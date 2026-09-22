@@ -139,6 +139,17 @@
       rec.skip = !rec.skip;
       G.save(); G.emit('change'); return rec.skip;
     },
+    /* portable save code - survives clearing the browser's site data/localStorage (a plain
+       "clear cache" alone does NOT touch localStorage, but "clear cookies and site data" does) */
+    exportSave() { try { return btoa(unescape(encodeURIComponent(JSON.stringify(G.state)))); } catch (e) { return null; } },
+    importSave(code) {
+      try {
+        const data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+        if (!data || typeof data !== 'object' || !('coins' in data)) return false;
+        G.state = Object.assign(fresh(), data);
+        G.save(); G.audio.setMuted(G.state.muted); G.emit('change'); return true;
+      } catch (e) { return false; }
+    },
     travel(i) {
       const z = G.data.zones[i];
       if (!z) return false;

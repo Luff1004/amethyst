@@ -4,5 +4,5 @@
                 false -> normal game: undiscovered cutscenes show as ???
 */
 G.config = {
-  unlockCodex: true,
+  unlockCodex: false,
 };

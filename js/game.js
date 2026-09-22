@@ -165,6 +165,7 @@
     // crystal HP - each hit opens a new crack where it landed
     hits++;
     if (!auto || Math.random() < 0.34) growCrack(clamp((px - c.x) / R, -0.95, 0.95) * 0.9, clamp((py - c.y) / R, -0.95, 0.95) * 0.9);
+    let shatterLuck = false;
     if (hits >= zone().hp) {
       hits = 0; s.shatters++;
       const bonus = G.stats.clickValue() * 10;
@@ -174,13 +175,15 @@
       ring(c.x, c.y, '#ffffff', R * 2.2, 3, 0.7); ring(c.x, c.y, `hsl(${h},90%,65%)`, R * 3, 2, 0.9);
       bundle(c.x, c.y, bonus, 3, 1.1);
       text(c.x, c.y - R * 0.3, 'SHATTER +' + G.fmt(bonus), '#ffffff', 22, 1.3);
+      text(c.x, c.y + R * 0.05, 'LUCK x5', `hsl(${h},95%,80%)`, 17, 1.1);
       shake = 1; flashA = 0.35;
+      shatterLuck = true;
       crystal = makeCrystal((Math.random() * 1e9) | 0);
     }
     cap();
     G.emit('mine');
     if (potion) potionBurst(potion, x, y);
-    roll(potion);
+    roll(potion, shatterLuck ? 5 : 1);
   }
 
   /* one-click luck bomb: everything flashes, the roll uses luck + potion luck with a higher cap */
@@ -193,8 +196,8 @@
     text(c.x, c.y - R * 0.9, pt.en + "  LUCK +" + G.fmt(pt.luck), col, 20, 1.6);
     flashA = 0.5; shake = 1;
   }
-  function roll(potion) {
-    const def = G.cutscenes.roll(G.state.zone, G.stats.luck() + (potion ? potion.luck : 0), potion ? G.data.potionCap : 0.5);
+  function roll(potion, luckMul = 1) {
+    const def = G.cutscenes.roll(G.state.zone, G.stats.luck() * luckMul + (potion ? potion.luck : 0), potion ? G.data.potionCap : 0.5);
     if (def) startCut(def, false);
   }
 

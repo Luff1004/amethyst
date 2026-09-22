@@ -189,7 +189,11 @@
         <div class="side"><button class="buy bevel small" data-prevwin="1"><span>보기</span></button></div></div>
       <div class="card bevel setcard">
         <div class="meta"><b>튜토리얼 다시 보기</b><span>처음 시작할 때 나오는 안내를 다시 재생합니다</span></div>
-        <div class="side"><button class="buy bevel small" data-retutorial="1"><span>시작</span></button></div></div>`;
+        <div class="side"><button class="buy bevel small" data-retutorial="1"><span>시작</span></button></div></div>
+      <div class="card bevel setcard">
+        <div class="meta"><b>진행 데이터 백업</b><span>브라우저 저장소가 지워져도(캐시/쿠키 삭제, 기기 변경 등) 복구할 수 있는 코드를 만들거나 불러옵니다</span></div>
+        <div class="side"><button class="buy bevel small" data-savecode="export"><span>코드 만들기</span></button>
+          <button class="buy bevel small" data-savecode="import"><span>코드 불러오기</span></button></div></div>`;
   }
 
   const views = { shop, up: upgrades, map, codex, crystal: crystalShop, settings: settingsView };
@@ -260,6 +264,16 @@
       G.state.tutorialStep = 0; G.state.tutorialDone = false; G.save(); G.ui.closePanel(); G.emit('tutorial:start');
     } else if ('reset' in el.dataset) {
       if (confirm('모든 진행 데이터를 삭제할까요?')) { G.reset(); shown = 0; }
+    } else if (el.dataset.savecode === 'export') {
+      const code = G.act.exportSave();
+      if (code) { prompt('아래 코드를 복사해 안전한 곳에 보관하세요. "코드 불러오기"로 언제든 복구할 수 있습니다.', code); G.audio.tab(); }
+      else { G.audio.deny(); toast('코드 생성에 실패했습니다'); }
+    } else if (el.dataset.savecode === 'import') {
+      const code = prompt('백업 코드를 붙여넣으세요. 현재 진행 데이터를 덮어씁니다.');
+      if (code && confirm('코드를 불러오면 현재 진행 데이터를 덮어씁니다. 계속할까요?')) {
+        if (G.act.importSave(code)) { G.audio.buy(); toast('데이터를 불러왔습니다'); shown = 0; render(); }
+        else { G.audio.deny(); toast('올바르지 않은 코드입니다'); }
+      }
     }
   });
 

@@ -51,7 +51,7 @@
     captions: [
       { a: 0.03, b: 0.17, ko: '태초에는 아무것도 없었다', en: 'IN THE BEGINNING, NOTHING', pos: 'top' },
       { a: 0.19, b: 0.35, ko: '그리고 하나의 점이 숨을 쉬었다', en: 'THEN A SINGLE POINT BREATHED', pos: 'center' },
-      { a: 0.37, b: 0.55, ko: '모든 것이 한 곳으로 모여들었다', en: 'EVERYTHING FELL INTO ONE' },
+      { a: 0.37, b: 0.55, ko: '모든 것이 한 곳으로 모여들었다', en: '万物归于一点', size: 26 },
       { a: 0.7, b: 0.86, ko: '그리고, 빛이 있었다', en: 'AND THERE WAS LIGHT' },
       { a: 0.88, b: 1.4, ko: '이 순간 우주는 당신의 것이다', en: 'THE UNIVERSE IS YOURS' },
     ],
