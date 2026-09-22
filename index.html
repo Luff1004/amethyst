@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#07060c">
+<title>AMETHYST</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<header id="hud">
+  <div class="wrap">
+    <div id="topline">
+      <div id="coinBox"><i id="coinIco"></i><div><small>COINS</small><b id="coinVal">0</b><em id="crysRow"><i id="crysIco"></i><span id="crysVal">0</span></em></div></div>
+      <div id="rightBox">
+        <div id="luckChip" class="bevel"><span>LUCK</span><b id="luckVal">x1.00</b></div>
+        <button id="btnAuto" class="bevel" aria-label="auto"></button>
+        <button id="btnSound" class="bevel" aria-label="sound"></button>
+        <button id="btnGear" class="bevel" aria-label="settings"></button>
+      </div>
+    </div>
+    <nav id="tabs">
+      <button class="tab bevel" data-tab="shop"><span>상점</span></button>
+      <button class="tab bevel" data-tab="map"><span>지도</span></button>
+      <button class="tab bevel" data-tab="up"><span>강화</span></button>
+      <button class="tab bevel" data-tab="codex"><span>도감</span></button>
+      <button class="tab bevel" data-tab="crystal"><span>크리스탈</span></button>
+    </nav>
+    <section id="panel" class="bevel" hidden></section>
+  </div>
+</header>
+
+<div id="hint"><b>TAP</b><span>화면을 터치해 채굴하세요</span></div>
+<div id="foot"></div>
+<div id="toast"></div>
+<div id="win"></div>
+<div id="tutorial" hidden></div>
+
+<script src="js/core/util.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/sfx.js"></script>
+<script src="js/data/zones.js"></script>
+<script src="js/data/foods.js"></script>
+<script src="js/data/upgrades.js"></script>
+<script src="js/data/potions.js"></script>
+<script src="js/core/state.js"></script>
+<script src="js/cutscenes/engine.js"></script>
+<script src="js/cutscenes/templates.js"></script>
+<script src="js/cutscenes/templates2.js"></script>
+<script src="js/cutscenes/grand.js"></script>
+<script src="js/cutscenes/cine-lib.js"></script>
+<script src="js/cutscenes/cine-env.js"></script>
+<script src="js/cutscenes/cine.js"></script>
+<script src="js/cutscenes/pack-01.js"></script>
+<script src="js/cutscenes/map0-base.js"></script>
+<script src="js/cutscenes/ultra.js"></script>
+<script src="js/cutscenes/transcend.js"></script>
+<script src="js/cutscenes/map1-vein.js"></script>
+<script src="js/cutscenes/ultra2.js"></script>
+<script src="js/cutscenes/map2-cavern.js"></script>
+<script src="js/cutscenes/ultra3.js"></script>
+<!-- add new cutscene packs / maps here, e.g. <script src="js/cutscenes/map3-core.js"></script> -->
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/tutorial.js"></script>
+</body>
+</html>

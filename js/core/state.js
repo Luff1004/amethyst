@@ -1,0 +1,159 @@
+/* AMETHYST - save data, derived stats and player actions */
+(() => {
+  const KEY = 'amethyst_save_v1';
+  const fresh = () => ({
+    v: 1, coins: 0, total: 0, clicks: 0, shatters: 0,
+    zone: 0, maxZone: 0,
+    upg: {}, buffs: {}, codex: {}, muted: false,
+    crystals: 0, potions: {}, armed: null, autoOn: true,
+    tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false,
+    settings: { autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner' },
+  });
+
+  G.state = fresh();
+
+  G.load = () => {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) G.state = Object.assign(fresh(), JSON.parse(raw));
+    } catch (e) { /* storage blocked - play without saving */ }
+    G.audio.setMuted(G.state.muted);
+  };
+  G.save = () => { try { localStorage.setItem(KEY, JSON.stringify(G.state)); } catch (e) {} };
+  G.reset = () => { G.state = fresh(); G.save(); G.emit('change'); };
+
+  const now = () => Date.now();
+  const upg = id => G.data.upgrades.find(u => u.id === id);
+  const lv = id => G.state.upg[id] || 0;
+
+  G.stats = {
+    zone: () => G.data.zones[G.state.zone],
+    level: lv,
+    val: id => upg(id).value(lv(id)),
+    coinMul() { return this.val('value') * this.zone().coinMul; },
+    clickValue() { return this.val('power') * this.coinMul(); },
+    critChance() { return this.val('crit'); },
+    critMul() { return this.val('critMul'); },
+    autoRate() { return this.val('auto'); },
+    foodLuck() {
+      let s = 0;
+      for (const f of G.data.foods) if ((G.state.buffs[f.id] || 0) > now()) s += f.bonus;
+      return s;
+    },
+    luck() { return 1 + this.val('luck') + this.foodLuck(); },
+    potion: id => G.data.potions.find(p => p.id === id),
+    armedPotion() { return G.state.armed ? this.potion(G.state.armed) : null; },
+    /* chance to see at least one mineral of tier >= `tier` in the current zone on a click with this luck */
+    chanceAtLeast(luck, tier, cap = 0.5) {
+      let miss = 1, n = 0;
+      for (const c of G.cutscenes.inZone(G.state.zone)) if (c.tierIdx >= tier) { miss *= 1 - Math.min(cap, luck / c.odds); n++; }
+      return n ? 1 - miss : null;
+    },
+    buffLeft(id) { return Math.max(0, ((G.state.buffs[id] || 0) - now()) / 1000); },
+    /* how many DISTINCT 1억+ (DIVINE tier and up) cutscenes you've ever discovered, across every map */
+    divineFound() {
+      let n = 0;
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6) n++; }
+      return n;
+    },
+    /* does the player currently satisfy a zone's `unlock` requirement? */
+    meetsUnlock(req) {
+      if (!req) return true;
+      if (req.type === 'divine') return this.divineFound() >= req.n;
+      return true;
+    },
+  };
+
+  G.addCoins = n => { G.state.coins += n; G.state.total += n; };
+
+  /* ---- actions (return true on success) ---- */
+  G.act = {
+    buyUpgrade(id) {
+      const u = upg(id), l = lv(id);
+      if (l >= u.max) return false;
+      const c = u.cost(l);
+      if (G.state.coins < c) return false;
+      G.state.coins -= c; G.state.upg[id] = l + 1;
+      G.save(); G.emit('change'); return true;
+    },
+    buyFood(id) {
+      const f = G.data.foods.find(x => x.id === id);
+      if (G.state.coins < f.cost) return false;
+      G.state.coins -= f.cost;
+      const base = Math.max(now(), G.state.buffs[id] || 0);
+      G.state.buffs[id] = base + f.duration * 1000;
+      G.save(); G.emit('change'); return true;
+    },
+    /* coins -> crystals */
+    exchange(n) {
+      const cost = n * G.data.exchange.rate;
+      if (n < 1 || G.state.coins < cost) return false;
+      G.state.coins -= cost; G.state.crystals += n;
+      G.save(); G.emit('change'); return true;
+    },
+    exchangeMax() { return this.exchange(Math.floor(G.state.coins / G.data.exchange.rate)); },
+    /* 1 box = 1 potion; which potion is a weighted dice roll */
+    openBox(id) {
+      const b = G.data.boxes.find(x => x.id === id);
+      if (!b || G.state.crystals < b.cost) return null;
+      G.state.crystals -= b.cost;
+      const total = b.w.reduce((a, v) => a + v, 0);
+      let r = Math.random() * total, idx = 0;
+      for (let i = 0; i < b.w.length; i++) { r -= b.w[i]; if (r < 0) { idx = i; break; } }
+      const pt = G.data.potions[idx];
+      G.state.potions[pt.id] = (G.state.potions[pt.id] || 0) + 1;
+      G.save(); G.emit("change"); G.emit("box", { box: b, potion: pt, idx });
+      return pt;
+    },
+    /* drink (arm) a potion for the next manual click; drinking the armed one again puts it back */
+    armPotion(id) {
+      const s = G.state;
+      if (s.armed === id) { s.potions[id] = (s.potions[id] || 0) + 1; s.armed = null; G.save(); G.emit('change'); return 'off'; }
+      if (!(s.potions[id] > 0)) return false;
+      if (s.armed) s.potions[s.armed] = (s.potions[s.armed] || 0) + 1;
+      s.potions[id]--; s.armed = id;
+      G.save(); G.emit('change'); return 'on';
+    },
+    toggleAuto() { G.state.autoOn = !G.state.autoOn; G.save(); G.emit('change'); return G.state.autoOn; },
+    setSetting(key, val) { G.state.settings[key] = val; G.save(); G.emit('change'); },
+    /* tutorial: step forward, or finish. The practice potion is granted exactly once ever -
+       replaying the tutorial from settings walks through it again but never re-grants it. */
+    tutorialNext() {
+      G.state.tutorialStep++;
+      if (G.state.tutorialStep >= G.data.tutorialSteps.length) {
+        G.state.tutorialDone = true;
+        if (!G.state.tutorialPotionGiven) {
+          G.state.tutorialPotionGiven = true;
+          G.state.potions.tutorial = (G.state.potions.tutorial || 0) + 1;
+          G.emit('tutorialDone');
+        } else {
+          G.emit('tutorialReplayDone');
+        }
+      }
+      G.save(); G.emit('change');
+    },
+    tutorialSkip() { G.state.tutorialDone = true; G.save(); G.emit('change'); },
+    /* codex: stop watching a cutscene (the reward still arrives) / watch it again */
+    toggleSkip(id) {
+      const rec = G.state.codex[id] || (G.state.codex[id] = { n: 0, t: Date.now(), best: 0 });
+      rec.skip = !rec.skip;
+      G.save(); G.emit('change'); return rec.skip;
+    },
+    travel(i) {
+      const z = G.data.zones[i];
+      if (!z) return false;
+      if (i > G.state.maxZone) {
+        if (i !== G.state.maxZone + 1) return false;
+        if (z.unlock) { if (!G.stats.meetsUnlock(z.unlock)) return false; }
+        else { if (G.state.coins < z.cost) return false; G.state.coins -= z.cost; }
+        G.state.maxZone = i;
+      }
+      G.state.zone = i;
+      G.save(); G.emit('change'); G.emit('zone'); return true;
+    },
+  };
+
+  setInterval(G.save, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) G.save(); });
+  window.addEventListener('pagehide', G.save);
+})();
