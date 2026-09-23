@@ -366,20 +366,29 @@
     },
   };
 
-  /* ---------------- CELESTIAL tier (10억대 TRANSCENDENT and above): bold geometric wireframe solids ---------------- */
+  /* ---------------- CELESTIAL tier (10억대 TRANSCENDENT and above): bold geometric wireframe solids ---------------
+     Two DIFFERENT solids layered together (never just one thin shape alone - that reads as a few
+     scratched pencil lines, not a "presence"), bold strokes + strong glow, and a second, denser
+     compound layer (icosa+merkaba) so every TRANSCENDENT hits the same heavy sacred-geometry weight
+     regardless of which primary shape its id happens to pick. */
   function celestialBuildup(c, k) {
     if (k <= 0.1) return;
     const { g, s, cx, cy, time, pal, def } = c, key = Cine.polyKeys[def.id.length % Cine.polyKeys.length];
     const open = E.outCubic(seg(k, 0.1, 0.7));
-    Cine.wireframe(g, key, { x: cx, y: cy, s: s * 1.7 * open, rx: 0.4 + time * 0.0003, ry: time * 0.00045, col: pal.A, alpha: 0.4 * open, glow: 0.35, lineW: 1.1 });
-    Cine.add(g, () => Cine.mandala(g, cx, cy, s * 2.3 * open, time * 0.00025, 0.3 * open, pal.A, pal.B));
+    Cine.wireframe(g, key, { x: cx, y: cy, s: s * 1.75 * open, rx: 0.4 + time * 0.0003, ry: time * 0.00045, col: pal.A, alpha: 0.55 * open, glow: 0.55, lineW: 2 });
+    Cine.wireframe(g, 'merkaba', { x: cx, y: cy, s: s * 1.3 * open, rx: -time * 0.00035, ry: 0.6 + time * 0.0002, col: pal.B, alpha: 0.32 * open, glow: 0.4, lineW: 1.3 });
+    Cine.add(g, () => Cine.mandala(g, cx, cy, s * 2.3 * open, time * 0.00025, 0.35 * open, pal.A, pal.B));
   }
   function celestialFX(c, b) {
     const { g, s, cx, cy, time, pal, def } = c, key = Cine.polyKeys[def.id.length % Cine.polyKeys.length];
+    const key2 = Cine.polyKeys[(def.id.length + 2) % Cine.polyKeys.length];
     const open = E.outBack(seg(b, 0.05, 0.5)), fade = 0.7 + 0.3 * Math.sin(time * 0.0009);
-    Cine.add(g, () => Cine.mandala(g, cx, cy, s * 2.8 * open, time * 0.00032, 0.7 * open * fade, pal.A, pal.B));
-    Cine.wireframe(g, key, { x: cx, y: cy, s: s * 2 * open, rx: 0.5 + time * 0.00025, ry: time * 0.0004, col: pal.A, alpha: 0.9 * open, glow: 0.55, lineW: 1.5 });
-    Cine.wireframe(g, key, { x: cx, y: cy, s: s * 1.35 * open, rx: -0.3 - time * 0.0003, ry: -time * 0.00055, rz: time * 0.0002, col: '#ffffff', alpha: 0.65 * open, glow: 0.3, lineW: 1 });
+    Cine.add(g, () => Cine.mandala(g, cx, cy, s * 2.9 * open, time * 0.00032, 0.85 * open * fade, pal.A, pal.B));
+    // dense compound layer, always present regardless of which primary shape got picked
+    Cine.wireframe(g, key2, { x: cx, y: cy, s: s * 2.3 * open, rx: 0.2 + time * 0.00018, ry: -time * 0.00028, rz: time * 0.00012, col: pal.B, alpha: 0.4 * open, glow: 0.4, lineW: 1.4 });
+    // primary shape, bold and glowing
+    Cine.wireframe(g, key, { x: cx, y: cy, s: s * 2 * open, rx: 0.5 + time * 0.00025, ry: time * 0.0004, col: pal.A, alpha: 1 * open, glow: 0.85, lineW: 2.6 });
+    Cine.wireframe(g, key, { x: cx, y: cy, s: s * 1.35 * open, rx: -0.3 - time * 0.0003, ry: -time * 0.00055, rz: time * 0.0002, col: '#ffffff', alpha: 0.75 * open, glow: 0.5, lineW: 1.8 });
   }
 
   /* ---------------- the scene ---------------- */

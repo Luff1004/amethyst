@@ -259,7 +259,9 @@
     icosa: (() => { const v = [[0, 1, PHI], [0, -1, PHI], [0, 1, -PHI], [0, -1, -PHI], [1, PHI, 0], [-1, PHI, 0], [1, -PHI, 0], [-1, -PHI, 0], [PHI, 0, 1], [-PHI, 0, 1], [PHI, 0, -1], [-PHI, 0, -1]].map(nrm); return { v, e: autoEdges(v) }; })(),
     merkaba: (() => { const a = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(nrm), b = a.map(p => [-p[0], -p[1], -p[2]]); const v = a.concat(b); return { v, e: autoEdges(a).concat(autoEdges(b).map(([i, j]) => [i + 4, j + 4])) }; })(),
   };
-  Cine.polyKeys = Object.keys(poly);
+  /* tetra excluded here - only 4 verts/6 edges, reads as a few scratched pencil lines rather than a
+     solid at the scale this renders; it stays in `poly` (nothing else references it by name). */
+  Cine.polyKeys = ['cube', 'octa', 'icosa', 'merkaba'];
   /* draw a wireframe polyhedron. o: x y s rx ry rz col alpha glow lineW */
   Cine.wireframe = (g, key, o) => {
     const p = poly[key] || poly.icosa, { x = 0, y = 0, s = 100, rx = 0, ry = 0, rz = 0, col = '#ffffff', alpha = 1, glow = 0.45, lineW = 1.4 } = o;

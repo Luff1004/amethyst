@@ -371,6 +371,19 @@
           }
         });
       }
+    } else if (style === 'type') {
+      // clean typewriter reveal - no jitter/dropout, characters appear in sequence with a blinking cursor
+      g.save(); g.font = `800 ${fontPx}px ${c.font || CAP_SERIF}`; g.textAlign = 'left'; g.textBaseline = 'middle';
+      let full = g.measureText(txt).width + spacing * (txt.length - 1), fpx = fontPx, sp = spacing;
+      if (full > W * 0.88) { const kk = (W * 0.88) / full; fpx *= kk; sp *= kk; g.font = `800 ${fpx}px ${c.font || CAP_SERIF}`; full = W * 0.88; }
+      const nShow = Math.round(txt.length * clamp(k * 1.08));
+      g.globalAlpha = Math.min(1, k * 4);
+      g.shadowColor = rgba(tierColor, 0.6); g.shadowBlur = fpx * 0.3;
+      g.fillStyle = '#eef1f8';
+      let x = W / 2 - full / 2;
+      for (let i = 0; i < nShow; i++) { const ch = txt[i]; g.fillText(ch, x, py); x += g.measureText(ch).width + sp; }
+      if (nShow < txt.length && Math.floor(time / 380) % 2 === 0) { g.fillStyle = rgba(tierColor, 0.9); g.fillRect(x, py - fpx * 0.5, Math.max(2, fpx * 0.09), fpx); }
+      g.restore();
     } else {
       g.save(); g.translate(W / 2, py); g.scale(0.92 + 0.08 * k, 0.92 + 0.08 * k); g.translate(-W / 2, -py);
       glitchCaption(g, txt, W / 2, py, fontPx, spacing, k, W, time, c.font);
@@ -428,9 +441,7 @@
         glitchCaptionVertical(g, txt, c.x != null ? W * c.x : W * (grand ? 0.82 : 0.86), H * (c.y != null ? c.y : 0.42), Math.min((c.size || 34) * s, W * 0.11), k, a.time, tier.color, c.font, W, H);
       } else {
         const py = c.pos === 'top' ? H * 0.22 : c.pos === 'center' ? H * (c.y != null ? c.y : 0.5) : H - bar * 0.5;
-        g.save(); g.translate(W / 2, py); g.scale(0.92 + 0.08 * k, 0.92 + 0.08 * k); g.translate(-W / 2, -py);
-        glitchCaption(g, txt, W / 2, py, Math.min((c.size || 24) * s, W * 0.07), 3.5 * s, k, W, a.time, c.font);
-        g.restore();
+        drawCaptionLine(g, c, txt, py, k, W, H, a.time, tier.color, s);
       }
     }
 

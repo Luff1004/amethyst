@@ -171,16 +171,16 @@
   R(1300000000, 'planetarycore', 'Planetary Core', 205,
     { env: 'space', envHue: 205, hero: { k: 'prism', n: 20, h: 205, s: 70, l: -8, size: 1.3, shine: 70 }, entry: 'orbit', finale: 'nova', fx: ['stars', 'orbit', 'sparks'], cam: 'drift' },
     { duration: 16000, revealAt: 0.63, captions: [
-      { a: 0.04, b: 0.24, en: 'A WORLD WAS BORN IN THE DARK', pos: 'top', style: 'fly', from: 'top' },
-      { a: 0.28, b: 0.5, en: 'AND IT NEVER STOPPED TURNING', style: 'fly', from: 'left' },
+      { a: 0.04, b: 0.24, en: '一个世界在黑暗中诞生', size: 26, pos: 'top', style: 'fly', from: 'top' },
+      { a: 0.28, b: 0.5, en: '从未停止转动', size: 26, style: 'fly', from: 'left' },
       { a: 0.66, b: 1.4, en: '天核', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
   R(3300000000, 'abyssalsovereign', 'Abyssal Sovereign', 12,
     { env: 'abyss', envHue: 8, hero: { k: 'twin', h: 12, s: 90, l: -6, size: 1.35, shine: 60 }, entry: 'tide', finale: 'quake', fx: ['embers', 'bubbles'], cam: 'push' },
     { duration: 17000, revealAt: 0.63, hue2: 40, captions: [
-      { a: 0.04, b: 0.24, en: 'SOMETHING ANCIENT STIRS BELOW', pos: 'top', style: 'engrave' },
-      { a: 0.28, b: 0.5, en: 'IT HAS ALWAYS RULED THE DARK', style: 'engrave' },
-      { a: 0.66, b: 0.92, en: 'الظلام الأبدي', pos: 'center', size: 26 },
+      { a: 0.04, b: 0.24, en: 'شيء قديم يتحرك في الأعماق', pos: 'top', size: 24, style: 'engrave' },
+      { a: 0.28, b: 0.5, en: 'لطالما حكم الظلام', size: 24, style: 'engrave' },
+      { a: 0.66, b: 0.92, en: 'الظلام الأبدي', pos: 'center', size: 26, style: 'engrave' },
     ] });
   R(6000000000, 'worldforge', 'World-Forge Eternal', 22,
     { env: 'forge', envHue: 20, hero: { k: 'octa', h: 22, s: 95, size: 1.4, shine: 70 }, entry: 'forge', finale: 'nova', fx: ['embers', 'sparks'], cam: 'push' },
@@ -193,6 +193,6 @@
     { env: 'void', envHue: 280, hero: { k: 'spire', h: 280, s: 80, l: -10, size: 1.4, shine: 60 }, entry: 'unveil', finale: 'implode', fx: ['arcs', 'stars', 'runes'], cam: 'pull' },
     { duration: 19000, revealAt: 0.65, hue2: 320, captions: [
       { a: 0.04, b: 0.26, en: 'EVERY VEIN LEADS TO AN END', pos: 'top', style: 'engrave' },
-      { a: 0.3, b: 0.54, en: '每条矿脉终将尽头', size: 26, style: 'engrave' },
+      { a: 0.3, b: 0.54, en: 'THIS IS WHERE THE STONE STOPS', style: 'engrave' },
     ] });
 })();

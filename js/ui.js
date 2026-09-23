@@ -299,11 +299,40 @@
   G.on('win', ({ def, reward, tier }) => {
     fireWin(`<small>${tier.en}</small><b>${def.name}</b><span>1 in ${G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
   });
-  /* crystal box opened */
+  /* crystal box opened: spin a roulette strip past a run of crystals before landing on the real
+     result, then show the usual reward banner. The outcome is already decided (G.act.openBox already
+     picked + granted it) - the strip is just decelerated onto that predetermined item for show. */
+  const spinEl = $('#boxSpin'), spinStrip = spinEl.querySelector('.spinstrip');
+  const ITEM_W = 68 + 8;
+  function playBoxSpin(potion, onDone) {
+    const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo');
+    const winIndex = 26, n = 34;
+    const items = [];
+    for (let i = 0; i < n; i++) items.push(i === winIndex ? potion : pool[(Math.random() * pool.length) | 0]);
+    spinStrip.innerHTML = items.map((pt, i) =>
+      `<div class="spinitem${i === winIndex ? ' win' : ''}" style="--ph:${pt.hue}">${G.icon('potion', 24)}<b>${pt.name}</b></div>`).join('');
+    spinStrip.style.transition = 'none';
+    spinStrip.style.transform = `translateX(${-ITEM_W * 3}px)`;
+    spinEl.hidden = false;
+    void spinEl.offsetWidth;
+    spinEl.classList.add('show');
+    requestAnimationFrame(() => {
+      void spinStrip.offsetWidth;
+      spinStrip.style.transition = 'transform 2.6s cubic-bezier(.1,.7,.15,1)';
+      spinStrip.style.transform = `translateX(${-ITEM_W * winIndex}px)`;
+    });
+    G.audio.tab();
+    setTimeout(() => {
+      spinEl.classList.remove('show');
+      setTimeout(() => { spinEl.hidden = true; onDone(); }, 250);
+    }, 2650);
+  }
   G.on('box', ({ box, potion, idx }) => {
-    const col = `hsl(${potion.hue},90%,66%)`;
-    fireWin(`<small>${box.en} OPENED</small><b>${potion.name}</b><span>${potion.en}</span><em style="color:${col}">LUCK +${G.fmt(potion.luck)}</em>`, col, 2800);
-    G.audio.potion(); if (idx >= 4) G.audio.blast(idx);
+    playBoxSpin(potion, () => {
+      const col = `hsl(${potion.hue},90%,66%)`;
+      fireWin(`<small>${box.en} OPENED</small><b>${potion.name}</b><span>${potion.en}</span><em style="color:${col}">LUCK +${G.fmt(potion.luck)}</em>`, col, 2800);
+      G.audio.potion(); if (idx >= 4) G.audio.blast(idx);
+    });
   });
   G.on('tutorialDone', () => toast('견습생의 크리스탈을 받았습니다 - 크리스탈 탭에서 마셔보세요'));
   G.on('tutorialReplayDone', () => toast('튜토리얼을 다시 봤습니다 (크리스탈은 처음 한 번만 지급돼요)'));

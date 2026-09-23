@@ -25,10 +25,10 @@
     id: 'watcher', name: 'The Watcher', odds: 10000000000, zone: 0, snd: 'rise:heart hit:whomp tail:echo amb:space root:73 scale:phrygian', duration: 17000, revealAt: 0.72,
     colors: ['#ff4a5e', '#8a0018', '#000000'],
     captions: [
-      { a: 0.04, b: 0.2, ko: '고요 속에서', en: 'IN THE SILENCE', pos: 'top', font: 'Georgia,"Times New Roman",serif' },
+      { a: 0.04, b: 0.2, ko: '고요 속에서', en: 'IN THE SILENCE', pos: 'top', style: 'engrave', font: 'Georgia,"Times New Roman",serif' },
       { a: 0.22, b: 0.4, ko: '무언가가 눈을 떴다', en: 'SOMETHING OPENED ITS EYES', pos: 'center', style: 'engrave', font: 'Georgia,"Times New Roman",serif' },
-      { a: 0.42, b: 0.62, ko: '수많은 시선이 당신을 향한다', en: '千万道目光注视着你', size: 26, font: 'Georgia,"Times New Roman",serif' },
-      { a: 0.74, b: 1.4, ko: '눈을 돌릴 수 없다', en: 'THERE IS NO LOOKING AWAY', font: 'Georgia,"Times New Roman",serif' },
+      { a: 0.42, b: 0.62, ko: '수많은 시선이 당신을 향한다', en: 'A THOUSAND GAZES FIND YOU', style: 'engrave', font: 'Georgia,"Times New Roman",serif' },
+      { a: 0.74, b: 1.4, ko: '눈을 돌릴 수 없다', en: 'THERE IS NO LOOKING AWAY', style: 'engrave', font: 'Georgia,"Times New Roman",serif' },
     ],
     draw(g, e) {
       const { p, u, cx, cy, time, W, H } = e, [A, B] = e.col;

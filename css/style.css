@@ -284,6 +284,24 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 #eventModal .emsg.ok { color: #6dffb0; }
 #eventModal .emsg.bad { color: var(--bad); }
 
+/* crystal box roulette: a slot-machine strip that spins past a bunch of crystals and decelerates
+   onto the one actually won, before the usual reward banner shows. */
+#boxSpin { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; background: rgba(4,3,8,0); pointer-events: none; transition: background .25s; }
+#boxSpin.show { background: rgba(4,3,8,.72); pointer-events: auto; }
+.spintrack { position: relative; width: min(94vw, 380px); height: 86px; overflow: hidden; border-radius: 10px; background: #0e0a1a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 10px 40px rgba(0,0,0,.6); }
+.spinstrip { position: absolute; top: 0; left: 50%; height: 100%; display: flex; align-items: center; gap: 8px; padding: 0 8px; transform: translateX(0); }
+.spinitem { flex: none; width: 68px; height: 68px; border-radius: 9px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: radial-gradient(circle at 35% 30%, hsl(var(--ph),85%,32%), #120c1f 75%); border: 1px solid hsla(var(--ph),80%,60%,.35); }
+.spinitem .i { color: hsl(var(--ph),90%,72%); }
+.spinitem b { font: 700 8.5px var(--mono); color: hsl(var(--ph),90%,78%); letter-spacing: -.02em; }
+.spinitem.win { box-shadow: 0 0 0 2px #fff, 0 0 22px hsl(var(--ph),95%,65%); }
+.spinptr { position: absolute; left: 50%; top: -6px; bottom: -6px; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 10px #fff, 0 0 20px var(--gold); z-index: 2; }
+.spinptr::before, .spinptr::after { content: ""; position: absolute; left: 50%; width: 0; height: 0; border: 6px solid transparent; transform: translateX(-50%); }
+.spinptr::before { top: -8px; border-top: none; border-bottom-color: #fff; }
+.spinptr::after { bottom: -8px; border-bottom: none; border-top-color: #fff; }
+.spinfade { position: absolute; top: 0; bottom: 0; width: 60px; z-index: 1; pointer-events: none; }
+.spinfade.l { left: 0; background: linear-gradient(90deg, #0e0a1a, rgba(14,10,26,0)); }
+.spinfade.r { right: 0; background: linear-gradient(270deg, #0e0a1a, rgba(14,10,26,0)); }
+
 /* exam-theme popup: styled like a Korean 모의고사 answer sheet, pinned onto the usual dark card */
 #eventModal .tcard.exam { --fill: rgba(16, 11, 26, .98); border: 1px solid rgba(255, 207, 90, .18); }
 #eventModal .examhead { display: flex; align-items: baseline; justify-content: space-between; font-family: "Noto Serif KR", "Nanum Myeongjo", "Batang", Georgia, serif; border-bottom: 1px dashed rgba(255, 255, 255, .18); padding-bottom: 8px; }
