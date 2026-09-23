@@ -197,7 +197,7 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 .card.exch .side .pair { flex: 2; display: flex; gap: 6px; }
 .card.exch .side .buy { flex: 1; min-width: 0; }
 
-/* potion boxes */
+/* crystal boxes */
 .card.box { --line: color-mix(in srgb, var(--bc) 55%, transparent); }
 .card.box .bico { color: var(--bc); background: color-mix(in srgb, var(--bc) 14%, transparent); }
 .odds2 { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: 3px; }

@@ -143,8 +143,8 @@
     const crit = Math.random() < G.stats.critChance();
     const gain = G.stats.clickValue() * (crit ? G.stats.critMul() : 1);
     G.addCoins(gain); s.clicks++;
-    let potion = null;
-    if (!auto && s.armed) { potion = G.stats.armedPotion(); s.armed = null; G.save(); G.emit("change"); }
+    let armed = null;
+    if (!auto && G.stats.armedCount() > 0) { armed = G.stats.armedList(); s.armed = {}; G.save(); G.emit("change"); }
     G.audio.coin(auto ? 0 : combo, auto, zone().snd);
     G.audio.crack(zone().snd, hits / zone().hp, auto);
     if (crit) G.audio.crit();
@@ -182,22 +182,25 @@
     }
     cap();
     G.emit('mine');
-    if (potion) potionBurst(potion, x, y);
-    roll(potion, shatterLuck ? 5 : 1);
+    if (armed) potionBurst(armed, x, y);
+    roll(armed, shatterLuck ? 5 : 1);
   }
 
-  /* one-click luck bomb: everything flashes, the roll uses luck + potion luck with a higher cap */
-  function potionBurst(pt, x, y) {
-    const c = center(), R = crystalR(), col = `hsl(${pt.hue},100%,68%)`;
-    G.audio.blast(G.data.potions.indexOf(pt));
+  /* one-click luck bomb: everything flashes, the roll uses luck + all armed crystals' luck stacked, with a higher cap */
+  function potionBurst(list, x, y) {
+    const c = center(), R = crystalR(), top = list.slice().sort((a, b) => b.luck - a.luck)[0], col = `hsl(${top.hue},100%,68%)`;
+    const totalLuck = list.reduce((a, p) => a + p.luck, 0);
+    G.audio.blast(G.data.potions.indexOf(top));
     for (let i = 0; i < 4; i++) ring(c.x, c.y, i % 2 ? "#ffffff" : col, R * (2.4 + i), 3 - i * 0.4, 0.7 + i * 0.15);
     for (let i = 0; i < 22; i++) spark(c.x, c.y, i % 3 ? col : "#ffffff", 1.8);
     coins(c.x, c.y, 3, 1.5);
-    text(c.x, c.y - R * 0.9, pt.en + "  LUCK +" + G.fmt(pt.luck), col, 20, 1.6);
+    const label = list.length > 1 ? list.length + ' CRYSTALS  LUCK +' + G.fmt(totalLuck) : top.en + '  LUCK +' + G.fmt(totalLuck);
+    text(c.x, c.y - R * 0.9, label, col, 20, 1.6);
     flashA = 0.5; shake = 1;
   }
-  function roll(potion, luckMul = 1) {
-    const def = G.cutscenes.roll(G.state.zone, G.stats.luck() * luckMul + (potion ? potion.luck : 0), potion ? G.data.potionCap : 0.5);
+  function roll(armed, luckMul = 1) {
+    const potionLuck = armed ? armed.reduce((a, p) => a + p.luck, 0) : 0;
+    const def = G.cutscenes.roll(G.state.zone, G.stats.luck() * luckMul + potionLuck, armed ? G.data.potionCap : 0.5);
     if (def) startCut(def, false);
   }
 
@@ -355,15 +358,16 @@
     g.beginPath(); g.arc(0, 0, R * 1.32, 0, TAU); g.stroke(); g.setLineDash([]);
     for (let i = 0; i < 4; i++) { g.rotate(Math.PI / 2); g.beginPath(); g.moveTo(R * 1.25, 0); g.lineTo(R * 1.42, 0); g.stroke(); }
     g.restore();
-    // a drunk potion charges the crystal: pulsing halo + orbiting sparks until the next click fires it
-    const ap = G.stats.armedPotion();
+    // drunk potions charge the crystal: pulsing halo + orbiting sparks (one ring of sparks per armed crystal) until the next click fires them
+    const ap = G.stats.armedTop(), armedN = G.stats.armedCount();
     if (ap) {
       const pc = `hsl(${ap.hue},100%,68%)`, pk = 0.55 + 0.35 * Math.sin(t * 6);
       const gl = g.createRadialGradient(c.x, c.y, R * 0.5, c.x, c.y, R * 2.1);
-      gl.addColorStop(0, `hsla(${ap.hue},100%,60%,${0.32 * pk})`); gl.addColorStop(1, `hsla(${ap.hue},100%,60%,0)`);
+      gl.addColorStop(0, `hsla(${ap.hue},100%,60%,${(0.24 + 0.08 * Math.min(3, armedN)) * pk})`); gl.addColorStop(1, `hsla(${ap.hue},100%,60%,0)`);
       g.fillStyle = gl; g.fillRect(c.x - R * 2.2, c.y - R * 2.2, R * 4.4, R * 4.4);
       g.strokeStyle = pc; g.globalAlpha = pk; g.lineWidth = 2.5; g.beginPath(); g.arc(c.x, c.y, R * (1.5 + 0.05 * Math.sin(t * 8)), 0, TAU); g.stroke(); g.globalAlpha = 1;
-      for (let i = 0; i < 10; i++) { const a = t * 1.8 + (i / 10) * TAU, rr = R * (1.5 + 0.12 * Math.sin(t * 3 + i)); g.fillStyle = i % 2 ? pc : '#ffffff'; g.fillRect(c.x + Math.cos(a) * rr - 2, c.y + Math.sin(a) * rr - 2, 4, 4); }
+      const sparkN = Math.min(24, 10 * armedN);
+      for (let i = 0; i < sparkN; i++) { const a = t * 1.8 + (i / sparkN) * TAU, rr = R * (1.5 + 0.12 * Math.sin(t * 3 + i)); g.fillStyle = i % 2 ? pc : '#ffffff'; g.fillRect(c.x + Math.cos(a) * rr - 2, c.y + Math.sin(a) * rr - 2, 4, 4); }
     }
     // HP arc (progress to shatter)
     const prog = hits / zone().hp;

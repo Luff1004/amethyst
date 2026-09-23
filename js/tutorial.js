@@ -5,12 +5,12 @@ G.data.tutorialSteps = [
   { title: '지도', body: '지도 탭에서 다른 지역으로 이동할 수 있습니다. 지역마다 코인 배율과 등장하는 컷신이 완전히 다릅니다.' },
   { title: '강화', body: '강화 탭에서는 코인으로 곡괭이, 치명타, 자동 채굴 같은 능력을 영구히 올릴 수 있습니다.' },
   { title: '도감', body: '컷신을 한 번 보면 도감에 기록됩니다. 이미 본 컷신은 "그만 보기"로 재생을 끄고 보상만 받을 수 있습니다.' },
-  { title: '크리스탈', body: '코인을 크리스탈로 교환해 물약 상자를 살 수 있습니다. 물약은 마시면 다음 클릭 한 번에 큰 행운을 몰아줍니다.' },
+  { title: '크리스탈', body: '코인을 크리스탈로 교환해 크리스탈 상자를 살 수 있습니다. 상자에서 나온 크리스탈은 마시면 다음 클릭 한 번에 큰 행운을 몰아줍니다.' },
   { title: '설정', body: '오른쪽 위 톱니바퀴에서 컷신 표시 방식, 알림 스타일 등을 취향대로 바꿀 수 있습니다.' },
-  { title: '준비 완료', body: '연습용으로 견습생의 물약(LUCK +50)을 하나 드립니다. 크리스탈 탭에서 마셔보세요. 이 물약은 상자에서는 절대 나오지 않는 튜토리얼 전용입니다.' },
+  { title: '준비 완료', body: '연습용으로 견습생의 크리스탈(LUCK +50)을 하나 드립니다. 크리스탈 탭에서 마셔보세요. 이 크리스탈은 상점에는 절대 나오지 않는 튜토리얼 전용입니다.' },
 ];
 /* shown instead of the last step's body/button once the potion has already been handed out once */
-const REPLAY_LAST = { title: '준비 완료', body: '여기까지가 튜토리얼입니다. 견습생의 물약은 처음 한 번만 지급되기 때문에, 다시 드리지는 않습니다.' };
+const REPLAY_LAST = { title: '준비 완료', body: '여기까지가 튜토리얼입니다. 견습생의 크리스탈은 처음 한 번만 지급되기 때문에, 다시 드리지는 않습니다.' };
 
 (() => {
   const el = document.getElementById('tutorial');
@@ -29,7 +29,7 @@ const REPLAY_LAST = { title: '준비 완료', body: '여기까지가 튜토리�
           <div class="dots">${steps.map((_, i) => `<i class="${i === step ? 'on' : ''}"></i>`).join('')}</div>
           <div class="btns">
             ${step === 0 ? `<button class="buy bevel small skipbtn" data-tskip>건너뛰기</button>` : ''}
-            <button class="buy bevel" data-tnext><span>${last ? (G.state.tutorialPotionGiven ? '닫기' : '물약 받기') : '다음'}</span></button>
+            <button class="buy bevel" data-tnext><span>${last ? (G.state.tutorialPotionGiven ? '닫기' : '크리스탈 받기') : '다음'}</span></button>
           </div>
         </div>
       </div>`;

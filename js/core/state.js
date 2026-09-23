@@ -5,7 +5,7 @@
     v: 1, coins: 0, total: 0, clicks: 0, shatters: 0,
     zone: 0, maxZone: 0,
     upg: {}, buffs: {}, codex: {}, muted: false,
-    crystals: 0, potions: {}, armed: null, autoOn: true,
+    crystals: 0, potions: {}, armed: {}, autoOn: true,
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false,
     settings: { autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner' },
   });
@@ -16,6 +16,7 @@
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) G.state = Object.assign(fresh(), JSON.parse(raw));
+      if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};   // older saves had a single id string
     } catch (e) { /* storage blocked - play without saving */ }
     G.audio.setMuted(G.state.muted);
   };
@@ -42,7 +43,16 @@
     },
     luck() { return 1 + this.val('luck') + this.foodLuck(); },
     potion: id => G.data.potions.find(p => p.id === id),
-    armedPotion() { return G.state.armed ? this.potion(G.state.armed) : null; },
+    /* several crystals can be armed at once now - their luck stacks (adds up) for the next click */
+    armedList() {
+      const out = [];
+      for (const id in G.state.armed) { const n = G.state.armed[id], pt = this.potion(id); if (n > 0 && pt) for (let i = 0; i < n; i++) out.push(pt); }
+      return out;
+    },
+    armedCount() { return this.armedList().length; },
+    armedLuck() { return this.armedList().reduce((a, p) => a + p.luck, 0); },
+    /* the highest-luck armed crystal, used to pick a single accent colour for the HUD/halo */
+    armedTop() { return this.armedList().sort((a, b) => b.luck - a.luck)[0] || null; },
     /* chance to see at least one mineral of tier >= `tier` in the current zone on a click with this luck */
     chanceAtLeast(luck, tier, cap = 0.5) {
       let miss = 1, n = 0;
@@ -92,7 +102,7 @@
       G.save(); G.emit('change'); return true;
     },
     exchangeMax() { return this.exchange(Math.floor(G.state.coins / G.data.exchange.rate)); },
-    /* 1 box = 1 potion; which potion is a weighted dice roll */
+    /* 1 box = 1 crystal item; which one is a weighted dice roll */
     openBox(id) {
       const b = G.data.boxes.find(x => x.id === id);
       if (!b || G.state.crystals < b.cost) return null;
@@ -105,14 +115,21 @@
       G.save(); G.emit("change"); G.emit("box", { box: b, potion: pt, idx });
       return pt;
     },
-    /* drink (arm) a potion for the next manual click; drinking the armed one again puts it back */
+    /* drink (arm) a crystal for the next manual click - several can be armed at once and their
+       luck stacks; arming the same one again drinks another unit rather than replacing it */
     armPotion(id) {
       const s = G.state;
-      if (s.armed === id) { s.potions[id] = (s.potions[id] || 0) + 1; s.armed = null; G.save(); G.emit('change'); return 'off'; }
       if (!(s.potions[id] > 0)) return false;
-      if (s.armed) s.potions[s.armed] = (s.potions[s.armed] || 0) + 1;
-      s.potions[id]--; s.armed = id;
+      s.potions[id]--; s.armed[id] = (s.armed[id] || 0) + 1;
       G.save(); G.emit('change'); return 'on';
+    },
+    /* put one armed unit back into the inventory */
+    unarmPotion(id) {
+      const s = G.state;
+      if (!(s.armed[id] > 0)) return false;
+      s.armed[id]--; if (!s.armed[id]) delete s.armed[id];
+      s.potions[id] = (s.potions[id] || 0) + 1;
+      G.save(); G.emit('change'); return 'off';
     },
     toggleAuto() { G.state.autoOn = !G.state.autoOn; G.save(); G.emit('change'); return G.state.autoOn; },
     setSetting(key, val) { G.state.settings[key] = val; G.save(); G.emit('change'); },
@@ -147,6 +164,7 @@
         const data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
         if (!data || typeof data !== 'object' || !('coins' in data)) return false;
         G.state = Object.assign(fresh(), data);
+        if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};
         G.save(); G.audio.setMuted(G.state.muted); G.emit('change'); return true;
       } catch (e) { return false; }
     },

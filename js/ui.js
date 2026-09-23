@@ -41,34 +41,36 @@
   }
 
   function crystalShop() {
-    const luck = G.stats.luck(), s = G.state, cap = G.data.potionCap;
-    const pct = v => (v == null ? '—' : v >= 0.995 ? '99%+' : v < 0.001 ? '<0.1%' : (v * 100).toFixed(v < 0.1 ? 1 : 0) + '%');
+    const s = G.state;
     const boxes = G.data.boxes.map(b => {
       const tot = b.w.reduce((a, v) => a + v, 0);
       const odds = b.w.map((w, i) => (w > 0 ? `<i style="--hc:hsl(${G.data.potions[i].hue},85%,66%)">${G.data.potions[i].name} <b>${(w / tot * 100).toFixed(w / tot < 0.01 ? 2 : w / tot < 0.1 ? 1 : 0)}%</b></i>` : '')).join('');
       return `<div class="card bevel box" style="--bc:${b.color}">
         <div class="ico bico">${G.icon('shop', 26)}</div>
         <div class="meta"><b style="color:${b.color}">${b.name}</b><small style="color:${b.color}">${b.en}</small>
-          <span>열면 <b>물약 1개</b>가 나옵니다 (종류는 확률)</span>
+          <span>열면 <b>크리스탈 1개</b>가 나옵니다 (종류는 확률)</span>
           <div class="odds2">${odds}</div></div>
         <div class="side">${crystalBtn(b.cost, `data-box="${b.id}"`)}</div></div>`;
     }).join('');
-    const potions = G.data.potions.map(pt => {
-      const have = s.potions[pt.id] || 0, armed = s.armed === pt.id, L = luck + pt.luck;
-      return `<div class="card bevel potion ${armed ? 'on' : ''} ${have || armed ? '' : 'dim'}" style="--ph:${pt.hue}">
+    const potions = G.data.potions.filter(pt => pt.id !== 'tutorial' || (s.potions.tutorial || 0) > 0 || (s.armed.tutorial || 0) > 0).map(pt => {
+      const have = s.potions[pt.id] || 0, armedN = s.armed[pt.id] || 0;
+      return `<div class="card bevel potion ${armedN ? 'on' : ''} ${have || armedN ? '' : 'dim'}" style="--ph:${pt.hue}">
         <div class="ico pico">${G.icon('potion', 26)}</div>
         <div class="meta"><b>${pt.name}</b><small>${pt.en}</small>
-          <span class="val">LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK</i></span>
-          <span class="chn">10만대+ <b>${pct(G.stats.chanceAtLeast(L, 3, cap))}</b> &nbsp; 1억대+ <b>${pct(G.stats.chanceAtLeast(L, 6, cap))}</b> &nbsp; 10억대+ <b>${pct(G.stats.chanceAtLeast(L, 7, cap))}</b></span></div>
-        <div class="side"><em>${armed ? '장전됨' : '보유 ' + have}</em>
-          <button class="buy bevel small ${have || armed ? '' : 'poor'} ${armed ? 'offbtn' : ''}" data-puse="${pt.id}"><span>${armed ? '취소' : '마시기'}</span></button></div></div>`;
+          <span class="val">LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK, 중첩 가능</i></span></div>
+        <div class="side"><em>${armedN ? '장전 ' + armedN + (have ? ' · 보유 ' + have : '') : '보유 ' + have}</em>
+          <div class="pair">
+            <button class="buy bevel small offbtn ${armedN ? '' : 'poor'}" data-punarm="${pt.id}"><span>취소</span></button>
+            <button class="buy bevel small ${have ? '' : 'poor'}" data-puse="${pt.id}"><span>마시기</span></button>
+          </div></div></div>`;
     }).join('');
-    return `<div class="ph"><h2>CRYSTAL <small>크리스탈 상점</small></h2><span>물약은 <b>다음 클릭 한 번</b>에만 적용</span></div>
-      <div class="sub">크리스탈 <b class="cy">${G.fmtInt(s.crystals)}</b> &nbsp;/&nbsp; 물약은 상자에서만 나옵니다 · 확률은 이 지역 기준</div>
+    const armedLuck = G.stats.armedLuck();
+    return `<div class="ph"><h2>CRYSTAL <small>크리스탈 상점</small></h2><span>크리스탈은 <b>다음 클릭 한 번</b>에만 적용 · 여러 개 중첩 가능</span></div>
+      <div class="sub">크리스탈 <b class="cy">${G.fmtInt(s.crystals)}</b> &nbsp;/&nbsp; 크리스탈은 상자에서만 나옵니다${armedLuck ? ` &nbsp;/&nbsp; 장전된 럭 <b class="cy">+${G.fmt(armedLuck)}</b>` : ''}</div>
       ${exchangeCard()}
-      <div class="ph mini"><h2>POTION BOX <small>물약 상자</small></h2></div>
+      <div class="ph mini"><h2>CRYSTAL BOX <small>크리스탈 상자</small></h2></div>
       <div class="list">${boxes}</div>
-      <div class="ph mini"><h2>POTIONS <small>보유 물약</small></h2></div>
+      <div class="ph mini"><h2>CRYSTALS <small>보유 크리스탈</small></h2></div>
       <div class="list">${potions}</div>`;
   }
 
@@ -246,8 +248,9 @@
       const pt = G.act.openBox(el.dataset.box);
       if (!pt) { G.audio.deny(); toast('크리스탈이 부족합니다'); } else G.audio.buy();
     } else if (el.dataset.puse) {
-      const r = G.act.armPotion(el.dataset.puse);
-      if (r === 'on') { G.audio.potion(); toast('다음 클릭 한 번에 럭이 쏟아집니다'); } else if (r === 'off') { G.audio.tab(); toast('물약을 되돌렸습니다'); } else { G.audio.deny(); toast('보유한 물약이 없습니다'); }
+      if (G.act.armPotion(el.dataset.puse)) { G.audio.potion(); toast('장전됨 - 다음 클릭에 럭이 중첩됩니다'); } else { G.audio.deny(); toast('보유한 크리스탈이 없습니다'); }
+    } else if (el.dataset.punarm) {
+      if (G.act.unarmPotion(el.dataset.punarm)) { G.audio.tab(); toast('크리스탈을 되돌렸습니다'); } else { G.audio.deny(); }
     } else if (el.dataset.replay) {
       G.replay(el.dataset.replay);
     } else if (el.dataset.skip) {
@@ -293,14 +296,14 @@
   G.on('win', ({ def, reward, tier }) => {
     fireWin(`<small>${tier.en}</small><b>${def.name}</b><span>1 in ${G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
   });
-  /* potion box opened */
+  /* crystal box opened */
   G.on('box', ({ box, potion, idx }) => {
     const col = `hsl(${potion.hue},90%,66%)`;
     fireWin(`<small>${box.en} OPENED</small><b>${potion.name}</b><span>${potion.en}</span><em style="color:${col}">LUCK +${G.fmt(potion.luck)}</em>`, col, 2800);
     G.audio.potion(); if (idx >= 4) G.audio.blast(idx);
   });
-  G.on('tutorialDone', () => toast('견습생의 물약을 받았습니다 - 크리스탈 탭에서 마셔보세요'));
-  G.on('tutorialReplayDone', () => toast('튜토리얼을 다시 봤습니다 (물약은 처음 한 번만 지급돼요)'));
+  G.on('tutorialDone', () => toast('견습생의 크리스탈을 받았습니다 - 크리스탈 탭에서 마셔보세요'));
+  G.on('tutorialReplayDone', () => toast('튜토리얼을 다시 봤습니다 (크리스탈은 처음 한 번만 지급돼요)'));
   G.on('coinArrive', () => {
     if (bumpT) return;
     coinBox.classList.add('bump');
@@ -323,13 +326,13 @@
   /* slow tick: timers, affordability, luck chip, footer */
   function tick() {
     const luck = G.stats.luck();
-    // crystals, auto button, armed-potion luck chip
-    const s = G.state, ap = G.stats.armedPotion();
+    // crystals, auto button, armed-crystals luck chip (several can stack now)
+    const s = G.state, ap = G.stats.armedTop(), armedLuck = G.stats.armedLuck();
     crysVal.textContent = G.fmt(s.crystals);
     btnAuto.classList.toggle('off', !s.autoOn); btnAuto.classList.toggle('idle', G.stats.autoRate() <= 0);
     luckChip.classList.toggle('potion', !!ap);
     luckChip.querySelector('span').textContent = ap ? 'NEXT CLICK' : 'LUCK';
-    luckVal.textContent = ap ? G.fmtLuck(luck + ap.luck) : G.fmtLuck(luck);
+    luckVal.textContent = ap ? G.fmtLuck(luck + armedLuck) : G.fmtLuck(luck);
     if (ap) luckChip.style.setProperty('--pc', `hsl(${ap.hue},100%,66%)`);
     luckChip.classList.toggle('hot', luck > 1.001);
     const z = G.stats.zone();
