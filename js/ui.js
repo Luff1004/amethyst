@@ -116,7 +116,9 @@
         // actually progressed through every zone up to it first - same spirit as the codex bypass
         const next = i === s.maxZone + 1 || (G.config.unlockCodex && isLevel1Zone && !owned);
         const locked = next && z.unlock;
-        const isLevel1 = isLevel1Zone && !s.level1.restored;
+        // review mode also keeps the LEVEL 1 button around even after restoring, since otherwise
+        // there'd be no way to replay/re-check it locally once seen
+        const isLevel1 = isLevel1Zone && (!s.level1.restored || G.config.unlockCodex);
         let btn, req, name = owned || next ? z.name : '???', card = '';
         if (cur) btn = '<button class="buy bevel cur" disabled><span>현재 위치</span></button>';
         else if (owned) btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
