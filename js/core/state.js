@@ -234,7 +234,10 @@
       const z = G.data.zones[i];
       if (!z) return false;
       if (i > G.state.maxZone) {
-        if (i !== G.state.maxZone + 1) return false;
+        // review mode (js/config.js) can jump straight to LEVEL 1's real zone without having
+        // walked through every zone up to it first, matching the same bypass on the map card
+        const reviewSkip = G.config.unlockCodex && z.unlock && z.unlock.type === 'level1';
+        if (i !== G.state.maxZone + 1 && !reviewSkip) return false;
         if (z.unlock) { if (!G.stats.meetsUnlock(z.unlock)) return false; }
         else { if (G.state.coins < z.cost) return false; G.state.coins -= z.cost; }
         G.state.maxZone = i;

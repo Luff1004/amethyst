@@ -110,9 +110,13 @@
     const s = G.state;
     return `<div class="ph"><h2>MAP <small>지도</small></h2><span>깊이 내려갈수록 코인 배율과 컷신이 늘어납니다</span></div>
       <div class="list">${G.data.zones.map((z, i) => {
-        const n = G.cutscenes.inZone(i).length, cur = i === s.zone, owned = i <= s.maxZone, next = i === s.maxZone + 1;
+        const n = G.cutscenes.inZone(i).length, cur = i === s.zone, owned = i <= s.maxZone;
+        const isLevel1Zone = z.unlock && z.unlock.type === 'level1';
+        // review mode (js/config.js, auto-true on localhost) can reach LEVEL 1 without having
+        // actually progressed through every zone up to it first - same spirit as the codex bypass
+        const next = i === s.maxZone + 1 || (G.config.unlockCodex && isLevel1Zone && !owned);
         const locked = next && z.unlock;
-        const isLevel1 = z.unlock && z.unlock.type === 'level1' && !s.level1.restored;
+        const isLevel1 = isLevel1Zone && !s.level1.restored;
         let btn, req, name = owned || next ? z.name : '???', card = '';
         if (cur) btn = '<button class="buy bevel cur" disabled><span>현재 위치</span></button>';
         else if (owned) btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
