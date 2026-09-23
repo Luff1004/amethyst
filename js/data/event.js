@@ -1,33 +1,41 @@
 /*
-  PROMO EVENT - the small banner button in the top bar + its code-redemption popup.
+  PROMO EVENT - the small banner button in the top bar + its popup (js/event.js renders it).
 
   Set G.data.event = null to hide the banner entirely between events (no other code needs to
   change). To swap in a new event later, just replace the object below:
     id         : unique key, used to remember "already redeemed" per player (js/core/state.js)
+    theme      : 'exam' renders the body as a math-exam paper (question number, points, answer
+                 blank styled like a Korean 모의고사). Omit for the plain banner/body/link layout.
     teaser     : short text on the top-bar button
     title/body : shown when the popup opens (body may contain \n for line breaks)
-    linkLabel/linkUrl : the "go play it" button - opens in a new tab
-    codeLabel  : placeholder text on the code input
-    codes      : an allow-list of valid codes, matched trimmed + case-insensitively. Since this is
-                 a static site with no backend, codes can't be verified against another server -
-                 add whatever codes you hand out (or generate) to this array as you go.
-                 For anything fancier (per-player codes, a real API check, etc.) set
+    problem    : (exam theme only) the question itself, as HTML - sup/sub tags are fine
+    points     : (exam theme only) small "[N점]" style label
+    linkLabel/linkUrl : optional "go play it" button that opens in a new tab
+    codeLabel  : placeholder text on the answer/code input
+    codes      : an allow-list of correct answers/codes, matched trimmed + case-insensitively.
+                 Since this is a static site with no backend, nothing can be verified against a
+                 server - for a fixed-answer problem like this one, just list the accepted answer
+                 (and any equivalent ways of writing it). For a real per-player code system, set
                  `validate: (code) => boolean` instead - it's checked first if present.
-    reward     : the crystal item granted on a correct code (pushed into G.data.potions below).
+    reward     : the crystal item granted on a correct answer (pushed into G.data.potions below).
                  `guarantee: N` makes it force a mineral of tier index N or higher (see G.tiers in
                  js/core/util.js - 6 = DIVINE / "1억대") on the player's next click, instead of the
                  usual `luck` number. It can only ever be redeemed once per player (js/core/state.js).
 */
 G.data.event = {
-  id: 'hodumaroo',
-  teaser: '호두마루 이벤트',
-  title: '호두마루 이벤트',
-  body: '호두마루 게임에서 일일 퀘스트를 모두 완료하면 코드를 받을 수 있습니다.\n\n아래 버튼으로 호두마루에 입장해 코드를 받아온 뒤, 이 창에 입력하면 1억대 이상 컷신이 100% 확정으로 뜨는 특별한 크리스탈을 드립니다.\n\n1인당 1개까지만 받을 수 있습니다.',
-  linkLabel: '호두마루 입장하기',
-  linkUrl: 'https://github.io/hodumaroo',
-  codeLabel: '호두마루에서 받은 코드 입력',
-  codes: [],   // add valid codes here as you hand them out, e.g. ['HODU-7F3K']
-  reward: { id: 'hodumaroo', name: '호두마루의 크리스탈', en: 'HODUMAROO CRYSTAL', hue: 132, guarantee: 6 },
+  id: 'eulerexam',
+  theme: 'exam',
+  teaser: '수학 시험',
+  title: '오일러의 시험',
+  body: '아래 문제를 풀어 정답을 입력하면, 1억대 이상 컷신이 100% 확정으로 뜨는 특별한 크리스탈을 드립니다.\n\n1인당 1개까지만 받을 수 있습니다.',
+  points: '[4점]',
+  problem: '오일러의 공식 <i>e<sup>iθ</sup> = cos&thinsp;θ + i·sin&thinsp;θ</i> 를 이용하여, 두 복소수<br>' +
+    '<b>z₁ = e<sup>iπ/3</sup>,&nbsp;&nbsp; z₂ = e<sup>iπ/4</sup></b><br>' +
+    '에 대하여 <b>z₁¹² · z₂⁸</b> 의 값을 구하시오.',
+  meta: '예상 정답률 1 / 999,999,999',
+  codeLabel: '정답 입력',
+  codes: ['1'],
+  reward: { id: 'euler', name: '오일러의 크리스탈', en: "EULER'S CRYSTAL", hue: 258, guarantee: 6 },
 };
 
 if (G.data.event && G.data.event.reward) G.data.potions.push(G.data.event.reward);
