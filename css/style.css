@@ -50,6 +50,10 @@ body.cut #hud * { pointer-events: none !important; }
 #luckChip.hot { --line: rgba(255, 207, 90, .7); }
 #luckChip.hot b { color: var(--gold); text-shadow: 0 0 10px rgba(255, 207, 90, .5); }
 #btnSound { --c: 7px; width: 40px; display: grid; place-items: center; color: var(--ink); }
+#btnEvent { --c: 7px; --line: rgba(180, 255, 140, .5); display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 40px; color: #baffb0; font: 700 11.5px/1 var(--mono); white-space: nowrap; animation: eventpulse 2.2s ease-in-out infinite; }
+#btnEvent .i { color: #baffb0; }
+@keyframes eventpulse { 0%, 100% { box-shadow: 0 0 0 rgba(160, 255, 130, 0); } 50% { box-shadow: 0 0 14px rgba(160, 255, 130, .35); } }
+@media (max-width: 460px) { #btnEvent span { display: none; } #btnEvent { padding: 0 10px; } }
 
 #tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .tab { --c: 9px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 7px; font-weight: 700; letter-spacing: .12em; color: #cfc6ea; transition: color .15s; }
@@ -251,6 +255,26 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 #tutorial .btns { display: flex; gap: 8px; }
 #tutorial .skip { font-size: 11px; color: var(--dim); padding: 6px; }
 #btnGear { --c: 7px; width: 40px; display: grid; place-items: center; color: var(--ink); }
+
+/* ------------- promo event popup (reuses tutorial's scrim/card look) ------------- */
+#eventModal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 14px; pointer-events: none; }
+#eventModal.show { pointer-events: auto; }
+#eventModal .scrim { position: fixed; inset: 0; background: rgba(4,3,8,.5); opacity: 0; transition: opacity .3s; }
+#eventModal.show .scrim { opacity: 1; }
+#eventModal .tcard { position: relative; --c: 14px; --fill: rgba(14,10,26,.97); width: min(92vw, 420px); padding: 20px 18px 18px; display: grid; gap: 10px; transform: translateY(16px) scale(.98); opacity: 0; transition: transform .3s, opacity .3s; }
+#eventModal.show .tcard { transform: translateY(0) scale(1); opacity: 1; }
+#eventModal h3 { margin: 0; font-size: 18px; color: #fff; }
+#eventModal p { margin: 0; font-size: 13px; color: #cfc6ea; line-height: 1.6; }
+#eventModal .xclose { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; display: grid; place-items: center; color: var(--dim); font-size: 20px; line-height: 1; background: none; border: none; cursor: pointer; }
+#eventModal .xclose:hover { color: #fff; }
+#eventModal .eventlink { justify-content: center; margin-top: 2px; color: #baffb0; --line: rgba(160, 255, 130, .5); }
+#eventModal .ecode { display: flex; gap: 6px; margin-top: 4px; }
+#eventModal .ecode input { flex: 1; min-width: 0; height: 38px; padding: 0 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; font: 700 13px var(--mono); }
+#eventModal .ecode input:disabled { color: var(--dim); }
+#eventModal .ecode input::placeholder { color: var(--dim); font-weight: 500; }
+#eventModal .emsg { min-height: 14px; font: 700 11px var(--mono); color: var(--bad); }
+#eventModal .emsg.ok { color: #6dffb0; }
+#eventModal .emsg.bad { color: var(--bad); }
 
 /* ------------- map unlock: codex-milestone gate + tab badge ------------- */
 .tab { position: relative; }

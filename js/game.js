@@ -188,18 +188,29 @@
 
   /* one-click luck bomb: everything flashes, the roll uses luck + all armed crystals' luck stacked, with a higher cap */
   function potionBurst(list, x, y) {
-    const c = center(), R = crystalR(), top = list.slice().sort((a, b) => b.luck - a.luck)[0], col = `hsl(${top.hue},100%,68%)`;
-    const totalLuck = list.reduce((a, p) => a + p.luck, 0);
+    const c = center(), R = crystalR();
+    const guaranteeItem = list.find(p => p.guarantee);
+    const top = guaranteeItem || list.slice().sort((a, b) => (b.luck || 0) - (a.luck || 0))[0], col = `hsl(${top.hue},100%,68%)`;
+    const totalLuck = list.reduce((a, p) => a + (p.luck || 0), 0);
     G.audio.blast(G.data.potions.indexOf(top));
     for (let i = 0; i < 4; i++) ring(c.x, c.y, i % 2 ? "#ffffff" : col, R * (2.4 + i), 3 - i * 0.4, 0.7 + i * 0.15);
     for (let i = 0; i < 22; i++) spark(c.x, c.y, i % 3 ? col : "#ffffff", 1.8);
     coins(c.x, c.y, 3, 1.5);
-    const label = list.length > 1 ? list.length + ' CRYSTALS  LUCK +' + G.fmt(totalLuck) : top.en + '  LUCK +' + G.fmt(totalLuck);
+    const label = guaranteeItem ? top.en + '  ' + G.tiers[guaranteeItem.guarantee].en + '+ CONFIRMED'
+      : list.length > 1 ? list.length + ' CRYSTALS  LUCK +' + G.fmt(totalLuck) : top.en + '  LUCK +' + G.fmt(totalLuck);
     text(c.x, c.y - R * 0.9, label, col, 20, 1.6);
     flashA = 0.5; shake = 1;
   }
   function roll(armed, luckMul = 1) {
-    const potionLuck = armed ? armed.reduce((a, p) => a + p.luck, 0) : 0;
+    // a "guarantee" crystal (event rewards etc.) skips the normal odds roll entirely and hands
+    // back a random mineral of at least that tier from the current zone - a real guarantee, not
+    // just a very high luck number that could still theoretically miss
+    const guarantee = armed ? armed.reduce((m, p) => p.guarantee ? Math.max(m, p.guarantee) : m, 0) : 0;
+    if (guarantee) {
+      const pool = G.cutscenes.inZone(G.state.zone).filter(c => c.tierIdx >= guarantee);
+      if (pool.length) { startCut(pool[Math.floor(Math.random() * pool.length)], false); return; }
+    }
+    const potionLuck = armed ? armed.reduce((a, p) => a + (p.luck || 0), 0) : 0;
     const def = G.cutscenes.roll(G.state.zone, G.stats.luck() * luckMul + potionLuck, armed ? G.data.potionCap : 0.5);
     if (def) startCut(def, false);
   }

@@ -52,12 +52,14 @@
           <div class="odds2">${odds}</div></div>
         <div class="side">${crystalBtn(b.cost, `data-box="${b.id}"`)}</div></div>`;
     }).join('');
-    const potions = G.data.potions.filter(pt => pt.id !== 'tutorial' || (s.potions.tutorial || 0) > 0 || (s.armed.tutorial || 0) > 0).map(pt => {
+    const hidden = pt => (pt.id === 'tutorial' || pt.id === 'hodumaroo') && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0);
+    const potions = G.data.potions.filter(pt => !hidden(pt)).map(pt => {
       const have = s.potions[pt.id] || 0, armedN = s.armed[pt.id] || 0;
+      const valTxt = pt.guarantee ? `${G.tiers[pt.guarantee].en}+ 확정 <i>/ 1 CLICK, 1회 한정</i>` : `LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK, 중첩 가능</i>`;
       return `<div class="card bevel potion ${armedN ? 'on' : ''} ${have || armedN ? '' : 'dim'}" style="--ph:${pt.hue}">
         <div class="ico pico">${G.icon('potion', 26)}</div>
         <div class="meta"><b>${pt.name}</b><small>${pt.en}</small>
-          <span class="val">LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK, 중첩 가능</i></span></div>
+          <span class="val">${valTxt}</span></div>
         <div class="side"><em>${armedN ? '장전 ' + armedN + (have ? ' · 보유 ' + have : '') : '보유 ' + have}</em>
           <div class="pair">
             <button class="buy bevel small offbtn ${armedN ? '' : 'poor'}" data-punarm="${pt.id}"><span>취소</span></button>
@@ -330,9 +332,10 @@
     const s = G.state, ap = G.stats.armedTop(), armedLuck = G.stats.armedLuck();
     crysVal.textContent = G.fmt(s.crystals);
     btnAuto.classList.toggle('off', !s.autoOn); btnAuto.classList.toggle('idle', G.stats.autoRate() <= 0);
+    const guaranteeTop = G.stats.armedList().find(p => p.guarantee);
     luckChip.classList.toggle('potion', !!ap);
-    luckChip.querySelector('span').textContent = ap ? 'NEXT CLICK' : 'LUCK';
-    luckVal.textContent = ap ? G.fmtLuck(luck + armedLuck) : G.fmtLuck(luck);
+    luckChip.querySelector('span').textContent = guaranteeTop ? G.tiers[guaranteeTop.guarantee].en + '+' : ap ? 'NEXT CLICK' : 'LUCK';
+    luckVal.textContent = guaranteeTop ? '확정' : ap ? G.fmtLuck(luck + armedLuck) : G.fmtLuck(luck);
     if (ap) luckChip.style.setProperty('--pc', `hsl(${ap.hue},100%,66%)`);
     luckChip.classList.toggle('hot', luck > 1.001);
     const z = G.stats.zone();

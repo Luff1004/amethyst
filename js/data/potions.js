@@ -23,11 +23,14 @@ G.data.potions = [
 ];
 G.data.potionCap = 0.9;
 
-/* weights are per crystal item, in the order above (excluding the tutorial-only one) */
+/* weights are per crystal item, in the order above (excluding the tutorial-only one).
+   each box now leans hard on its own 1-2 target tiers instead of spreading evenly across all of
+   them, so the boxes actually feel different from each other rather than "all about the same". */
 G.data.boxes = [
-  { id: 'common', name: '일반 상자',   en: 'COMMON BOX', color: '#9aa6c4', cost: 3000,    w: [60, 28, 9, 2.5, 0.5, 0, 0, 0] },
-  { id: 'rare',   name: '레어 상자',   en: 'RARE BOX',   color: '#5aa8ff', cost: 12000,   w: [30, 34, 22, 10, 3.5, 0.5, 0, 0] },
-  { id: 'epic',   name: '에픽 상자',   en: 'EPIC BOX',   color: '#b878ff', cost: 45000,   w: [8, 20, 30, 26, 12, 3.5, 0.5, 0] },
-  { id: 'delta',  name: '델타 상자',   en: 'DELTA BOX',  color: '#4fe0c4', cost: 200000,  w: [0, 2, 12, 26, 30, 22, 7, 1] },
-  { id: 'ultra',  name: '울트라 상자', en: 'ULTRA BOX',  color: '#ffb63d', cost: 1000000, w: [0, 0, 2, 12, 24, 32, 24, 6] },
+  { id: 'common', name: '일반 상자',   en: 'COMMON BOX', color: '#9aa6c4', cost: 3000,    w: [70, 25, 5, 0, 0, 0, 0, 0] },
+  { id: 'rare',   name: '레어 상자',   en: 'RARE BOX',   color: '#5aa8ff', cost: 12000,   w: [10, 55, 28, 6, 1, 0, 0, 0] },
+  { id: 'epic',   name: '에픽 상자',   en: 'EPIC BOX',   color: '#b878ff', cost: 45000,   w: [0, 10, 45, 35, 9, 1, 0, 0] },
+  { id: 'delta',  name: '델타 상자',   en: 'DELTA BOX',  color: '#4fe0c4', cost: 200000,  w: [0, 0, 8, 42, 40, 9, 1, 0] },
+  { id: 'ultra',  name: '울트라 상자', en: 'ULTRA BOX',  color: '#ffb63d', cost: 1000000, w: [0, 0, 0, 5, 35, 40, 17, 3] },
+  { id: 'giga',   name: '기가 상자',   en: 'GIGA BOX',   color: '#ff5ad6', cost: 5000000, w: [0, 0, 0, 0, 0, 0, 10, 90] },
 ];

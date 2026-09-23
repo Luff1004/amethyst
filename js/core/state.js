@@ -6,7 +6,7 @@
     zone: 0, maxZone: 0,
     upg: {}, buffs: {}, codex: {}, muted: false,
     crystals: 0, potions: {}, armed: {}, autoOn: true,
-    tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false,
+    tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
     settings: { autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner' },
   });
 
@@ -50,9 +50,13 @@
       return out;
     },
     armedCount() { return this.armedList().length; },
-    armedLuck() { return this.armedList().reduce((a, p) => a + p.luck, 0); },
-    /* the highest-luck armed crystal, used to pick a single accent colour for the HUD/halo */
-    armedTop() { return this.armedList().sort((a, b) => b.luck - a.luck)[0] || null; },
+    armedLuck() { return this.armedList().reduce((a, p) => a + (p.luck || 0), 0); },
+    /* the crystal to represent with a single accent colour for the HUD/halo - a "guarantee"
+       crystal (event rewards etc.) wins out over sorting by luck, since it has none */
+    armedTop() {
+      const list = this.armedList();
+      return list.find(p => p.guarantee) || list.slice().sort((a, b) => (b.luck || 0) - (a.luck || 0))[0] || null;
+    },
     /* chance to see at least one mineral of tier >= `tier` in the current zone on a click with this luck */
     chanceAtLeast(luck, tier, cap = 0.5) {
       let miss = 1, n = 0;
@@ -130,6 +134,21 @@
       s.armed[id]--; if (!s.armed[id]) delete s.armed[id];
       s.potions[id] = (s.potions[id] || 0) + 1;
       G.save(); G.emit('change'); return 'off';
+    },
+    /* redeem a promo-event code (see js/data/event.js) - each event's reward can be claimed once
+       ever per player, regardless of how many codes they try */
+    redeemEventCode(code) {
+      const ev = G.data.event;
+      if (!ev || !ev.reward) return 'invalid';
+      const s = G.state;
+      if (s.eventRedeemed[ev.id]) return 'already';
+      const clean = (code || '').trim().toUpperCase();
+      const ok = ev.validate ? ev.validate(clean) : (ev.codes || []).some(c => c.toUpperCase() === clean);
+      if (!ok) return 'invalid';
+      s.eventRedeemed[ev.id] = true;
+      s.potions[ev.reward.id] = (s.potions[ev.reward.id] || 0) + 1;
+      G.save(); G.emit('change');
+      return 'ok';
     },
     toggleAuto() { G.state.autoOn = !G.state.autoOn; G.save(); G.emit('change'); return G.state.autoOn; },
     setSetting(key, val) { G.state.settings[key] = val; G.save(); G.emit('change'); },
