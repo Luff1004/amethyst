@@ -321,31 +321,57 @@
   });
   /* crystal box opened: spin a roulette strip past a run of crystals before landing on the real
      result, then show the usual reward banner. The outcome is already decided (G.act.openBox already
-     picked + granted it) - the strip is just decelerated onto that predetermined item for show. */
-  const spinEl = $('#boxSpin'), spinStrip = spinEl.querySelector('.spinstrip');
-  const ITEM_W = 68 + 8;
+     picked + granted it) - the strip is just decelerated onto that predetermined item for show.
+     Geometry is measured from the actual rendered layout (offsetLeft/clientWidth) rather than
+     assumed magic numbers, so the pointer always lines up exactly on the landed card regardless of
+     card size/gap tweaks. The spin itself is two stages: a long fast blurred run that slightly
+     overshoots the target, then a short bouncy settle back onto it - closer to a real slot machine
+     than a single flat deceleration. */
+  const spinEl = $('#boxSpin'), spinTrack = spinEl.querySelector('.spintrack'), spinStrip = spinEl.querySelector('.spinstrip');
   function playBoxSpin(potion, onDone) {
     const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo');
-    const winIndex = 26, n = 34;
+    const winIndex = 32, n = 40;
     const items = [];
     for (let i = 0; i < n; i++) items.push(i === winIndex ? potion : pool[(Math.random() * pool.length) | 0]);
-    spinStrip.innerHTML = items.map((pt, i) =>
-      `<div class="spinitem${i === winIndex ? ' win' : ''}" style="--ph:${pt.hue}">${G.icon('potion', 24)}<b>${pt.name}</b></div>`).join('');
+    spinStrip.className = 'spinstrip blur';
     spinStrip.style.transition = 'none';
-    spinStrip.style.transform = `translateX(${-ITEM_W * 3}px)`;
+    spinStrip.style.transform = 'translateX(0)';
+    spinStrip.innerHTML = items.map((pt, i) => {
+      const rarity = pt.secret ? 'SECRET' : (pt.star || 1) + '★';
+      return `<div class="spinitem${i === winIndex ? ' win' : ''}${pt.secret ? ' secret' : ''}" style="--ph:${pt.hue}">${G.icon('potion', 26)}<i class="sistar">${rarity}</i><b>${pt.name}</b></div>`;
+    }).join('');
+
     spinEl.hidden = false;
     void spinEl.offsetWidth;
     spinEl.classList.add('show');
+
     requestAnimationFrame(() => {
+      const itemEls = spinStrip.children, target = itemEls[winIndex];
+      const trackW = spinTrack.clientWidth;
+      const centerOf = el => el.offsetLeft + el.offsetWidth / 2;
+      const startX = trackW / 2 - centerOf(itemEls[0]);
+      const finalX = trackW / 2 - centerOf(target);
+      const overshootX = trackW / 2 - centerOf(itemEls[Math.min(items.length - 1, winIndex + 2)]);
+
+      spinStrip.style.transform = `translateX(${startX}px)`;
       void spinStrip.offsetWidth;
-      spinStrip.style.transition = 'transform 2.6s cubic-bezier(.1,.7,.15,1)';
-      spinStrip.style.transform = `translateX(${-ITEM_W * winIndex}px)`;
+      spinStrip.style.transition = 'transform 2.3s cubic-bezier(.08,.85,.1,1)';
+      spinStrip.style.transform = `translateX(${overshootX}px)`;
+
+      [80, 150, 230, 320, 430, 560, 720, 900, 1100, 1350, 1650, 2000].forEach(t => setTimeout(() => G.audio.tab(), t));
+      setTimeout(() => spinStrip.classList.remove('blur'), 1750);
+      setTimeout(() => {
+        spinStrip.style.transition = 'transform .45s cubic-bezier(.3,1.4,.3,1)';
+        spinStrip.style.transform = `translateX(${finalX}px)`;
+        G.audio.tab();
+      }, 2300);
+      setTimeout(() => target.classList.add('land'), 2760);
     });
-    G.audio.tab();
+
     setTimeout(() => {
       spinEl.classList.remove('show');
-      setTimeout(() => { spinEl.hidden = true; onDone(); }, 250);
-    }, 2650);
+      setTimeout(() => { spinEl.hidden = true; onDone(); }, 300);
+    }, 3350);
   }
   G.on('box', ({ box, potion, idx }) => {
     playBoxSpin(potion, () => {

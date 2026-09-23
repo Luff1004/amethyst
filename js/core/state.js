@@ -84,8 +84,11 @@
       for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8) n++; }
       return n;
     },
-    /* every SECRET-tier cutscene in the whole game found at least once - the gate for LEVEL 1 */
+    /* every SECRET-tier cutscene in the whole game found at least once - the gate for LEVEL 1.
+       same review-mode bypass as the codex (js/config.js unlockCodex, auto-true on localhost) so
+       LEVEL 1 - and ENDING 1 - is reachable locally without grinding out all 4 secrets first. */
     allSecretsFound() {
+      if (G.config.unlockCodex) return true;
       const total = G.cutscenes.list.filter(c => c.tierIdx >= 8).length;
       return total > 0 && this.secretFound() >= total;
     },

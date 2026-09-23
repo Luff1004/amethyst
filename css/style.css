@@ -286,21 +286,31 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 
 /* crystal box roulette: a slot-machine strip that spins past a bunch of crystals and decelerates
    onto the one actually won, before the usual reward banner shows. */
-#boxSpin { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; background: rgba(4,3,8,0); pointer-events: none; transition: background .25s; }
-#boxSpin.show { background: rgba(4,3,8,.72); pointer-events: auto; }
-.spintrack { position: relative; width: min(94vw, 380px); height: 86px; overflow: hidden; border-radius: 10px; background: #0e0a1a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 10px 40px rgba(0,0,0,.6); }
-.spinstrip { position: absolute; top: 0; left: 50%; height: 100%; display: flex; align-items: center; gap: 8px; padding: 0 8px; transform: translateX(0); }
-.spinitem { flex: none; width: 68px; height: 68px; border-radius: 9px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: radial-gradient(circle at 35% 30%, hsl(var(--ph),85%,32%), #120c1f 75%); border: 1px solid hsla(var(--ph),80%,60%,.35); }
-.spinitem .i { color: hsl(var(--ph),90%,72%); }
-.spinitem b { font: 700 8.5px var(--mono); color: hsl(var(--ph),90%,78%); letter-spacing: -.02em; }
-.spinitem.win { box-shadow: 0 0 0 2px #fff, 0 0 22px hsl(var(--ph),95%,65%); }
-.spinptr { position: absolute; left: 50%; top: -6px; bottom: -6px; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 10px #fff, 0 0 20px var(--gold); z-index: 2; }
-.spinptr::before, .spinptr::after { content: ""; position: absolute; left: 50%; width: 0; height: 0; border: 6px solid transparent; transform: translateX(-50%); }
-.spinptr::before { top: -8px; border-top: none; border-bottom-color: #fff; }
-.spinptr::after { bottom: -8px; border-bottom: none; border-top-color: #fff; }
-.spinfade { position: absolute; top: 0; bottom: 0; width: 60px; z-index: 1; pointer-events: none; }
-.spinfade.l { left: 0; background: linear-gradient(90deg, #0e0a1a, rgba(14,10,26,0)); }
-.spinfade.r { right: 0; background: linear-gradient(270deg, #0e0a1a, rgba(14,10,26,0)); }
+#boxSpin { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; background: rgba(4,3,8,0); pointer-events: none; transition: background .3s; backdrop-filter: blur(0px); }
+#boxSpin.show { background: rgba(4,3,8,.82); pointer-events: auto; backdrop-filter: blur(3px); }
+.spinwrap { display: flex; flex-direction: column; align-items: center; gap: 14px; transform: scale(.92); opacity: 0; transition: transform .4s cubic-bezier(.2,.8,.2,1.2), opacity .3s; }
+#boxSpin.show .spinwrap { transform: scale(1); opacity: 1; }
+.spinlabel { font: 800 11px/1 var(--mono); letter-spacing: .35em; color: var(--dim); }
+.spintrack { position: relative; width: min(92vw, 420px); height: 108px; overflow: hidden; border-radius: 14px; background: radial-gradient(ellipse at 50% 120%, #241a3d 0%, #0a0714 70%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), inset 0 18px 30px -20px rgba(0,0,0,.9), 0 20px 60px rgba(0,0,0,.7); }
+.spintrack::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.08), transparent 40%); pointer-events: none; z-index: 4; }
+.spinstrip { position: absolute; top: 0; left: 0; height: 100%; display: flex; align-items: center; gap: 10px; padding: 0 10px; will-change: transform; }
+.spinstrip.blur { filter: blur(3px) brightness(1.15); }
+.spinitem { flex: none; width: 82px; height: 84px; border-radius: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; background: radial-gradient(circle at 35% 28%, hsl(var(--ph),85%,34%), #120c1f 78%); border: 1px solid hsla(var(--ph),80%,62%,.4); box-shadow: inset 0 0 14px hsla(var(--ph),90%,60%,.18); transition: transform .2s; }
+.spinitem.secret { background: radial-gradient(circle at 35% 28%, hsl(var(--ph),90%,42%), #1a0f28 78%); border-color: hsla(var(--ph),95%,72%,.7); animation: spinsecret 1.4s ease-in-out infinite; }
+@keyframes spinsecret { 50% { box-shadow: inset 0 0 20px hsla(var(--ph),95%,70%,.5), 0 0 18px hsla(var(--ph),95%,60%,.4); } }
+.spinitem .i { color: hsl(var(--ph),90%,74%); width: 26px; height: 26px; }
+.spinitem .sistar { font: 700 8.5px var(--mono); color: hsl(var(--ph),95%,72%); letter-spacing: -.03em; }
+.spinitem b { font: 700 8.5px var(--mono); color: hsl(var(--ph),92%,82%); letter-spacing: -.03em; max-width: 74px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spinitem.win { z-index: 2; box-shadow: 0 0 0 2px #fff, 0 0 10px #fff, 0 0 28px hsl(var(--ph),95%,65%); }
+.spinitem.win.land { animation: spinland .5s cubic-bezier(.3,1.6,.4,1); }
+@keyframes spinland { 0% { transform: scale(1); } 35% { transform: scale(1.16); } 100% { transform: scale(1); } }
+.spinptr { position: absolute; left: 50%; top: -8px; bottom: -8px; width: 3px; margin-left: -1.5px; background: linear-gradient(180deg, #fff, var(--gold)); box-shadow: 0 0 12px #fff, 0 0 26px var(--gold); z-index: 5; border-radius: 2px; }
+.spinptr::before, .spinptr::after { content: ""; position: absolute; left: 50%; width: 0; height: 0; border: 7px solid transparent; transform: translateX(-50%); filter: drop-shadow(0 0 4px var(--gold)); }
+.spinptr::before { top: -9px; border-top: none; border-bottom-color: #fff; }
+.spinptr::after { bottom: -9px; border-bottom: none; border-top-color: #fff; }
+.spinfade { position: absolute; top: 0; bottom: 0; width: 90px; z-index: 3; pointer-events: none; }
+.spinfade.l { left: 0; background: linear-gradient(90deg, #0a0714, rgba(10,7,20,0)); }
+.spinfade.r { right: 0; background: linear-gradient(270deg, #0a0714, rgba(10,7,20,0)); }
 
 /* exam-theme popup: styled like a Korean 모의고사 answer sheet, pinned onto the usual dark card */
 #eventModal .tcard.exam { --fill: rgba(16, 11, 26, .98); border: 1px solid rgba(255, 207, 90, .18); }
