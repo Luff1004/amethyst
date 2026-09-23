@@ -85,6 +85,7 @@
       mineRig.draw(g, { cx, cy, R: Math.min(w, h) * 0.22, hue: 0, time: now, prog: gauge, pulse: 0.15 + 0.15 * Math.sin(now * 0.003) });
       g.restore();
     }
+    drawGlitch(g, w, h, gauge);
   }
   function loop(now) {
     if (!miningLive) return;
@@ -92,12 +93,39 @@
     loopId = requestAnimationFrame(loop);
   }
 
+  /* screen static/glitch, ramping up with gauge - tearing bands re-sampled from the canvas itself
+     plus speckle noise, on top of the cracks, so the destruction reads as more than just lines
+     spreading (지지직거림). */
+  function drawGlitch(g, w, h, gaugeNow) {
+    const intensity = G.clamp((gaugeNow - 0.25) / 0.75);
+    if (intensity <= 0) return;
+    if (Math.random() < intensity * 0.7) {
+      const bands = 1 + Math.floor(intensity * 5);
+      for (let i = 0; i < bands; i++) {
+        const sy = Math.random() * h, bh = 2 + Math.random() * 18 * intensity, dx = (Math.random() - 0.5) * 50 * intensity;
+        try { g.drawImage(g.canvas, 0, sy, w, bh, dx, sy, w, bh); } catch (e) {}
+      }
+    }
+    g.save(); g.globalAlpha = 0.22 * intensity;
+    for (let i = 0; i < 50 * intensity; i++) {
+      g.fillStyle = Math.random() < 0.5 ? '#fff' : '#000';
+      g.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 3, 1 + Math.random() * 3);
+    }
+    g.restore();
+    if (Math.random() < intensity * 0.08) { g.fillStyle = `rgba(255,255,255,${0.18 * intensity})`; g.fillRect(0, 0, w, h); }
+  }
+
   function onClick() {
     if (gauge >= 1) return;
     gauge = G.act.level1Click();
-    mineRig.growCrack((Math.random() - 0.5) * 1.1, (Math.random() - 0.5) * 1.1);
-    screenCracks.grow((Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.25, 2.4);
+    // more, and bigger, cracks as it gets closer to breaking - the destruction should accelerate
+    const n = 1 + Math.floor(gauge * 3);
+    for (let i = 0; i < n; i++) {
+      mineRig.growCrack((Math.random() - 0.5) * 1.1, (Math.random() - 0.5) * 1.1);
+      screenCracks.grow((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.3, 2.2 + gauge * 1.6);
+    }
     G.audio.crack('glass', gauge, false);
+    if (gauge > 0.3) G.audio.noise({ d: 0.12, v: 0.05 * gauge, f: 7000, q: 0.4 });
     updateHud();
     if (gauge >= 1) {
       destroyStart = performance.now();
@@ -106,11 +134,15 @@
     }
   }
 
-  /* ---------------- ending: blackout -> still eye -> captions -> credits ---------------- */
+  /* ---------------- ending: blackout -> still eye -> captions -> white flash -> back to the
+     main game with the crystal gone. No credits screen - the white flash IS the transition out
+     (the whole #level1 overlay fades its opacity to 0 right after, dissolving the white straight
+     into the crystal-less main game underneath). '.' entries are pure beats/pauses (like "...") -
+     they were never meant to be drawn as a literal period on screen. */
   function playEnding() {
     el.innerHTML = `<div class="l1black"></div><div class="l1eyewrap"><img src="${EYE_IMG}" class="l1eye" alt=""></div>
-      <div class="l1cap"></div><div class="l1credits" hidden></div>`;
-    const black = el.querySelector('.l1black'), eyeWrap = el.querySelector('.l1eyewrap'), cap = el.querySelector('.l1cap'), credits = el.querySelector('.l1credits');
+      <div class="l1cap"></div>`;
+    const black = el.querySelector('.l1black'), eyeWrap = el.querySelector('.l1eyewrap'), cap = el.querySelector('.l1cap');
     requestAnimationFrame(() => black.classList.add('show'));
     setTimeout(() => {
       eyeWrap.classList.add('show');
@@ -118,23 +150,22 @@
       let i = 0;
       const step = () => {
         cap.innerHTML = '';
-        if (i >= lines.length) { setTimeout(showCredits, 1700); return; }
+        if (i >= lines.length) { setTimeout(whiteOut, 900); return; }
         const ln = lines[i++];
-        if (ln) {
+        if (ln && ln !== '.') {
           const d = document.createElement('div'); d.className = 'l1capline'; d.textContent = ln; cap.appendChild(d);
           requestAnimationFrame(() => d.classList.add('show'));
         }
-        setTimeout(step, ln === '.' ? 420 : ln === '' ? 480 : 780);
+        const delay = ln === 'WAKE UP' ? 3000 : ln === '.' ? 420 : ln === '' ? 480 : 780;
+        setTimeout(step, delay);
       };
       setTimeout(step, 1300);
     }, 950);
-    function showCredits() {
+    function whiteOut() {
       eyeWrap.classList.remove('show'); cap.innerHTML = '';
-      credits.hidden = false; requestAnimationFrame(() => credits.classList.add('show'));
-      credits.innerHTML = `<h2>AMETHYST</h2><p class="l1cline">LEVEL 1</p>
-        <p class="l1cline">감사합니다</p>
-        <button class="buy bevel l1exit" data-l1exit><span>계속</span></button>`;
-      credits.querySelector('[data-l1exit]').addEventListener('click', finish);
+      black.classList.add('white');
+      G.audio.blast(7);
+      setTimeout(finish, 550);
     }
   }
 

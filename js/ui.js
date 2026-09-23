@@ -144,11 +144,20 @@
         }
         else if (next) btn = coinBtn(z.cost, `data-zone="${i}"`);
         else btn = `<button class="buy bevel locked" disabled>${G.icon('lock', 15)}</button>`;
-        return `<div class="card bevel zone ${cur ? 'on' : ''} ${owned ? '' : 'dim'}${card}" style="--zh:${z.hue}">
+        const mainCard = `<div class="card bevel zone ${cur ? 'on' : ''} ${owned ? '' : 'dim'}${card}" style="--zh:${z.hue}">
           <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
           <div class="meta"><b>${name}</b><small>${isLevel1 && name === 'LEVEL 1' ? '' : z.en}</small>
             <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span>${req || ''}</div>
           <div class="side">${btn}</div></div>`;
+        // review mode: also show the REAL zone as its own separate card underneath the LEVEL 1
+        // one, so both are reachable locally instead of LEVEL 1 hiding it entirely
+        const extraCard = (G.config.unlockCodex && isLevel1Zone && !owned) ? `
+          <div class="card bevel zone dim" style="--zh:${z.hue}">
+            <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
+            <div class="meta"><b>${z.name} <small style="opacity:.6">(실제 맵)</small></b><small>${z.en}</small>
+              <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span></div>
+            <div class="side"><button class="buy bevel" data-zone="${i}"><span>이동</span></button></div></div>` : '';
+        return mainCard + extraCard;
       }).join('')}</div>`;
   }
 
