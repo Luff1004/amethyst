@@ -70,10 +70,17 @@
       for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6) n++; }
       return n;
     },
+    /* how many DISTINCT SECRET-tier cutscenes (the one-per-map hidden mineral) you've ever found */
+    secretFound() {
+      let n = 0;
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8) n++; }
+      return n;
+    },
     /* does the player currently satisfy a zone's `unlock` requirement? */
     meetsUnlock(req) {
       if (!req) return true;
       if (req.type === 'divine') return this.divineFound() >= req.n;
+      if (req.type === 'secret') return this.secretFound() >= req.n;
       return true;
     },
   };

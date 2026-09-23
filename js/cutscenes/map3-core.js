@@ -126,36 +126,36 @@
   R(1300000000, 'infernalcore', 'The Infernal Core', 8,
     { env: 'forge', envHue: 12, hero: { k: 'spire', h: 8, s: 90, l: 0, size: 1.4, shine: 85, trans: 0.35 }, entry: 'ignite', finale: 'nova', fx: ['embers', 'sparks'], cam: 'push' },
     { duration: 17000, revealAt: 0.63, captions: [
-      { a: 0.04, b: 0.24, en: 'SOMETHING BURNS BENEATH EVERYTHING', pos: 'top' },
-      { a: 0.28, b: 0.5, en: 'AND IT HAS NEVER GONE OUT' },
+      { a: 0.04, b: 0.24, en: 'SOMETHING BURNS BENEATH EVERYTHING', pos: 'top', style: 'fly', from: 'bottom', font: '"Segoe UI",system-ui,sans-serif' },
+      { a: 0.28, b: 0.5, en: 'AND IT HAS NEVER GONE OUT', style: 'fly', from: 'bottom', font: '"Segoe UI",system-ui,sans-serif' },
       { a: 0.66, b: 1.4, en: '業火', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
   R(2700000000, 'obsidiansingularity', 'Obsidian Singularity', 268,
     { env: 'void', envHue: 270, hero: { k: 'octa', h: 268, s: 30, l: -14, size: 1.45, shine: 60, trans: 0.25 }, entry: 'drop', finale: 'implode', fx: ['stars', 'arcs'], cam: 'pull' },
     { duration: 17500, revealAt: 0.63, hue2: 250, captions: [
-      { a: 0.04, b: 0.24, en: 'PRESSURE ENOUGH SWALLOWS LIGHT ITSELF', pos: 'top' },
-      { a: 0.28, b: 0.5, en: 'THIS ONE LEARNED TO SWALLOW HEAT TOO' },
+      { a: 0.04, b: 0.24, en: 'PRESSURE ENOUGH SWALLOWS LIGHT ITSELF', pos: 'top', style: 'fly', from: 'left', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.28, b: 0.5, en: 'THIS ONE LEARNED TO SWALLOW HEAT TOO', style: 'fly', from: 'right', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
       { a: 0.66, b: 1.4, en: '黑穴', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
   R(4100000000, 'pressuremonarch', 'The Pressure Monarch', 195,
     { env: 'mountain', envHue: 195, hero: { k: 'cube', h: 195, s: 8, l: 90, size: 1.35, shine: 90, trans: 0.5 }, entry: 'geode', finale: 'shatter', fx: ['dust', 'sparks'], cam: 'push' },
     { duration: 18000, revealAt: 0.64, captions: [
-      { a: 0.04, b: 0.25, en: 'A MOUNTAIN SPENT AN AGE CROWNING IT', pos: 'top' },
-      { a: 0.29, b: 0.52, en: 'CARBON FORCED INTO SOMETHING ETERNAL' },
+      { a: 0.04, b: 0.25, en: 'A MOUNTAIN SPENT AN AGE CROWNING IT', pos: 'top', style: 'engrave' },
+      { a: 0.29, b: 0.52, en: 'CARBON FORCED INTO SOMETHING ETERNAL', style: 'engrave' },
       { a: 0.68, b: 1.4, en: 'الضغط الأبدي', pos: 'center', size: 26 },
     ] });
   R(6300000000, 'ashenthrone', 'The Ashen Throne', 30,
     { env: 'desert', envHue: 30, hero: { k: 'cluster', h: 30, s: 65, l: -4, size: 1.4, shine: 55, trans: 0.4 }, entry: 'unveil', finale: 'quake', fx: ['sand', 'embers'], cam: 'drift' },
     { duration: 18500, revealAt: 0.64, captions: [
-      { a: 0.04, b: 0.25, en: 'EVERYTHING THAT BURNS LEAVES A THRONE', pos: 'top' },
-      { a: 0.29, b: 0.52, en: 'AND SOMETHING ALWAYS SITS ON IT' },
-      { a: 0.68, b: 1.4, en: 'NOTHING HERE WAS EVER PUT OUT' },
+      { a: 0.04, b: 0.25, en: 'EVERYTHING THAT BURNS LEAVES A THRONE', pos: 'top', style: 'engrave', font: 'Georgia,"Times New Roman",serif' },
+      { a: 0.29, b: 0.52, en: '万物燃尽终成王座', size: 26, style: 'engrave', font: 'Georgia,"Times New Roman",serif' },
+      { a: 0.68, b: 1.4, en: 'NOTHING HERE WAS EVER PUT OUT', style: 'engrave', font: 'Georgia,"Times New Roman",serif' },
     ] });
   R(9600000000, 'heartofcreation', 'The Heart of Creation', 12,
     { env: 'forge', envHue: 12, hero: { k: 'star', h: 12, s: 92, l: 2, size: 1.5, shine: 90, trans: 0.3 }, entry: 'lightning', finale: 'nova', fx: ['embers', 'sparks', 'arcs'], cam: 'push' },
     { duration: 19500, revealAt: 0.65, hue2: 45, captions: [
-      { a: 0.04, b: 0.26, en: 'EVERY WORLD HAS ONE CENTER THAT NEVER COOLS', pos: 'top' },
-      { a: 0.3, b: 0.54, en: 'YOU ARE HOLDING A PIECE OF IT' },
+      { a: 0.04, b: 0.26, en: 'EVERY WORLD HAS ONE CENTER THAT NEVER COOLS', pos: 'top', style: 'fly', from: 'top' },
+      { a: 0.3, b: 0.54, en: 'YOU ARE HOLDING A PIECE OF IT', style: 'fly', from: 'left' },
       { a: 0.69, b: 1.4, en: '創世核心', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
 })();

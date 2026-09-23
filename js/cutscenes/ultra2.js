@@ -25,10 +25,10 @@
     snd: 'rise:crystalline hit:celesta tail:musicbox amb:whisper root:220 scale:lydian',
     colors: ['#ff9ae0', '#6affe0', '#1a0a2e'],
     captions: [
-      { a: 0.04, b: 0.2, ko: '눈을 감으면, 다른 곳이 보인다', en: 'CLOSE YOUR EYES, SEE ELSEWHERE', pos: 'top' },
-      { a: 0.22, b: 0.4, ko: '전에 와 본 적 있는 것 같다', en: 'IT FEELS LIKE YOU HAVE BEEN HERE', pos: 'center' },
-      { a: 0.42, b: 0.6, ko: '낯설지만, 다정하다', en: 'STRANGE, BUT KIND' },
-      { a: 0.72, b: 0.92, ko: '두려워하지 마라', en: 'BE NOT AFRAID' },
+      { a: 0.04, b: 0.2, ko: '눈을 감으면, 다른 곳이 보인다', en: 'CLOSE YOUR EYES, SEE ELSEWHERE', pos: 'top', style: 'fly', from: 'top' },
+      { a: 0.22, b: 0.4, ko: '전에 와 본 적 있는 것 같다', en: 'IT FEELS LIKE YOU HAVE BEEN HERE', pos: 'center', style: 'fly', from: 'left' },
+      { a: 0.42, b: 0.6, ko: '낯설지만, 다정하다', en: 'أنت غريب، لكنك لطيف', size: 24, style: 'fly', from: 'right' },
+      { a: 0.72, b: 0.92, ko: '두려워하지 마라', en: 'BE NOT AFRAID', style: 'fly', from: 'bottom' },
       { a: 0.94, b: 1.4, ko: '이곳은 언제나 당신을 알고 있었다', en: 'THIS PLACE HAS ALWAYS KNOWN YOU' },
     ],
     draw(g, e) {

@@ -116,7 +116,7 @@
         if (cur) btn = '<button class="buy bevel cur" disabled><span>현재 위치</span></button>';
         else if (owned) btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
         else if (locked) {
-          const have = G.stats.divineFound(), met = have >= z.unlock.n;
+          const have = z.unlock.type === 'secret' ? G.stats.secretFound() : G.stats.divineFound(), met = have >= z.unlock.n;
           req = `<span class="unlockreq ${met ? 'met' : ''}">${G.icon('luck', 12)} ${z.unlock.label || '조건 필요'} (${Math.min(have, z.unlock.n)}/${z.unlock.n})</span>`;
           btn = `<button class="buy bevel ${met ? '' : 'poor'}" data-zone="${i}"><span>${met ? '해금' : '조건 미달'}</span></button>`;
         }

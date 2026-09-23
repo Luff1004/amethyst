@@ -16,10 +16,10 @@
     snd: 'rise:granular hit:laser tail:chime amb:machine root:180 scale:phrygian',
     colors: ['#8fe8ff', '#ff5ec4', '#050308'],
     captions: [
-      { a: 0.04, b: 0.2, en: 'SOMEONE LEFT THIS RUNNING', pos: 'top' },
-      { a: 0.22, b: 0.4, en: 'DEEP WHERE NO SIGNAL SHOULD REACH' },
-      { a: 0.42, b: 0.6, en: 'IT KEEPS PLAYING ANYWAY', pos: 'center' },
-      { a: 0.72, b: 1.4, en: 'PRETENDING EVERYTHING IS FINE' },
+      { a: 0.04, b: 0.2, en: 'SOMEONE LEFT THIS RUNNING', pos: 'top', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.22, b: 0.4, en: '深处不该有信号', size: 26, font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.42, b: 0.6, en: 'IT KEEPS PLAYING ANYWAY', pos: 'center', style: 'engrave', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.72, b: 1.4, en: 'PRETENDING EVERYTHING IS FINE', style: 'engrave', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
     ],
     draw(g, e) {
       const { p, u, cx, cy, time, W, H } = e, [A, B, D] = e.col;

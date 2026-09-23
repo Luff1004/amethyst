@@ -16,10 +16,10 @@
     snd: 'rise:rumble hit:whomp tail:machine amb:machine root:60 scale:phrygian',
     colors: ['#39ff6a', '#ff2b2b', '#050502'],
     captions: [
-      { a: 0.04, b: 0.2, en: 'THE THERMAL RIG SHOULD HAVE MELTED', pos: 'top' },
-      { a: 0.22, b: 0.4, en: 'INSTEAD IT KEPT RECORDING', pos: 'center' },
-      { a: 0.42, b: 0.6, en: 'ONE FRAME, OVER AND OVER' },
-      { a: 0.72, b: 1.4, en: 'SOMETHING DOWN HERE IS STILL WARM ENOUGH TO WATCH' },
+      { a: 0.04, b: 0.2, en: 'THE THERMAL RIG SHOULD HAVE MELTED', pos: 'top', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.22, b: 0.4, en: 'INSTEAD IT KEPT RECORDING', pos: 'center', style: 'fly', from: 'left', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.42, b: 0.6, en: 'إطار واحد، مرارا وتكرارا', size: 24, font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.72, b: 1.4, en: 'SOMETHING DOWN HERE IS STILL WARM ENOUGH TO WATCH', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
     ],
     draw(g, e) {
       const { p, u, cx, cy, time, W, H } = e, [A, B, D] = e.col;

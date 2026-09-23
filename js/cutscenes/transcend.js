@@ -49,10 +49,10 @@
     snd: 'rise:rumble hit:cathedral tail:pad amb:space root:55 scale:minor',
     colors: ['#fff1c9', '#8a5cff', '#000000'],
     captions: [
-      { a: 0.03, b: 0.17, ko: '태초에는 아무것도 없었다', en: 'IN THE BEGINNING, NOTHING', pos: 'top' },
-      { a: 0.19, b: 0.35, ko: '그리고 하나의 점이 숨을 쉬었다', en: 'THEN A SINGLE POINT BREATHED', pos: 'center' },
-      { a: 0.37, b: 0.55, ko: '모든 것이 한 곳으로 모여들었다', en: '万物归于一点', size: 26 },
-      { a: 0.7, b: 0.86, ko: '그리고, 빛이 있었다', en: 'AND THERE WAS LIGHT' },
+      { a: 0.03, b: 0.17, ko: '태초에는 아무것도 없었다', en: 'IN THE BEGINNING, NOTHING', pos: 'top', style: 'fly', from: 'top' },
+      { a: 0.19, b: 0.35, ko: '그리고 하나의 점이 숨을 쉬었다', en: 'THEN A SINGLE POINT BREATHED', pos: 'center', style: 'fly', from: 'left' },
+      { a: 0.37, b: 0.55, ko: '모든 것이 한 곳으로 모여들었다', en: '万物归于一点', size: 26, style: 'fly', from: 'right' },
+      { a: 0.7, b: 0.86, ko: '그리고, 빛이 있었다', en: 'AND THERE WAS LIGHT', style: 'fly', from: 'bottom' },
       { a: 0.88, b: 1.4, ko: '이 순간 우주는 당신의 것이다', en: 'THE UNIVERSE IS YOURS' },
     ],
     draw(gm, e) {
@@ -146,11 +146,11 @@
     snd: 'rise:ticks hit:gong tail:bells amb:machine root:110 scale:harmonic',
     colors: ['#ffd98a', '#c9822b', '#0a0703'],
     captions: [
-      { a: 0.04, b: 0.2, ko: '시간은 흐르지 않는다, 다만 되감길 뿐', en: 'TIME DOES NOT FLOW. IT UNWINDS', pos: 'top' },
-      { a: 0.22, b: 0.4, ko: '초침이 비명을 지르며 달려간다', en: 'THE SECOND HAND SCREAMS ONWARD', pos: 'center' },
-      { a: 0.42, b: 0.58, ko: '마지막 한 초, 세계가 숨을 멈춘다', en: 'ONE LAST SECOND' },
-      { a: 0.7, b: 0.86, ko: '영원 속에서 부서진 시간', en: 'SHATTERED IN ETERNITY' },
-      { a: 0.88, b: 1.4, ko: '이 순간, 시간은 당신을 위해 멈춘다', en: 'TIME STANDS STILL FOR YOU' },
+      { a: 0.04, b: 0.2, ko: '시간은 흐르지 않는다, 다만 되감길 뿐', en: 'TIME DOES NOT FLOW. IT UNWINDS', pos: 'top', style: 'engrave', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.22, b: 0.4, ko: '초침이 비명을 지르며 달려간다', en: 'THE SECOND HAND SCREAMS ONWARD', pos: 'center', style: 'engrave', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.42, b: 0.58, ko: '마지막 한 초, 세계가 숨을 멈춘다', en: 'ONE LAST SECOND', style: 'engrave', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.7, b: 0.86, ko: '영원 속에서 부서진 시간', en: 'دهر محطم في الأبدية', pos: 'center', size: 24 },
+      { a: 0.88, b: 1.4, ko: '이 순간, 시간은 당신을 위해 멈춘다', en: 'TIME STANDS STILL FOR YOU', style: 'engrave', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
     ],
     draw(gm, e) {
       Cine.render(gm, e, g => {
@@ -232,10 +232,10 @@
     snd: 'rise:choir hit:choirstab tail:choirpad amb:sea root:130 scale:major',
     colors: ['#ffe9a8', '#ff7a3a', '#050208'],
     captions: [
-      { a: 0.03, b: 0.18, ko: '마지막 태양이 저물어 간다', en: 'THE LAST SUN IS SETTING', pos: 'top' },
-      { a: 0.2, b: 0.38, ko: '별은 스스로의 무게에 무너진다', en: 'A STAR FALLS INTO ITSELF', pos: 'center' },
-      { a: 0.4, b: 0.58, ko: '빛조차 돌아오지 못하는 곳', en: 'WHERE EVEN LIGHT CANNOT RETURN' },
-      { a: 0.7, b: 0.86, ko: '그러나 끝은 다시 시작이었다', en: 'BUT THE END WAS A BEGINNING' },
+      { a: 0.03, b: 0.18, ko: '마지막 태양이 저물어 간다', en: 'THE LAST SUN IS SETTING', pos: 'top', style: 'fly', from: 'right' },
+      { a: 0.2, b: 0.38, ko: '별은 스스로의 무게에 무너진다', en: 'A STAR FALLS INTO ITSELF', pos: 'center', style: 'fly', from: 'top' },
+      { a: 0.4, b: 0.58, ko: '빛조차 돌아오지 못하는 곳', en: '连光都无法归来之地', size: 26, style: 'fly', from: 'left' },
+      { a: 0.7, b: 0.86, ko: '그러나 끝은 다시 시작이었다', en: 'BUT THE END WAS A BEGINNING', style: 'fly', from: 'bottom' },
       { a: 0.88, b: 1.4, ko: '영원의 새벽이 당신 앞에 밝아온다', en: 'ETERNITY DAWNS BEFORE YOU' },
     ],
     draw(gm, e) {

@@ -337,6 +337,47 @@
     g.restore(); g.globalAlpha = 1;
   }
 
+  /* horizontal-caption entrance styles - a cutscene picks one per line with caption.style, so the
+     10억대+ tier doesn't all read the same way. 'fade' (default) is the original soft scale-in.
+     'fly' sends the line in from an edge (caption.from: left/right/top/bottom, or a deterministic
+     pick from the text itself) with a bouncy overshoot, and drifts back out the same way at the end
+     - "떠다니다가 사라지는" feel, good for wind/light/airy minerals.
+     'engrave' reveals the line through a widening clip mask from the centre out, with a scatter of
+     chisel-dust at the growing edges - a "carved into the stone/metal" feel, good for
+     forge/pressure/crystal minerals. */
+  const hashStr = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); };
+  function drawCaptionLine(g, c, txt, py, k, W, H, time, tierColor, s) {
+    const fontPx = Math.min((c.size || 24) * s, W * 0.07), spacing = 3.5 * s, style = c.style || 'fade';
+    if (style === 'fly') {
+      const dirs = ['left', 'right', 'top', 'bottom'], dir = c.from || dirs[hashStr(txt) % 4];
+      const ease = E.outBack(clamp(k, 0, 1)), dist = (1 - ease) * (dir === 'left' || dir === 'right' ? W * 0.42 : H * 0.3);
+      let ox = 0, oy = 0;
+      if (dir === 'left') ox = -dist; else if (dir === 'right') ox = dist; else if (dir === 'top') oy = -dist; else oy = dist;
+      g.save(); g.translate(ox, oy);
+      glitchCaption(g, txt, W / 2, py, fontPx, spacing, k, W, time, c.font);
+      g.restore();
+    } else if (style === 'engrave') {
+      g.save(); g.textAlign = 'center'; g.font = `800 ${fontPx}px ${c.font || CAP_SERIF}`;
+      const tw = g.measureText(txt).width + spacing * txt.length, revW = Math.max(2, tw * clamp(k * 1.35));
+      g.beginPath(); g.rect(W / 2 - revW / 2 - 6, py - fontPx * 0.9, revW + 12, fontPx * 1.8); g.clip();
+      glitchCaption(g, txt, W / 2, py, fontPx, spacing, Math.min(1, k * 1.7), W, time, c.font);
+      g.restore();
+      if (k > 0.02 && k < 0.97) {
+        const r = G.rng(Math.floor(time / 60) * 977 + txt.length);
+        [W / 2 - revW / 2, W / 2 + revW / 2].forEach(ex => {
+          for (let i = 0; i < 3; i++) {
+            g.fillStyle = rgba(tierColor, 0.5 * r());
+            g.fillRect(ex + (r() - 0.5) * 8, py + (r() - 0.5) * fontPx, 1.5, 1.5 + r() * 2.5);
+          }
+        });
+      }
+    } else {
+      g.save(); g.translate(W / 2, py); g.scale(0.92 + 0.08 * k, 0.92 + 0.08 * k); g.translate(-W / 2, -py);
+      glitchCaption(g, txt, W / 2, py, fontPx, spacing, k, W, time, c.font);
+      g.restore();
+    }
+  }
+
   C.draw = (g, W, H) => {
     const a = C.active;
     if (!a) return;

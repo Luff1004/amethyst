@@ -135,36 +135,36 @@
   R(1400000000, 'lighteternal', 'The Light Eternal', 48,
     { env: 'sanctum', envHue: 48, hero: { k: 'prism', n: 20, h: 48, s: 60, l: 10, size: 1.3, shine: 80, trans: 0.5 }, entry: 'unveil', finale: 'beam', fx: ['feathers', 'stars'], cam: 'drift' },
     { duration: 16000, revealAt: 0.63, captions: [
-      { a: 0.04, b: 0.24, en: 'EVERY CAVE REMEMBERS THE SUN', pos: 'top' },
-      { a: 0.28, b: 0.5, en: 'THIS ONE NEVER LET IT GO' },
+      { a: 0.04, b: 0.24, en: 'EVERY CAVE REMEMBERS THE SUN', pos: 'top', style: 'fly', from: 'top' },
+      { a: 0.28, b: 0.5, en: 'THIS ONE NEVER LET IT GO', style: 'fly', from: 'right' },
       { a: 0.66, b: 1.4, en: '永光', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
   R(2800000000, 'cavernofinfinity', 'Cavern of Infinity', 210,
     { env: 'void', envHue: 250, hero: { k: 'spire', h: 210, s: 75, l: 4, size: 1.35, shine: 65, trans: 0.45 }, entry: 'drop', finale: 'implode', fx: ['stars', 'arcs'], cam: 'pull' },
     { duration: 17000, revealAt: 0.63, hue2: 260, captions: [
-      { a: 0.04, b: 0.24, en: 'THE TUNNEL NEVER FOUND A WALL', pos: 'top' },
-      { a: 0.28, b: 0.5, en: 'IT JUST KEPT GOING DOWN' },
+      { a: 0.04, b: 0.24, en: 'THE TUNNEL NEVER FOUND A WALL', pos: 'top', style: 'fly', from: 'top', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
+      { a: 0.28, b: 0.5, en: 'IT JUST KEPT GOING DOWN', style: 'fly', from: 'bottom', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
       { a: 0.66, b: 1.4, en: '無限', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
   R(4200000000, 'crystalbornmonarch', 'Crystalborn Monarch', 172,
     { env: 'arcane', envHue: 172, hero: { k: 'cluster', h: 172, s: 65, l: 6, size: 1.3, shine: 55, trans: 0.45 }, entry: 'geode', finale: 'shatter', fx: ['runes', 'dust'], cam: 'push' },
     { duration: 17500, revealAt: 0.64, captions: [
-      { a: 0.04, b: 0.25, en: 'THE CAVE CHOSE ITS OWN KING', pos: 'top' },
-      { a: 0.29, b: 0.52, en: 'AND GREW HIM FROM ITS WALLS' },
+      { a: 0.04, b: 0.25, en: 'THE CAVE CHOSE ITS OWN KING', pos: 'top', style: 'engrave' },
+      { a: 0.29, b: 0.52, en: 'AND GREW HIM FROM ITS WALLS', style: 'engrave' },
       { a: 0.68, b: 1.4, en: '晶王', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
   R(6500000000, 'radiantabyss', 'Radiant Abyss', 190,
     { env: 'abyss', envHue: 195, hero: { k: 'octa', h: 190, s: 80, l: 2, size: 1.4, shine: 70, trans: 0.4 }, entry: 'tide', finale: 'pulse', fx: ['bubbles', 'sparks'], cam: 'push' },
     { duration: 18000, revealAt: 0.64, hue2: 220, captions: [
-      { a: 0.04, b: 0.25, en: 'LIGHT SHOULD NOT REACH THIS DEEP', pos: 'top' },
-      { a: 0.29, b: 0.52, en: 'AND YET IT NEVER STOPPED' },
+      { a: 0.04, b: 0.25, en: 'LIGHT SHOULD NOT REACH THIS DEEP', pos: 'top', style: 'fly', from: 'left' },
+      { a: 0.29, b: 0.52, en: 'AND YET IT NEVER STOPPED', style: 'fly', from: 'right' },
       { a: 0.68, b: 1.4, en: '輝淵', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
   R(9800000000, 'lastrefraction', 'The Last Refraction', 300,
     { env: 'aurora', envHue: 300, hero: { k: 'twin', h: 300, s: 80, l: 4, size: 1.4, shine: 75, trans: 0.4 }, entry: 'unveil', finale: 'nova', fx: ['snow', 'stars'], cam: 'drift' },
     { duration: 19000, revealAt: 0.65, hue2: 190, captions: [
-      { a: 0.04, b: 0.26, en: 'ALL LIGHT ENDS SOMEWHERE', pos: 'top' },
-      { a: 0.3, b: 0.54, en: 'THIS IS WHERE IT BENDS ONE LAST TIME' },
+      { a: 0.04, b: 0.26, en: 'ALL LIGHT ENDS SOMEWHERE', pos: 'top', style: 'fly', from: 'top' },
+      { a: 0.3, b: 0.54, en: 'THIS IS WHERE IT BENDS ONE LAST TIME', style: 'fly', from: 'left' },
       { a: 0.69, b: 0.95, en: 'الضوء الأخير', pos: 'center', size: 26 },
     ] });
 })();
