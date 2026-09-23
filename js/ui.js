@@ -111,31 +111,40 @@
     return `<div class="ph"><h2>MAP <small>지도</small></h2><span>깊이 내려갈수록 코인 배율과 컷신이 늘어납니다</span></div>
       <div class="list">${G.data.zones.map((z, i) => {
         const isLevel1Zone = z.unlock && z.unlock.type === 'level1';
-        const n = G.cutscenes.inZone(i).length, cur = i === s.zone;
-        // review mode (js/config.js, auto-true on localhost): every ordinary zone is unlocked
-        // outright; LEVEL 1's zone stays on its own special card instead (see isLevel1 below) so
-        // there's still something to click through rather than it just becoming a normal zone
-        const owned = i <= s.maxZone || (G.config.unlockCodex && !isLevel1Zone);
-        const next = i === s.maxZone + 1 || (G.config.unlockCodex && isLevel1Zone && !owned);
+        const n = G.cutscenes.inZone(i).length, cur = i === s.zone, owned = i <= s.maxZone;
+        const review = G.config.unlockCodex;
+
+        // review mode + LEVEL 1's zone: always render BOTH a permanent LEVEL 1 entry card and a
+        // normal zone card reflecting its actual state, independent of each other - visiting the
+        // real zone (owned becoming true) must not make the LEVEL 1 card disappear, and vice versa
+        if (review && isLevel1Zone) {
+          const level1Card = `<div class="card bevel zone level1card" style="--zh:${z.hue}">
+            <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
+            <div class="meta"><b>LEVEL 1</b><small>${G.stats.allSecretsFound() ? '모든 시크릿 발견됨' : '???'}</small></div>
+            <div class="side"><button class="buy bevel level1btn" data-level1open="1"><span>???</span></button></div></div>`;
+          const zoneBtn = cur ? '<button class="buy bevel cur" disabled><span>현재 위치</span></button>' : `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
+          const realCard = `<div class="card bevel zone ${cur ? 'on' : ''}" style="--zh:${z.hue}">
+            <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
+            <div class="meta"><b>${z.name} <small style="opacity:.6">(실제 맵)</small></b><small>${z.en}</small>
+              <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span></div>
+            <div class="side">${zoneBtn}</div></div>`;
+          return level1Card + realCard;
+        }
+
+        const next = i === s.maxZone + 1 || (review && !owned);
         const locked = next && z.unlock;
-        // review mode also keeps the LEVEL 1 button around even after restoring, since otherwise
-        // there'd be no way to replay/re-check it locally once seen
-        const isLevel1 = isLevel1Zone && (!s.level1.restored || G.config.unlockCodex);
         let btn, req, name = owned || next ? z.name : '???', card = '';
         if (cur) btn = '<button class="buy bevel cur" disabled><span>현재 위치</span></button>';
         else if (owned) btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
-        else if (locked && isLevel1) {
+        else if (locked && isLevel1Zone) {
+          // production (not review mode - that case returned early above): the classic
+          // mystery-card flow - fully hidden until every secret is found, then a "???" prompt
           if (!G.stats.allSecretsFound()) { btn = `<button class="buy bevel locked" disabled>${G.icon('lock', 15)}</button>`; }
           else {
             name = 'LEVEL 1'; card = ' level1card';
             req = `<span class="unlockreq met">${G.icon('luck', 12)} 모든 시크릿 발견됨</span>`;
             btn = `<button class="buy bevel level1btn" data-level1open="1"><span>???</span></button>`;
           }
-        }
-        else if (locked && z.unlock.type === 'level1') {
-          // only reached once restored (isLevel1 is false by then), so this is always met
-          req = `<span class="unlockreq met">${G.icon('luck', 12)} ${z.unlock.label}</span>`;
-          btn = `<button class="buy bevel" data-zone="${i}"><span>해금</span></button>`;
         }
         else if (locked) {
           const have = z.unlock.type === 'secret' ? G.stats.secretFound() : G.stats.divineFound(), met = have >= z.unlock.n;
@@ -144,20 +153,11 @@
         }
         else if (next) btn = coinBtn(z.cost, `data-zone="${i}"`);
         else btn = `<button class="buy bevel locked" disabled>${G.icon('lock', 15)}</button>`;
-        const mainCard = `<div class="card bevel zone ${cur ? 'on' : ''} ${owned ? '' : 'dim'}${card}" style="--zh:${z.hue}">
+        return `<div class="card bevel zone ${cur ? 'on' : ''} ${owned ? '' : 'dim'}${card}" style="--zh:${z.hue}">
           <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
-          <div class="meta"><b>${name}</b><small>${isLevel1 && name === 'LEVEL 1' ? '' : z.en}</small>
+          <div class="meta"><b>${name}</b><small>${card ? '' : z.en}</small>
             <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span>${req || ''}</div>
           <div class="side">${btn}</div></div>`;
-        // review mode: also show the REAL zone as its own separate card underneath the LEVEL 1
-        // one, so both are reachable locally instead of LEVEL 1 hiding it entirely
-        const extraCard = (G.config.unlockCodex && isLevel1Zone && !owned) ? `
-          <div class="card bevel zone dim" style="--zh:${z.hue}">
-            <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
-            <div class="meta"><b>${z.name} <small style="opacity:.6">(실제 맵)</small></b><small>${z.en}</small>
-              <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span></div>
-            <div class="side"><button class="buy bevel" data-zone="${i}"><span>이동</span></button></div></div>` : '';
-        return mainCard + extraCard;
       }).join('')}</div>`;
   }
 
