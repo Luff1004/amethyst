@@ -18,6 +18,7 @@
     toastEl.textContent = msg; toastEl.classList.add('show');
     clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 1400);
   }
+  G.on('toast', toast);   // lets other files (game.js etc.) surface a toast without touching ui.js internals
 
   /* ---------------- panel renderers ---------------- */
   const coinBtn = (cost, extra = '') =>

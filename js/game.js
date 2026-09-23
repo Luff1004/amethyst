@@ -133,18 +133,29 @@
   const zone = () => G.data.zones[G.state.zone];
   const hue = () => zone().hue;
 
+  /* 용융 핵 (zone 3) - the gems have hardened under the pressure, and won't crack open for a weak
+     pickaxe: below 곡괭이 강화 lv.100 you barely dent them (no shatter, no cutscene roll). */
+  const HARD_ZONE = 3, HARD_LV = 100;
+  const isGated = () => G.state.zone === HARD_ZONE && G.stats.level('power') < HARD_LV;
+  let lastGateWarn = 0;
+
   function mine(x, y, auto) {
     if (G.cutscenes.active) return;
     const s = G.state, now = performance.now();
+    const gated = isGated();
+    if (gated && !auto && now - lastGateWarn > 1500) {
+      lastGateWarn = now;
+      G.emit('toast', `곡괭이가 너무 약해 튕겨나옵니다! 곡괭이 강화 Lv.${HARD_LV} 필요 (현재 Lv.${G.stats.level('power')})`);
+    }
     if (!auto) {
       combo = now - lastClick < 700 ? Math.min(combo + 1, 10) : 0;
       lastClick = now;
     }
-    const crit = Math.random() < G.stats.critChance();
-    const gain = G.stats.clickValue() * (crit ? G.stats.critMul() : 1);
+    const crit = !gated && Math.random() < G.stats.critChance();
+    const gain = G.stats.clickValue() * (crit ? G.stats.critMul() : 1) * (gated ? 0.05 : 1);
     G.addCoins(gain); s.clicks++;
     let armed = null;
-    if (!auto && G.stats.armedCount() > 0) { armed = G.stats.armedList(); s.armed = {}; G.save(); G.emit("change"); }
+    if (!gated && !auto && G.stats.armedCount() > 0) { armed = G.stats.armedList(); s.armed = {}; G.save(); G.emit("change"); }
     G.audio.coin(auto ? 0 : combo, auto, zone().snd);
     G.audio.crack(zone().snd, hits / zone().hp, auto);
     if (crit) G.audio.crit();
@@ -162,11 +173,11 @@
     if (!auto || crit) text(x + (Math.random() - 0.5) * 30, y - 14, (crit ? 'CRIT +' : '+') + G.fmt(gain), crit ? '#ffffff' : '#ffe08a', crit ? 22 : 15, crit ? 1.1 : 0.8);
     if (crit) flashA = Math.max(flashA, 0.18);
 
-    // crystal HP - each hit opens a new crack where it landed
-    hits++;
-    if (!auto || Math.random() < 0.34) growCrack(clamp((px - c.x) / R, -0.95, 0.95) * 0.9, clamp((py - c.y) / R, -0.95, 0.95) * 0.9);
+    // crystal HP - each hit opens a new crack where it landed (a gated hard-zone gem barely dents)
+    if (!gated) hits++;
+    if (!gated && (!auto || Math.random() < 0.34)) growCrack(clamp((px - c.x) / R, -0.95, 0.95) * 0.9, clamp((py - c.y) / R, -0.95, 0.95) * 0.9);
     let shatterLuck = false;
-    if (hits >= zone().hp) {
+    if (!gated && hits >= zone().hp) {
       hits = 0; s.shatters++;
       const bonus = G.stats.clickValue() * 10;
       G.addCoins(bonus); G.audio.shatter(zone().snd);
@@ -183,7 +194,7 @@
     cap();
     G.emit('mine');
     if (armed) potionBurst(armed, x, y);
-    roll(armed, shatterLuck ? 5 : 1);
+    if (!gated) roll(armed, shatterLuck ? 5 : 1);
   }
 
   /* one-click luck bomb: everything flashes, the roll uses luck + all armed crystals' luck stacked, with a higher cap */
@@ -380,11 +391,18 @@
       const sparkN = Math.min(24, 10 * armedN);
       for (let i = 0; i < sparkN; i++) { const a = t * 1.8 + (i / sparkN) * TAU, rr = R * (1.5 + 0.12 * Math.sin(t * 3 + i)); g.fillStyle = i % 2 ? pc : '#ffffff'; g.fillRect(c.x + Math.cos(a) * rr - 2, c.y + Math.sin(a) * rr - 2, 4, 4); }
     }
-    // HP arc (progress to shatter)
+    // HP arc (progress to shatter) - a hard-zone gem under level shows a locked red ring instead
     const prog = hits / zone().hp;
     g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.08)';
     g.beginPath(); g.arc(c.x, c.y, R * 1.2, 0, TAU); g.stroke();
-    if (prog > 0) {
+    if (isGated()) {
+      const bl = 0.5 + 0.5 * Math.sin(t * 5);
+      g.strokeStyle = `rgba(255,70,70,${0.4 + 0.35 * bl})`; g.lineWidth = 3; g.setLineDash([6, 8]);
+      g.beginPath(); g.arc(c.x, c.y, R * 1.2, 0, TAU); g.stroke(); g.setLineDash([]);
+      g.textAlign = 'center'; g.font = `800 ${R * 0.09}px ui-monospace, monospace`;
+      g.fillStyle = `rgba(255,120,120,${0.75 + 0.25 * bl})`;
+      g.fillText(`곡괭이 강화 Lv.${HARD_LV} 필요`, c.x, c.y - R * 1.42);
+    } else if (prog > 0) {
       g.strokeStyle = `hsl(${h},90%,70%)`; g.lineWidth = 3;
       g.beginPath(); g.arc(c.x, c.y, R * 1.2, -Math.PI / 2, -Math.PI / 2 + TAU * prog); g.stroke();
     }
