@@ -324,3 +324,62 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 .unlockreq .i { color: var(--bad); width: 12px; height: 12px; }
 .unlockreq.met { color: #6dffb0 !important; }
 .unlockreq.met .i { color: #6dffb0; }
+
+/* ------------- LEVEL 1 map card ------------- */
+.card.zone.level1card { --line: rgba(255,255,255,.4); animation: l1cardpulse 1.8s ease-in-out infinite; }
+.card.zone.level1card .meta b { font-family: var(--mono); letter-spacing: .08em; }
+@keyframes l1cardpulse { 50% { --line: rgba(255,80,80,.55); } }
+.level1btn { color: #fff; --line: rgba(255,255,255,.5); }
+
+/* ------------- LEVEL 1 experience ------------- */
+#level1 { position: fixed; inset: 0; z-index: 90; background: #000; opacity: 0; pointer-events: none; transition: opacity .5s; filter: grayscale(1) contrast(1.08); display: flex; flex-direction: column; overflow: hidden; }
+#level1.show { opacity: 1; pointer-events: auto; }
+.l1head { display: flex; justify-content: space-between; align-items: center; padding: calc(env(safe-area-inset-top) + 12px) 14px 10px; }
+.l1mark { font: 800 22px/1 var(--mono); color: #eee; display: flex; align-items: baseline; gap: 6px; }
+.l1mark b { font-size: 26px; }
+.l1tabs { display: flex; gap: 8px; }
+.l1tab { height: 34px; padding: 0 12px; background: #1a1a1a; border: 1px solid #444; color: #ccc; font: 700 12px var(--mono); border-radius: 4px; cursor: pointer; }
+.l1tab.devil { background: #2a0000; border-color: #700; color: #f66; font-family: "Noto Serif KR","Nanum Myeongjo",serif; }
+.l1cracks { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.l1cracksvg { width: 100%; height: 100%; }
+.l1cracksvg path { fill: none; stroke: #fff; stroke-width: .6; opacity: .55; filter: drop-shadow(0 0 2px #fff); }
+.l1stage { flex: 1; display: grid; place-items: center; position: relative; }
+.l1crystal { cursor: pointer; width: 44vw; max-width: 220px; transition: opacity .6s, transform .6s; filter: drop-shadow(0 0 30px rgba(255,255,255,.15)); }
+.l1crystal:active { transform: scale(.95); }
+.l1crystal.gone { opacity: 0; transform: scale(.2) rotate(25deg); pointer-events: none; }
+.l1gem polygon { fill: #cfcfcf; stroke: #fff; stroke-width: 1.4; }
+.l1tapline { position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%); color: #999; font: 700 11px var(--mono); letter-spacing: .3em; animation: l1tappulse 1.6s ease-in-out infinite; }
+@keyframes l1tappulse { 50% { opacity: .3; } }
+.l1mosaic { position: absolute; inset: 8% 6%; background: #0a0a0a; border: 1px solid #333; z-index: 5; padding: 16px; }
+.l1mosaicinner { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.l1mrow { flex: 1; background: repeating-linear-gradient(45deg, #aaa 0 6px, #333 6px 12px); filter: blur(7px) contrast(1.3); border-radius: 4px; }
+.l1close { position: absolute; top: 8px; right: 10px; width: 30px; height: 30px; background: none; border: none; color: #999; font-size: 22px; cursor: pointer; }
+.l1toast { position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%); background: #000; border: 1px solid #444; color: #eee; padding: 8px 14px; font: 700 12px var(--mono); opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; }
+.l1toast.show { opacity: 1; }
+.l1black { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .9s; z-index: 10; }
+.l1black.show { opacity: 1; }
+.l1eyewrap { position: absolute; inset: 0; z-index: 11; display: grid; place-items: center; opacity: 0; transition: opacity 1.4s; }
+.l1eyewrap.show { opacity: 1; }
+.l1eye { max-width: 78vw; max-height: 55vh; object-fit: contain; }
+.l1cap { position: absolute; inset: 0; z-index: 12; display: grid; place-items: center; pointer-events: none; }
+.l1capline { font: 800 15vw/1 var(--mono); color: #fff; letter-spacing: .05em; opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .35s; text-shadow: 0 0 24px rgba(255,255,255,.5); }
+.l1capline.show { opacity: 1; transform: translateY(0); }
+.l1credits { position: absolute; inset: 0; z-index: 13; display: grid; place-items: center; text-align: center; opacity: 0; transition: opacity 1s; }
+.l1credits.show { opacity: 1; }
+.l1credits h2 { color: #fff; font: 800 34px var(--mono); letter-spacing: .2em; margin: 0 0 14px; }
+.l1credits .l1cline { color: #999; font: 600 13px var(--mono); margin: 4px 0; }
+.l1credits .l1exit { margin-top: 22px; color: #fff; --line: rgba(255,255,255,.5); }
+
+/* ------------- jumpscare + restore ------------- */
+#jumpscare { position: fixed; inset: 0; z-index: 95; background: #000; display: grid; place-items: center; }
+.jsimg { width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.5); }
+#jumpscare.flash .jsimg { animation: jsimg .5s cubic-bezier(.2,1,.3,1) forwards; }
+@keyframes jsimg { 0% { opacity: 0; transform: scale(2.2); } 8% { opacity: 1; transform: scale(1.3); } 60% { opacity: 1; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+#jumpscare.flash::after { content: ""; position: absolute; inset: 0; background: #fff; animation: jsflash .5s ease-out forwards; }
+@keyframes jsflash { 0% { opacity: 1; } 15% { opacity: 0; } 100% { opacity: 0; } }
+.jsend { text-align: center; opacity: 0; transition: opacity 1s; padding: 20px; }
+.jsend.show { opacity: 1; }
+.jsend p { color: #ccc; font: 700 15px var(--mono); margin: 0 0 18px; letter-spacing: .05em; }
+.jsend .buy { color: #fff; --line: rgba(255,255,255,.55); }
+#jumpscare.restoreburst { animation: jsrestore 1s ease-out forwards; }
+@keyframes jsrestore { 0% { background: #fff; } 100% { background: #000; } }

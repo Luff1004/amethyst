@@ -112,9 +112,23 @@
       <div class="list">${G.data.zones.map((z, i) => {
         const n = G.cutscenes.inZone(i).length, cur = i === s.zone, owned = i <= s.maxZone, next = i === s.maxZone + 1;
         const locked = next && z.unlock;
-        let btn, req;
+        const isLevel1 = z.unlock && z.unlock.type === 'level1' && !s.level1.restored;
+        let btn, req, name = owned || next ? z.name : '???', card = '';
         if (cur) btn = '<button class="buy bevel cur" disabled><span>현재 위치</span></button>';
         else if (owned) btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
+        else if (locked && isLevel1) {
+          if (!G.stats.allSecretsFound()) { btn = `<button class="buy bevel locked" disabled>${G.icon('lock', 15)}</button>`; }
+          else {
+            name = 'LEVEL 1'; card = ' level1card';
+            req = `<span class="unlockreq met">${G.icon('luck', 12)} 모든 시크릿 발견됨</span>`;
+            btn = `<button class="buy bevel level1btn" data-level1open="1"><span>???</span></button>`;
+          }
+        }
+        else if (locked && z.unlock.type === 'level1') {
+          // only reached once restored (isLevel1 is false by then), so this is always met
+          req = `<span class="unlockreq met">${G.icon('luck', 12)} ${z.unlock.label}</span>`;
+          btn = `<button class="buy bevel" data-zone="${i}"><span>해금</span></button>`;
+        }
         else if (locked) {
           const have = z.unlock.type === 'secret' ? G.stats.secretFound() : G.stats.divineFound(), met = have >= z.unlock.n;
           req = `<span class="unlockreq ${met ? 'met' : ''}">${G.icon('luck', 12)} ${z.unlock.label || '조건 필요'} (${Math.min(have, z.unlock.n)}/${z.unlock.n})</span>`;
@@ -122,9 +136,9 @@
         }
         else if (next) btn = coinBtn(z.cost, `data-zone="${i}"`);
         else btn = `<button class="buy bevel locked" disabled>${G.icon('lock', 15)}</button>`;
-        return `<div class="card bevel zone ${cur ? 'on' : ''} ${owned ? '' : 'dim'}" style="--zh:${z.hue}">
+        return `<div class="card bevel zone ${cur ? 'on' : ''} ${owned ? '' : 'dim'}${card}" style="--zh:${z.hue}">
           <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
-          <div class="meta"><b>${owned || next ? z.name : '???'}</b><small>${z.en}</small>
+          <div class="meta"><b>${name}</b><small>${isLevel1 && name === 'LEVEL 1' ? '' : z.en}</small>
             <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span>${req || ''}</div>
           <div class="side">${btn}</div></div>`;
       }).join('')}</div>`;
@@ -219,7 +233,11 @@
   G.ui = { closePanel() { if (open) setOpen(open); } };
 
   /* ---------------- events ---------------- */
-  tabs.forEach(b => b.addEventListener('click', () => { G.audio.init(); G.audio.tab(); setOpen(b.dataset.tab); }));
+  tabs.forEach(b => b.addEventListener('click', () => {
+    G.audio.init();
+    if (b.dataset.tab === 'codex' && G.state.level1.crystalGone && !G.state.level1.restored && G.jumpscare) { G.jumpscare(); return; }
+    G.audio.tab(); setOpen(b.dataset.tab);
+  }));
   btnSound.addEventListener('click', () => {
     G.audio.init(); G.audio.setMuted(!G.audio.muted); G.state.muted = G.audio.muted; G.save(); paintSound();
   });
@@ -244,6 +262,8 @@
     } else if (el.dataset.zone) {
       const i = +el.dataset.zone, z = G.data.zones[i];
       if (G.act.travel(i)) { G.audio.buy(); } else { G.audio.deny(); toast(z && z.unlock ? '아직 해금 조건을 만족하지 않았습니다' : '코인이 부족합니다'); }
+    } else if (el.dataset.level1open) {
+      G.ui.closePanel(); if (G.level1) G.level1.open();
     } else if (el.dataset.exch) {
       const ok = el.dataset.exch === 'max' ? G.act.exchangeMax() : G.act.exchange(+el.dataset.exch);
       if (ok) { G.audio.buy(); toast('크리스탈로 교환했습니다'); } else { G.audio.deny(); toast('코인이 부족합니다 (' + G.fmt(G.data.exchange.rate) + ' = 1 크리스탈)'); }

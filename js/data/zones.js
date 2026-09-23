@@ -18,5 +18,6 @@ G.data.zones = [
     unlock: { type: 'divine', n: 3, label: '1억대 이상 컷신 3종 발견' } },   // coins alone won't open this one - see below
   { id: 'core',   name: '용융 핵',     en: 'MOLTEN CORE',    cost: 6e6,   coinMul: 40,  hue: 18,  hp: 32, snd: 'lava',
     unlock: { type: 'secret', n: 1, label: '시크릿 등급 컷신 1종 발견' } },
-  { id: 'void',   name: '공허의 균열', en: 'VOID RIFT',      cost: 3e8,   coinMul: 200, hue: 322, hp: 36, snd: 'void' },
+  { id: 'void',   name: '공허의 균열', en: 'VOID RIFT',      cost: 3e8,   coinMul: 200, hue: 322, hp: 36, snd: 'void',
+    unlock: { type: 'level1', label: 'LEVEL 1 완료' } },   // see js/level1.js - not a normal zone unlock
 ];

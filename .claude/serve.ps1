@@ -7,7 +7,10 @@ $l.Start()
 Write-Host "serving $root on $Port"
 while ($l.IsListening) {
   $c = $l.GetContext()
-  $p = [Uri]::UnescapeDataString($c.Request.Url.AbsolutePath).TrimStart('/')
+  # RawUrl, not Url.AbsolutePath - AbsolutePath decodes %23 to # and then treats it as a
+  # fragment marker, silently truncating any path that contains an encoded '#' (a real filename
+  # in this project has one). RawUrl keeps the raw percent-encoding so we decode it ourselves.
+  $p = [Uri]::UnescapeDataString($c.Request.RawUrl.Split('?')[0]).TrimStart('/')
   if ($p -eq '') { $p = 'index.html' }
   $f = Join-Path $root $p
   if ((Test-Path $f -PathType Leaf) -and $f.StartsWith($root)) {

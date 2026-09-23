@@ -140,7 +140,7 @@
   let lastGateWarn = 0;
 
   function mine(x, y, auto) {
-    if (G.cutscenes.active) return;
+    if (G.cutscenes.active || G.state.level1.crystalGone) return;
     const s = G.state, now = performance.now();
     const gated = isGated();
     if (gated && !auto && now - lastGateWarn > 1500) {
@@ -367,6 +367,19 @@
     g.fillStyle = vg; g.fillRect(0, 0, W, H);
   }
 
+  /* LEVEL 1's ending took the main crystal - an empty, faintly pulsing socket until it's restored */
+  function drawVoidWhereCrystalWas(t) {
+    const c = center(), R = crystalR();
+    const pul = 0.5 + 0.5 * Math.sin(t * 0.8);
+    g.save();
+    g.strokeStyle = `rgba(255,255,255,${0.06 + 0.05 * pul})`; g.lineWidth = 1.4; g.setLineDash([3, 9]);
+    g.beginPath(); g.arc(c.x, c.y, R * 0.95, 0, TAU); g.stroke(); g.setLineDash([]);
+    const vg = g.createRadialGradient(c.x, c.y, 0, c.x, c.y, R * 1.1);
+    vg.addColorStop(0, `rgba(0,0,0,${0.5 + 0.1 * pul})`); vg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = vg; g.beginPath(); g.arc(c.x, c.y, R * 1.1, 0, TAU); g.fill();
+    g.restore();
+  }
+
   function drawCrystal(t, now) {
     const h = hue(), c = center(), R = crystalR();
     const age = (now - crystal.born) / 1000, spawn = E.outBack(clamp(age / 0.5));
@@ -491,7 +504,7 @@
     g.save();
     if (shake > 0) g.translate((Math.random() - 0.5) * shake * 10, (Math.random() - 0.5) * shake * 10);
     drawBackground(t);
-    drawCrystal(t, now);
+    if (G.state.level1.crystalGone) drawVoidWhereCrystalWas(t); else drawCrystal(t, now);
     drawParticles();
     if (flashA > 0) { g.fillStyle = `rgba(255,255,255,${flashA})`; g.fillRect(-20, -20, W + 40, H + 40); }
     g.restore();

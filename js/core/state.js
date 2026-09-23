@@ -8,6 +8,14 @@
     crystals: 0, potions: {}, armed: {}, autoOn: true,
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
     settings: { autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner' },
+    /* LEVEL 1 - the secret ARG-ish sequence gating the real 5th map (js/level1.js).
+       gauge: 0..1 progress this run through the crystal-crack ending (resets each playthrough).
+       endingSeen: finished the crack -> eye -> captions -> credits sequence at least once.
+       crystalGone: the MAIN crystal is missing (set true right when the ending finishes; the
+                    codex tab becomes a jumpscare trigger while this is true and !restored).
+       restored: the player has clicked "자수정 회복하기" after the jumpscare - the real void
+                 rift map (zone 4) is unlocked for good from this point on. */
+    level1: { gauge: 0, endingSeen: false, crystalGone: false, restored: false },
   });
 
   G.state = fresh();
@@ -76,11 +84,17 @@
       for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8) n++; }
       return n;
     },
+    /* every SECRET-tier cutscene in the whole game found at least once - the gate for LEVEL 1 */
+    allSecretsFound() {
+      const total = G.cutscenes.list.filter(c => c.tierIdx >= 8).length;
+      return total > 0 && this.secretFound() >= total;
+    },
     /* does the player currently satisfy a zone's `unlock` requirement? */
     meetsUnlock(req) {
       if (!req) return true;
       if (req.type === 'divine') return this.divineFound() >= req.n;
       if (req.type === 'secret') return this.secretFound() >= req.n;
+      if (req.type === 'level1') return G.state.level1.restored;
       return true;
     },
   };
@@ -156,6 +170,25 @@
       s.potions[ev.reward.id] = (s.potions[ev.reward.id] || 0) + 1;
       G.save(); G.emit('change');
       return 'ok';
+    },
+    /* LEVEL 1 (js/level1.js): one "?" and one gauge tick per click on its crystal */
+    level1Click() {
+      const l1 = G.state.level1;
+      l1.gauge = Math.min(1, l1.gauge + 1 / 40);
+      G.save();
+      return l1.gauge;
+    },
+    /* the crack -> eye -> captions -> credits sequence just finished - the MAIN crystal vanishes */
+    level1Finish() {
+      const l1 = G.state.level1;
+      l1.endingSeen = true; l1.crystalGone = true; l1.gauge = 0;
+      G.save(); G.emit('change');
+    },
+    /* after the jumpscare: bring the main crystal back for good and unlock the real void rift map */
+    level1Restore() {
+      const l1 = G.state.level1;
+      l1.crystalGone = false; l1.restored = true;
+      G.save(); G.emit('change');
     },
     toggleAuto() { G.state.autoOn = !G.state.autoOn; G.save(); G.emit('change'); return G.state.autoOn; },
     setSetting(key, val) { G.state.settings[key] = val; G.save(); G.emit('change'); },

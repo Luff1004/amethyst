@@ -135,6 +135,15 @@ G.audio = (() => {
       tone({ f: 200, f2: 2600, type: 'sawtooth', d: 0.5, v: 0.08 });
       for (let i = 0; i < 6 + level * 2; i++) tone({ f: hz(523, SCALE[i % SCALE.length] + (i > 5 ? 12 : 0)), type: 'triangle', t: 0.1 + i * 0.045, d: 0.5, v: 0.08 });
     },
+    /* LEVEL 1's jumpscare - a harsh, loud, ugly sting. Deliberately overdriven, no build-up. */
+    jumpscare() {
+      if (!ctx) return;
+      tone({ f: 55, f2: 24, type: 'sawtooth', d: 1.1, v: 0.95 });
+      tone({ f: 1600, f2: 220, type: 'sawtooth', d: 0.4, v: 0.5 });
+      tone({ f: 2400, f2: 90, type: 'square', d: 0.55, v: 0.4, t: 0.02 });
+      noise({ d: 0.5, v: 0.9, f: 9000, f2: 100, q: 0.3, a: 0.001 });
+      noise({ d: 1.2, v: 0.3, f: 4000, f2: 60, q: 0.6, t: 0.05 });
+    },
     blackout(tier = 7) {
       if (!ctx) return;
       tone({ f: 90, f2: 24, type: 'sine', d: 1.6, v: 0.7 });
