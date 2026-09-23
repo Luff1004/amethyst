@@ -110,10 +110,12 @@
     const s = G.state;
     return `<div class="ph"><h2>MAP <small>지도</small></h2><span>깊이 내려갈수록 코인 배율과 컷신이 늘어납니다</span></div>
       <div class="list">${G.data.zones.map((z, i) => {
-        const n = G.cutscenes.inZone(i).length, cur = i === s.zone, owned = i <= s.maxZone;
         const isLevel1Zone = z.unlock && z.unlock.type === 'level1';
-        // review mode (js/config.js, auto-true on localhost) can reach LEVEL 1 without having
-        // actually progressed through every zone up to it first - same spirit as the codex bypass
+        const n = G.cutscenes.inZone(i).length, cur = i === s.zone;
+        // review mode (js/config.js, auto-true on localhost): every ordinary zone is unlocked
+        // outright; LEVEL 1's zone stays on its own special card instead (see isLevel1 below) so
+        // there's still something to click through rather than it just becoming a normal zone
+        const owned = i <= s.maxZone || (G.config.unlockCodex && !isLevel1Zone);
         const next = i === s.maxZone + 1 || (G.config.unlockCodex && isLevel1Zone && !owned);
         const locked = next && z.unlock;
         // review mode also keeps the LEVEL 1 button around even after restoring, since otherwise

@@ -233,11 +233,11 @@
     travel(i) {
       const z = G.data.zones[i];
       if (!z) return false;
+      // review mode (js/config.js, auto-true on localhost): every zone is freely reachable, no
+      // coin cost, no walking through zones in order, no unlock conditions
+      if (G.config.unlockCodex) { G.state.maxZone = Math.max(G.state.maxZone, i); G.state.zone = i; G.save(); G.emit('change'); G.emit('zone'); return true; }
       if (i > G.state.maxZone) {
-        // review mode (js/config.js) can jump straight to LEVEL 1's real zone without having
-        // walked through every zone up to it first, matching the same bypass on the map card
-        const reviewSkip = G.config.unlockCodex && z.unlock && z.unlock.type === 'level1';
-        if (i !== G.state.maxZone + 1 && !reviewSkip) return false;
+        if (i !== G.state.maxZone + 1) return false;
         if (z.unlock) { if (!G.stats.meetsUnlock(z.unlock)) return false; }
         else { if (G.state.coins < z.cost) return false; G.state.coins -= z.cost; }
         G.state.maxZone = i;
