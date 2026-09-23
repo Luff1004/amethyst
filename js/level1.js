@@ -17,57 +17,29 @@
   const EYE_IMG = 'last13409u81ujionjl%23(.jpg';   // '#' must be percent-encoded or it truncates the URL
   const JUMP_IMG = 'jump scare.jpg';
 
-  /* ---------------- mining stage ---------------- */
-  let gauge = 0;
+  /* ---------------- mining stage: the SAME faceted-crystal + branching-crack renderer the main
+     game uses (js/core/crystalfx.js), just drawn onto LEVEL 1's own canvas and grayscaled by the
+     container's CSS filter - not a cheap stand-in shape. A second, screen-sized crack rig cracks
+     the whole stage, not just the gem. ---------------- */
+  let gauge = 0, mineRig = null, screenCracks = null, loopId = 0, destroyStart = 0, miningLive = false;
 
-  const crackPaths = (() => {
-    const r = G.rng(4242), out = [];
-    for (let i = 0; i < 16; i++) {
-      const ang = (i / 16) * Math.PI * 2 + r() * 0.35, cx = 50, cy = 50;
-      let x = cx, y = cy, d = `M${x},${y}`;
-      const segs = 3 + Math.floor(r() * 3);
-      for (let s = 0; s < segs; s++) {
-        const len = (60 / segs) * (0.7 + r() * 0.7);
-        x += Math.cos(ang + (r() - 0.5) * 0.7) * len;
-        y += Math.sin(ang + (r() - 0.5) * 0.7) * len;
-        d += ` L${x.toFixed(1)},${y.toFixed(1)}`;
-      }
-      out.push(d);
-    }
-    return out;
-  })();
-
-  function crackSVG(g) {
-    const shown = Math.round(g * crackPaths.length);
-    const paths = crackPaths.slice(0, shown).map(d => `<path d="${d}"/>`).join('');
-    return `<svg viewBox="0 0 100 100" preserveAspectRatio="none" class="l1cracksvg">${paths}</svg>`;
-  }
-
-  function paintMine() {
-    const marks = Math.round(gauge * 40);
-    const gone = gauge >= 1;
+  function renderMineShell() {
     el.innerHTML = `
       <div class="l1head">
-        <div class="l1mark">?<b>${marks}</b></div>
+        <div class="l1mark">?<b>${Math.round(gauge * 40)}</b></div>
         <div class="l1tabs">
           <button class="l1tab" data-l1up>강화</button>
           <button class="l1tab devil" data-l1devil>与魔鬼的交易</button>
         </div>
       </div>
-      <div class="l1cracks">${crackSVG(gauge)}</div>
-      <div class="l1stage">
-        <div class="l1crystal${gone ? ' gone' : ''}" data-l1click style="--dmg:${gauge}">
-          <svg viewBox="0 0 100 116" class="l1gem"><polygon points="50,4 92,38 76,112 24,112 8,38"/></svg>
-        </div>
-        <div class="l1tapline">${gone ? '' : '탭'}</div>
-      </div>
+      <div class="l1stage"><canvas class="l1cv"></canvas><div class="l1tapline">탭</div></div>
       <div class="l1mosaic" hidden>
         <div class="l1mosaicinner">
           <div class="l1mrow"></div><div class="l1mrow"></div><div class="l1mrow"></div><div class="l1mrow"></div>
         </div>
         <button class="l1close" data-l1close>&times;</button>
       </div>`;
-    el.querySelector('[data-l1click]').addEventListener('click', onClick);
+    el.querySelector('.l1cv').addEventListener('click', onClick);
     el.querySelector('[data-l1up]').addEventListener('click', () => { G.audio.tab(); el.querySelector('.l1mosaic').hidden = false; });
     el.querySelector('[data-l1close]').addEventListener('click', () => { G.audio.tab(); el.querySelector('.l1mosaic').hidden = true; });
     el.querySelector('[data-l1devil]').addEventListener('click', () => { G.audio.deny(); l1toast('它没有回应...'); });
@@ -81,12 +53,57 @@
     clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1400);
   }
 
+  function updateHud() {
+    const mark = el.querySelector('.l1mark b'); if (mark) mark.textContent = Math.round(gauge * 40);
+    const tap = el.querySelector('.l1tapline'); if (tap) tap.textContent = gauge >= 1 ? '' : '탭';
+  }
+
+  function drawFrame(now) {
+    const cv = el.querySelector('.l1cv'); if (!cv || !mineRig) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1), rect = cv.parentElement.getBoundingClientRect();
+    const needW = Math.round(rect.width * dpr), needH = Math.round(rect.height * dpr);
+    if (cv.width !== needW || cv.height !== needH) { cv.width = needW; cv.height = needH; }
+    const g = cv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, rect.width, rect.height);
+    const w = rect.width, h = rect.height, cx = w / 2, cy = h / 2;
+
+    // the whole stage cracking, not just the gem - same branching-crack renderer. Painted at a
+    // fixed, modest scale (matching the crystal's own internal CS) so the strokes stay thin and
+    // crisp instead of blobbing into a solid dark mass when stretched across a whole screen.
+    const screenCS = 130;
+    screenCracks.paintIfDirty(now, 0, screenCS);
+    g.save(); g.globalAlpha = Math.min(1, gauge * 1.15); g.translate(cx, cy);
+    // no extra scale() here (unlike the crystal's own draw, which runs inside one) - the CR buffer
+    // is already in screen-ish pixels once painted at CS, so draw it 1:1 at native size
+    g.drawImage(screenCracks.canvas, -screenCracks.CR / 2, -screenCracks.CR / 2, screenCracks.CR, screenCracks.CR);
+    g.restore();
+
+    let alpha = 1;
+    if (destroyStart) alpha = Math.max(0, 1 - (now - destroyStart) / 400);
+    if (alpha > 0) {
+      g.save(); g.globalAlpha = alpha;
+      mineRig.draw(g, { cx, cy, R: Math.min(w, h) * 0.22, hue: 0, time: now, prog: gauge, pulse: 0.15 + 0.15 * Math.sin(now * 0.003) });
+      g.restore();
+    }
+  }
+  function loop(now) {
+    if (!miningLive) return;
+    drawFrame(now);
+    loopId = requestAnimationFrame(loop);
+  }
+
   function onClick() {
     if (gauge >= 1) return;
     gauge = G.act.level1Click();
+    mineRig.growCrack((Math.random() - 0.5) * 1.1, (Math.random() - 0.5) * 1.1);
+    screenCracks.grow((Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.25, 2.4);
     G.audio.crack('glass', gauge, false);
-    paintMine();
-    if (gauge >= 1) { G.audio.blackout(); setTimeout(playEnding, 650); }
+    updateHud();
+    if (gauge >= 1) {
+      destroyStart = performance.now();
+      G.audio.blackout();
+      setTimeout(() => { miningLive = false; cancelAnimationFrame(loopId); playEnding(); }, 650);
+    }
   }
 
   /* ---------------- ending: blackout -> still eye -> captions -> credits ---------------- */
@@ -122,6 +139,7 @@
   }
 
   function finish() {
+    miningLive = false; cancelAnimationFrame(loopId);
     G.act.level1Finish();
     el.classList.remove('show');
     setTimeout(() => { el.hidden = true; }, 400);
@@ -129,11 +147,24 @@
 
   function open() {
     gauge = G.state.level1.gauge || 0;
+    destroyStart = 0;
     el.hidden = false;
     void el.offsetWidth;
     el.classList.add('show');
     G.audio.init(); G.audio.tab();
-    paintMine();
+    renderMineShell();
+    mineRig = G.crystalFX.make((Math.random() * 1e9) | 0);
+    screenCracks = G.crystalFX.makeCracks(900);
+    // resume mid-session progress: replay that many cracks so the damage isn't invisible
+    const preClicks = Math.round(gauge * 40);
+    for (let i = 0; i < preClicks; i++) {
+      mineRig.growCrack((Math.random() - 0.5) * 1.1, (Math.random() - 0.5) * 1.1);
+      screenCracks.grow((Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.25, 2.4);
+    }
+    updateHud();
+    miningLive = true;
+    cancelAnimationFrame(loopId);
+    loopId = requestAnimationFrame(loop);
   }
   G.level1 = { open };
 
