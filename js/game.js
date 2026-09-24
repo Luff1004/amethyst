@@ -140,7 +140,7 @@
   let lastGateWarn = 0;
 
   function mine(x, y, auto) {
-    if (G.cutscenes.active || G.state.level1.crystalGone) return;
+    if (G.cutscenes.active || G.state.level1.crystalGone || G.config.viewer) return;
     const s = G.state, now = performance.now();
     const gated = isGated();
     if (gated && !auto && now - lastGateWarn > 1500) {

@@ -36,6 +36,14 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 body.cut #hud { opacity: 0; pointer-events: none; }
 body.cut #hud * { pointer-events: none !important; }
 
+/* codex-only viewer (js/config.js viewer): just the codex, full height, nothing to mine */
+html.viewer #topline, html.viewer #tabs, html.viewer #hint, html.viewer #foot, html.viewer #btnEvent { display: none !important; }
+html.viewer #hud { bottom: 0; padding-bottom: calc(env(safe-area-inset-bottom) + 10px); }
+html.viewer #hud .wrap { height: 100%; display: flex; flex-direction: column; }
+html.viewer #panel { max-height: none; flex: 1; margin-top: 0; animation: none; }
+html.viewer #game { filter: blur(6px) brightness(.45); }
+html.viewer body.cut #game { filter: none; }
+
 #topline { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 2px 2px 8px; pointer-events: none; }
 #topline > * { pointer-events: auto; }
 #coinBox { display: flex; align-items: center; gap: 10px; transition: transform .08s; transform-origin: left center; }

@@ -182,10 +182,16 @@
         if (c.tierIdx !== last) {
           last = c.tierIdx;
           const t = G.tiers[c.tierIdx], n = L.filter(x => x.tierIdx === c.tierIdx);
-          body += `<div class="band" style="--tc:${t.color}"><i></i><b>${t.en}</b><span>${t.ko}</span><em>${n.filter(x => (s.codex[x.id] || {}).n > 0).length}/${n.length}</em></div>`;
+          body += `<div class="band" style="--tc:${t.color}"><i></i><b>${t.en}</b><span>${t.ko}</span><em>${G.config.viewer ? n.length + '종' : n.filter(x => (s.codex[x.id] || {}).n > 0).length + '/' + n.length}</em></div>`;
         }
         const rec = s.codex[c.id], seen = rec && rec.n > 0, ok = known(c), t = G.tiers[c.tierIdx];
         const eff = Math.max(1, Math.ceil(c.odds / luck)), off = rec && rec.skip;
+        if (G.config.viewer) {
+          body += `<div class="card bevel" style="--tc:${t.color}"><div class="stripe"></div>
+            <div class="meta"><b>${c.name}</b><span class="odds">1 in ${G.fmtInt(c.odds)}</span></div>
+            <div class="side"><button class="buy bevel" data-replay="${c.id}">${G.icon('play', 14)}<span>보기</span></button></div></div>`;
+          return;
+        }
         body += `<div class="card bevel ${ok ? '' : 'dim'} ${off ? 'skipped' : ''}" style="--tc:${t.color}">
           <div class="stripe"></div>
           <div class="meta"><b>${ok ? c.name : '???'}</b>${off ? '<small class="skip">SKIP</small>' : ''}
@@ -198,6 +204,14 @@
       });
     }
     const total = G.cutscenes.list.length, found = G.cutscenes.list.filter(c => (s.codex[c.id] || {}).n > 0).length;
+    if (G.config.viewer) {
+      const vchips = Z.map((zz, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''}" data-cz="${i}" style="--zh:${zz.hue}">
+        <b>${String(i + 1).padStart(2, '0')}</b><span>${zc(i).length}</span></button>`).join('');
+      return `<div class="ph"><h2>AMETHYST <small>도감</small></h2><span>컷신 전체 <b>${total}</b>종 · 눌러서 감상</span></div>
+        <div class="chips">${vchips}</div>
+        <div class="zhead" style="--zh:${z.hue}"><b>${z.name}</b><small>${z.en}</small></div>
+        <div class="list">${body}</div>`;
+    }
     head = `<div class="ph"><h2>CODEX <small>도감</small></h2><span>전체 발견 <b>${found}</b> / ${total}</span></div>
       <div class="chips">${chips}</div>
       <div class="zhead" style="--zh:${z.hue}"><b>${z.name}</b><small>${z.en}</small></div>
@@ -247,7 +261,8 @@
     panel.hidden = !open;
     if (open) { panel.scrollTop = 0; render(); }
   }
-  G.ui = { closePanel() { if (open) setOpen(open); } };
+  G.ui = { closePanel() { if (open && !G.config.viewer) setOpen(open); } };
+  if (G.config.viewer) setOpen('codex');
 
   /* ---------------- events ---------------- */
   tabs.forEach(b => b.addEventListener('click', () => {

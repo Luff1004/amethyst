@@ -21,6 +21,7 @@
   G.state = fresh();
 
   G.load = () => {
+    if (G.config.viewer) { Object.assign(G.state, { tutorialDone: true, autoOn: false }); G.audio.setMuted(false); return; }
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) G.state = Object.assign(fresh(), JSON.parse(raw));
@@ -28,7 +29,7 @@
     } catch (e) { /* storage blocked - play without saving */ }
     G.audio.setMuted(G.state.muted);
   };
-  G.save = () => { try { localStorage.setItem(KEY, JSON.stringify(G.state)); } catch (e) {} };
+  G.save = () => { if (G.config.viewer) return; try { localStorage.setItem(KEY, JSON.stringify(G.state)); } catch (e) {} };
   G.reset = () => { G.state = fresh(); G.save(); G.emit('change'); };
 
   const now = () => Date.now();
