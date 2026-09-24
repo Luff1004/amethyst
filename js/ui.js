@@ -249,7 +249,8 @@
   }
   const ODDS_STEPS = [0, 1e3, 1e4, 1e5, 1e6, 1e7];
   const ODDS_LABEL = v => v === 0 ? '전체' : G.fmt(v) + '+';
-  const BANNERS = [['banner', '큰 배너'], ['toast', '작은 알림'], ['flash', '플래시만']];
+  const BANNERS = [['banner', '큰 배너'], ['card', '카드'], ['toast', '작은 알림'], ['ticker', '상단 한 줄'], ['bottom', '하단 알림'],
+    ['chip', '미니'], ['cinema', '시네마'], ['neon', '네온'], ['flash', '플래시만'], ['off', '끄기']];
 
   /* 설정: five sections of settings (defaults + meaning in js/core/state.js G.defaultSettings).
      Every row is either an on/off toggle or a row of choices; both write through data-set/data-val. */
@@ -283,8 +284,9 @@
       toggle('autoSkipSeen', '이미 본 컷신은 항상 건너뛰기', '도감에서 개별로 켠 것과 상관없이, 다시 뜬 컷신은 재생하지 않고 바로 보상만 받습니다') +
       seg('minOdds', '최소 확률부터 컷신 표시', '이보다 흔한 컷신은 처음 보는 것이라도 재생 없이 보상만 받습니다', ODDS_STEPS.map(v => [v, ODDS_LABEL(v)])) +
       toggle('captions', '컷신 자막', '컷신 중에 나오는 문구를 표시합니다') +
-      seg('bannerStyle', '보상 알림 스타일', '컷신을 건너뛸 때(또는 상자를 열 때) 뜨는 알림의 모양', BANNERS) +
-      action('알림 미리보기', '지금 스타일로 한 번 띄워봅니다', '<button class="buy bevel small" data-prevwin="1"><span>보기</span></button>');
+      seg('bannerStyle', '보상 알림 스타일', '컷신을 건너뛸 때, 상자를 열 때 뜨는 알림의 모양 (끄기: 소리만 납니다)', BANNERS) +
+      seg('bannerTime', '알림 표시 시간', '알림이 화면에 머무는 시간', [[0.6, '짧게'], [1, '보통'], [1.6, '길게'], [2.5, '아주 길게']]) +
+      action('알림 미리보기', '지금 스타일로 한 번 띄워봅니다 (누를 때마다 다른 등급)', '<button class="buy bevel small" data-prevwin="1"><span>보기</span></button>');
     else if (setSec === 'easy') body =
       toggle('boxSpin', '상자 룰렛 연출', '끄면 크리스탈 상자를 열자마자 결과가 바로 나옵니다') +
       seg('boxMulti', '상자 한 번에 열기', '한 번 누를 때 여는 상자 수 (무료권이 먼저 쓰이고, 여러 개는 결과를 한 번에 보여줍니다)', [[1, '1개'], [10, '10개'], [50, '50개']]) +
@@ -390,7 +392,10 @@
       const raw = el.dataset.val, val = raw === 'true' ? true : raw === 'false' ? false : isNaN(+raw) ? raw : +raw;
       G.act.setSetting(el.dataset.set, val); G.audio.tab();
     } else if (el.dataset.prevwin) {
-      G.emit('win', { def: { name: '미리보기 컷신', odds: 123456 }, reward: 123456, tier: G.tiers[4] });
+      // a real mineral from a random tier, so every press shows a different colour and size of number
+      const pool = G.cutscenes.list.filter(c => c.tierIdx >= 3), def = pool[Math.floor(Math.random() * pool.length)];
+      G.emit('win', { def, reward: G.cutscenes.reward(def), tier: G.tiers[def.tierIdx] });
+      if (G.opt('bannerStyle') === 'off') toast('알림이 꺼져 있습니다');
     } else if (el.dataset.retutorial) {
       G.state.tutorialStep = 0; G.state.tutorialDone = false; G.save(); G.ui.closePanel(); G.emit('tutorial:start');
     } else if ('reset' in el.dataset) {
@@ -415,8 +420,12 @@
   const winEl = $('#win');
   let winT = 0;
   const fireWin = (html, tc, ms) => {
-    winEl.className = `style-${G.state.settings.bannerStyle}`;
+    const style = G.opt('bannerStyle');
+    if (style === 'off') return;                              // 설정 - 알림 끄기 (the sound still plays)
+    ms = Math.round(ms * G.opt('bannerTime'));
+    winEl.className = `style-${style}`;
     winEl.style.setProperty('--tc', tc);
+    winEl.style.setProperty('--dur', ms + 'ms');
     winEl.innerHTML = html;
     void winEl.offsetWidth; winEl.classList.add('show');
     clearTimeout(winT); winT = setTimeout(() => winEl.classList.remove('show'), ms);

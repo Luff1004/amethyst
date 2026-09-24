@@ -7,7 +7,7 @@ G.defaultSettings = () => ({
   // screen
   shake: 1, lessFlash: false, particles: 1, floatText: true, quality: 'high', numFmt: 'short',
   // cutscenes
-  autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner', captions: true,
+  autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner', bannerTime: 1, captions: true,
   // convenience
   boxSpin: true, boxMulti: 1, pkgConfirm: true, wakeLock: false, vibrate: false, offlineAuto: false,
 });

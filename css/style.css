@@ -173,7 +173,7 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 #win b { font: 800 22px/1.2 system-ui, "Malgun Gothic", sans-serif; color: #fff; letter-spacing: .06em; text-shadow: 0 0 18px var(--tc); }
 #win span { font: 700 13px/1.2 var(--mono); color: var(--tc); }
 #win em { font: 800 24px/1.2 var(--mono); color: #ffd766; font-style: normal; text-shadow: 0 0 14px rgba(255, 200, 60, .55); }
-#win.show { animation: winin 2.6s ease both; }
+#win.show { animation: winin var(--dur, 2.6s) ease both; }
 @keyframes winin { 0% { opacity: 0; transform: translate(-50%, 10px) scaleY(.6); } 10% { opacity: 1; transform: translate(-50%, 0) scaleY(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -8px); } }
 .firstonly { font-size: 9.5px; color: var(--dim); text-align: right; max-width: 92px; line-height: 1.25; }
 
@@ -231,7 +231,7 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 #win.style-toast b { font-size: 13px; letter-spacing: 0; }
 #win.style-toast span { font-size: 10px; }
 #win.style-toast em { font-size: 14px; }
-#win.style-toast.show { animation: toastin 2.2s ease both; }
+#win.style-toast.show { animation: toastin var(--dur, 2.2s) ease both; }
 @keyframes toastin { 0% { opacity: 0; transform: translateX(16px); } 10% { opacity: 1; transform: translateX(0); } 82% { opacity: 1; } 100% { opacity: 0; transform: translateX(16px); } }
 
 #win.style-flash { background: none; border: none; padding: 0; top: 40%; }
@@ -239,8 +239,65 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 #win.style-flash b { font-size: 26px; text-shadow: 0 0 22px var(--tc), 0 0 8px #000; }
 #win.style-flash span { display: none; }
 #win.style-flash em { display: block; margin-top: 2px; font-size: 22px; }
-#win.style-flash.show { animation: flashin 1.5s ease both; }
+#win.style-flash.show { animation: flashin var(--dur, 1.5s) ease both; }
 @keyframes flashin { 0% { opacity: 0; transform: translate(-50%, 0) scale(.85); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.04); } 25% { transform: translate(-50%, 0) scale(1); } 78% { opacity: 1; } 100% { opacity: 0; } }
+
+/* 카드: a glowing card that pops in, centre screen */
+#win.style-card { top: 30%; width: min(80vw, 320px); padding: 18px 16px 16px; gap: 5px; border: 1px solid var(--tc); border-radius: 14px;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--tc) 38%, transparent), rgba(10, 7, 20, .96) 72%);
+  box-shadow: 0 0 34px color-mix(in srgb, var(--tc) 45%, transparent), 0 12px 30px rgba(0, 0, 0, .6); }
+#win.style-card b { font-size: 24px; }
+#win.style-card.show { animation: cardin var(--dur, 2.6s) ease both; }
+@keyframes cardin { 0% { opacity: 0; transform: translate(-50%, 14px) scale(.6); } 9% { opacity: 1; transform: translate(-50%, 0) scale(1.06); } 15% { transform: translate(-50%, 0) scale(1); } 82% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -6px) scale(.96); } }
+
+/* 상단 한 줄: a thin news-ticker strip under the tabs */
+#win.style-ticker { top: calc(env(safe-area-inset-top) + 136px); left: 0; right: 0; width: auto; transform: none; display: flex; justify-content: center; align-items: baseline; gap: 10px; padding: 7px 14px; white-space: nowrap; overflow: hidden;
+  background: linear-gradient(90deg, transparent, rgba(8, 6, 16, .94) 12%, rgba(8, 6, 16, .94) 88%, transparent); }
+#win.style-ticker small { font-size: 9px; letter-spacing: .25em; }
+#win.style-ticker b { font-size: 14px; letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; }
+#win.style-ticker span { font-size: 11px; }
+#win.style-ticker em { font-size: 14px; }
+#win.style-ticker.show { animation: tickin var(--dur, 2.4s) ease both; }
+@keyframes tickin { 0% { opacity: 0; transform: translateY(-10px); } 8% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
+
+/* 하단 알림: a pill sliding up from the bottom of the screen */
+#win.style-bottom { top: auto; bottom: calc(env(safe-area-inset-bottom) + 64px); width: min(90vw, 380px); display: flex; align-items: center; gap: 10px; padding: 10px 16px; text-align: left; border: 1px solid var(--tc); border-radius: 999px; background: rgba(10, 7, 20, .96); box-shadow: 0 0 20px color-mix(in srgb, var(--tc) 35%, transparent); }
+#win.style-bottom small { font-size: 8.5px; letter-spacing: .18em; flex: none; }
+#win.style-bottom b { font-size: 14px; letter-spacing: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#win.style-bottom span { display: none; }
+#win.style-bottom em { font-size: 15px; flex: none; }
+#win.style-bottom.show { animation: bottomin var(--dur, 2.4s) cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes bottomin { 0% { opacity: 0; transform: translate(-50%, 30px); } 10% { opacity: 1; transform: translate(-50%, 0); } 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 16px); } }
+
+/* 미니: a tiny chip beside the coin counter - the least intrusive */
+#win.style-chip { top: calc(env(safe-area-inset-top) + 138px); left: 14px; transform: none; width: auto; max-width: 62vw; display: flex; align-items: center; gap: 7px; padding: 5px 10px; border: 1px solid var(--tc); border-radius: 6px; background: rgba(8, 6, 16, .92); text-align: left; }
+#win.style-chip small, #win.style-chip span { display: none; }
+#win.style-chip b { font-size: 12px; letter-spacing: 0; text-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#win.style-chip em { font-size: 12px; text-shadow: none; }
+#win.style-chip.show { animation: chipin var(--dur, 1.8s) ease both; }
+@keyframes chipin { 0% { opacity: 0; transform: translateX(-10px); } 10% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
+
+/* 시네마: letterbox bars slide in, the name rolls like a film credit in the lower bar */
+#win.style-cinema { inset: 0; top: 0; left: 0; width: auto; transform: none; padding: 0 16px calc(env(safe-area-inset-bottom) + 2.6vh); background: none; border: none; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; }
+#win.style-cinema::before, #win.style-cinema::after { content: ""; position: fixed; left: 0; right: 0; height: 12vh; background: #000; z-index: -1; transform: scaleY(0); }
+#win.style-cinema::before { top: 0; transform-origin: top; box-shadow: 0 1px 0 var(--tc); }
+#win.style-cinema::after { bottom: 0; transform-origin: bottom; box-shadow: 0 -1px 0 var(--tc); }
+#win.style-cinema.show::before, #win.style-cinema.show::after { animation: cinbar var(--dur, 2.8s) ease both; }
+#win.style-cinema b { font-size: 20px; letter-spacing: .2em; }
+#win.style-cinema span { display: none; }
+#win.style-cinema em { font-size: 16px; }
+#win.style-cinema.show { animation: cintext var(--dur, 2.8s) ease both; }
+@keyframes cinbar { 0% { transform: scaleY(0); } 12% { transform: scaleY(1); } 85% { transform: scaleY(1); } 100% { transform: scaleY(0); } }
+@keyframes cintext { 0%, 10% { opacity: 0; letter-spacing: .6em; } 22% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+
+/* 네온: the name flickers on like a neon sign */
+#win.style-neon { top: 33%; background: none; border: none; padding: 0; gap: 4px; }
+#win.style-neon small { color: #fff; opacity: .7; text-shadow: 0 0 8px var(--tc); }
+#win.style-neon b { font-size: 30px; color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--tc), 0 0 28px var(--tc), 0 0 48px var(--tc); }
+#win.style-neon span { color: #fff; opacity: .8; text-shadow: 0 0 8px var(--tc); }
+#win.style-neon em { text-shadow: 0 0 6px #fff, 0 0 18px rgba(255, 200, 60, .8); }
+#win.style-neon.show { animation: neonin var(--dur, 2.6s) linear both; }
+@keyframes neonin { 0% { opacity: 0; } 3% { opacity: 1; } 5% { opacity: .1; } 8% { opacity: 1; } 10% { opacity: .3; } 13%, 84% { opacity: 1; } 86% { opacity: .4; } 88% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ------------- settings ------------- */
 .setcard { grid-template-columns: 1fr auto; }
