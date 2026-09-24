@@ -1,4 +1,20 @@
 /* AMETHYST - save data, derived stats and player actions */
+/* every player setting and its default (the 설정 panel, js/settings.js). Saves from before a setting
+   existed simply pick up its default - settings are merged key by key on load. */
+G.defaultSettings = () => ({
+  // sound
+  volume: 100, cutVolume: 100, sndMine: true, sndUi: true, bgMute: false,
+  // screen
+  shake: 1, lessFlash: false, particles: 1, floatText: true, quality: 'high', numFmt: 'short',
+  // cutscenes
+  autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner', captions: true,
+  // convenience
+  boxSpin: true, boxMulti: 1, pkgConfirm: true, wakeLock: false, vibrate: false, offlineAuto: false,
+});
+G.opt = key => {
+  const s = G.state && G.state.settings;
+  return s && key in s ? s[key] : G.defaultSettings()[key];
+};
 (() => {
   const KEY = 'amethyst_save_v1';
   const fresh = () => ({
@@ -11,7 +27,7 @@
        eaten, permanent foods already eaten, and how many of each package were bought */
     tickets: {}, foodInv: {}, perm: {}, pkgBought: {},
     lastSeen: 0,                     // when the game was last saved - offline mining (js/offline.js)
-    settings: { autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner' },
+    settings: G.defaultSettings(),
     /* LEVEL 1 - the secret ARG-ish sequence gating the real 5th map (js/level1.js).
        gauge: 0..1 progress this run through the crystal-crack ending (resets each playthrough).
        endingSeen: finished the crack -> eye -> captions -> credits sequence at least once.
@@ -28,7 +44,7 @@
     if (G.config.viewer) { Object.assign(G.state, { tutorialDone: true, autoOn: false }); G.audio.setMuted(false); return; }
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) G.state = Object.assign(fresh(), JSON.parse(raw));
+      if (raw) { G.state = Object.assign(fresh(), JSON.parse(raw)); G.state.settings = Object.assign(G.defaultSettings(), G.state.settings); }
       if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};   // older saves had a single id string
     } catch (e) { /* storage blocked - play without saving */ }
     G.audio.setMuted(G.state.muted);
@@ -225,7 +241,8 @@
       G.save(); G.emit('change');
     },
     toggleAuto() { G.state.autoOn = !G.state.autoOn; G.save(); G.emit('change'); return G.state.autoOn; },
-    setSetting(key, val) { G.state.settings[key] = val; G.save(); G.emit('change'); },
+    setSetting(key, val) { G.state.settings[key] = val; G.save(); G.emit('settings', key); G.emit('change'); },
+    resetSettings() { G.state.settings = G.defaultSettings(); G.save(); G.emit('settings', '*'); G.emit('change'); },
     /* tutorial: step forward, or finish. The practice potion is granted exactly once ever -
        replaying the tutorial from settings walks through it again but never re-grants it. */
     tutorialNext() {
@@ -257,6 +274,7 @@
         const data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
         if (!data || typeof data !== 'object' || !('coins' in data)) return false;
         G.state = Object.assign(fresh(), data);
+        G.state.settings = Object.assign(G.defaultSettings(), G.state.settings);
         if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};
         G.save(); G.audio.setMuted(G.state.muted); G.emit('change'); return true;
       } catch (e) { return false; }

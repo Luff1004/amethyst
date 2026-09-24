@@ -62,6 +62,7 @@
       g.globalAlpha = 1;
     },
     flash(g, e, k, hex = '#ffffff') {
+      k *= G.flashMul();
       if (k <= 0) return;
       g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = k;
       const fg = g.createRadialGradient(e.cx, e.cy, 0, e.cx, e.cy, e.R);

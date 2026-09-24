@@ -41,9 +41,21 @@ G.rgba = (hex, a = 1) => {
 };
 
 const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+/* 설정 - 번쩍임 줄이기: every full-screen white flash is scaled by this */
+G.flashMul = () => (G.opt && G.opt('lessFlash') ? 0.2 : 1);
+
+/* number style follows 설정 - 숫자 표기: 'short' 1.23M / 'kr' 1.23억 / 'full' 1,230,000 */
+const KR = [['간', 1e36], ['구', 1e32], ['양', 1e28], ['자', 1e24], ['해', 1e20], ['경', 1e16], ['조', 1e12], ['억', 1e8], ['만', 1e4]];
 G.fmt = n => {
   n = Math.floor(n);
   if (!isFinite(n)) return 'MAX';
+  const mode = G.opt ? G.opt('numFmt') : 'short';
+  if (mode === 'full' && n < 1e21) return n.toLocaleString('en-US');
+  if (mode === 'kr') {
+    if (n < 1e4) return n.toLocaleString('en-US');
+    const [u, d] = KR.find(([, v]) => n >= v), v = n / d;
+    return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.floor(v).toLocaleString('en-US')) + u;
+  }
   if (n < 1e6) return n.toLocaleString('en-US');
   const i = Math.min(Math.floor(Math.log10(n) / 3), SUF.length - 1);
   const v = n / Math.pow(1000, i);

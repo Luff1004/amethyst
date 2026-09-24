@@ -42,7 +42,7 @@
   }
 
   function crystalShop() {
-    const s = G.state;
+    const s = G.state, multi = G.opt('boxMulti');
     const boxes = G.data.boxes.map(b => {
       const tot = b.w.reduce((a, v) => a + v, 0);
       const odds = b.w.map((w, i) => (w > 0 ? `<i style="--hc:hsl(${G.data.potions[i].hue},85%,66%)">${G.data.potions[i].name} <b>${(w / tot * 100).toFixed(w / tot < 0.01 ? 2 : w / tot < 0.1 ? 1 : 0)}%</b></i>` : '')).join('');
@@ -52,7 +52,7 @@
         <div class="meta"><b style="color:${b.color}">${b.name}</b><small style="color:${b.color}">${b.en}</small>
           <span>열면 <b>크리스탈 1개</b>가 나옵니다 (종류는 확률)</span>
           <div class="odds2">${odds}</div></div>
-        <div class="side">${tk ? `<em class="tk">${G.icon('ticket', 13)} 무료권 ${tk}</em><button class="buy bevel ticketbtn" data-box="${b.id}">${G.icon('ticket', 15)}<span>무료로 열기</span></button>` : crystalBtn(b.cost, `data-box="${b.id}"`)}</div></div>`;
+        <div class="side">${tk ? `<em class="tk">${G.icon('ticket', 13)} 무료권 ${tk}</em><button class="buy bevel ticketbtn" data-box="${b.id}">${G.icon('ticket', 15)}<span>무료로 열기${multi > 1 ? ' x' + multi : ''}</span></button>` : crystalBtn(b.cost * multi, `data-box="${b.id}"`)}${multi > 1 && !tk ? `<em class="tk">${multi}개 한 번에</em>` : ''}</div></div>`;
     }).join('');
     // limited event crystals only show up (and only work) during their own month's event
     const hidden = pt => ((pt.id === 'tutorial' || pt.id === 'hodumaroo') && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0))
@@ -251,28 +251,55 @@
   const ODDS_LABEL = v => v === 0 ? '전체' : G.fmt(v) + '+';
   const BANNERS = [['banner', '큰 배너'], ['toast', '작은 알림'], ['flash', '플래시만']];
 
+  /* 설정: five sections of settings (defaults + meaning in js/core/state.js G.defaultSettings).
+     Every row is either an on/off toggle or a row of choices; both write through data-set/data-val. */
+  let setSec = 'sound';
   function settingsView() {
     const st = G.state.settings;
-    return `<div class="ph"><h2>SETTINGS <small>설정</small></h2></div>
-      <div class="card bevel setcard">
-        <div class="meta"><b>이미 본 컷신은 항상 건너뛰기</b><span>도감에서 개별로 켠 것과 상관없이, 다시 뜬 컷신은 재생하지 않고 바로 보상만 받습니다</span></div>
-        <div class="side"><button class="toggle ${st.autoSkipSeen ? 'on' : ''}" data-set="autoSkipSeen" data-val="${!st.autoSkipSeen}"><i></i></button></div></div>
-      <div class="card bevel setcard">
-        <div class="meta"><b>최소 확률부터 컷신 표시</b><span>이보다 흔한 컷신은 처음 보는 것이라도 재생 없이 보상만 받습니다</span>
-          <div class="segset">${ODDS_STEPS.map(v => `<button class="seg ${st.minOdds === v ? 'on' : ''}" data-set="minOdds" data-val="${v}">${ODDS_LABEL(v)}</button>`).join('')}</div></div></div>
-      <div class="card bevel setcard">
-        <div class="meta"><b>보상 알림 스타일</b><span>컷신을 건너뛸 때(또는 상자를 열 때) 뜨는 알림의 모양</span>
-          <div class="segset">${BANNERS.map(([v, label]) => `<button class="seg ${st.bannerStyle === v ? 'on' : ''}" data-set="bannerStyle" data-val="${v}">${label}</button>`).join('')}</div></div></div>
-      <div class="card bevel setcard" data-preview="1">
-        <div class="meta"><b>알림 미리보기</b><span>지금 스타일로 한 번 띄워봅니다</span></div>
-        <div class="side"><button class="buy bevel small" data-prevwin="1"><span>보기</span></button></div></div>
-      <div class="card bevel setcard">
-        <div class="meta"><b>튜토리얼 다시 보기</b><span>처음 시작할 때 나오는 안내를 다시 재생합니다</span></div>
-        <div class="side"><button class="buy bevel small" data-retutorial="1"><span>시작</span></button></div></div>
-      <div class="card bevel setcard">
-        <div class="meta"><b>진행 데이터 백업</b><span>브라우저 저장소가 지워져도(캐시/쿠키 삭제, 기기 변경 등) 복구할 수 있는 코드를 만들거나 불러옵니다</span></div>
-        <div class="side"><button class="buy bevel small" data-savecode="export"><span>코드 만들기</span></button>
-          <button class="buy bevel small" data-savecode="import"><span>코드 불러오기</span></button></div></div>`;
+    const toggle = (key, title, desc, off) => `<div class="card bevel setcard ${off ? 'na' : ''}">
+        <div class="meta"><b>${title}</b><span>${off || desc}</span></div>
+        <div class="side"><button class="toggle ${st[key] ? 'on' : ''}" data-set="${key}" data-val="${!st[key]}" ${off ? 'disabled' : ''}><i></i></button></div></div>`;
+    const seg = (key, title, desc, opts) => `<div class="card bevel setcard">
+        <div class="meta"><b>${title}</b><span>${desc}</span>
+          <div class="segset">${opts.map(([v, label]) => `<button class="seg bevel ${st[key] === v ? 'on' : ''}" data-set="${key}" data-val="${v}">${label}</button>`).join('')}</div></div></div>`;
+    const action = (title, desc, btns) => `<div class="card bevel setcard"><div class="meta"><b>${title}</b><span>${desc}</span></div><div class="side">${btns}</div></div>`;
+    const VOL = [[0, '끔'], [25, '25%'], [50, '50%'], [75, '75%'], [100, '100%']];
+    const SECS = [['sound', '소리'], ['screen', '화면'], ['cut', '컷신'], ['easy', '편의'], ['data', '데이터']];
+    let body = '';
+    if (setSec === 'sound') body =
+      seg('volume', '전체 볼륨', '게임의 모든 소리 크기 (위쪽 스피커 버튼은 완전 음소거)', VOL) +
+      seg('cutVolume', '컷신 소리', '광물이 등장할 때 나오는 연출 음악과 효과음 크기', VOL) +
+      toggle('sndMine', '채굴 효과음', '크리스탈을 칠 때의 타격음 · 코인 소리 · 치명타 · 파쇄음') +
+      toggle('sndUi', '버튼 효과음', '탭 이동, 구매, 실패할 때 나는 소리') +
+      toggle('bgMute', '백그라운드에서 소리 끄기', '다른 앱이나 탭으로 가면 소리를 멈추고, 돌아오면 다시 켭니다');
+    else if (setSec === 'screen') body =
+      seg('quality', '그래픽 품질', '낮출수록 배터리와 발열이 줄어듭니다 (화면 선명도)', [['high', '고화질'], ['mid', '보통'], ['low', '절약']]) +
+      seg('particles', '파티클 양', '채굴할 때 튀는 파편과 불꽃의 양', [[1, '많이'], [0.55, '보통'], [0.2, '적게'], [0, '끔']]) +
+      seg('shake', '화면 흔들림', '치명타 · 파쇄 · 컷신 등장 때 화면이 흔들리는 정도', [[1, '보통'], [0.5, '약하게'], [0, '끔']]) +
+      toggle('lessFlash', '번쩍임 줄이기', '화면 전체가 하얗게 번쩍이는 효과를 크게 줄입니다 (눈이 피로하거나 빛에 민감할 때)') +
+      toggle('floatText', '떠오르는 숫자', '채굴할 때 크리스탈 위로 떠오르는 +코인 · CRIT 글자') +
+      seg('numFmt', '숫자 표기', `예시: ${[['short', '1.23M'], ['kr', '123만'], ['full', '1,230,000']].map(([, e]) => e).join(' / ')}`, [['short', '1.23M'], ['kr', '123만'], ['full', '전체 숫자']]);
+    else if (setSec === 'cut') body =
+      toggle('autoSkipSeen', '이미 본 컷신은 항상 건너뛰기', '도감에서 개별로 켠 것과 상관없이, 다시 뜬 컷신은 재생하지 않고 바로 보상만 받습니다') +
+      seg('minOdds', '최소 확률부터 컷신 표시', '이보다 흔한 컷신은 처음 보는 것이라도 재생 없이 보상만 받습니다', ODDS_STEPS.map(v => [v, ODDS_LABEL(v)])) +
+      toggle('captions', '컷신 자막', '컷신 중에 나오는 문구를 표시합니다') +
+      seg('bannerStyle', '보상 알림 스타일', '컷신을 건너뛸 때(또는 상자를 열 때) 뜨는 알림의 모양', BANNERS) +
+      action('알림 미리보기', '지금 스타일로 한 번 띄워봅니다', '<button class="buy bevel small" data-prevwin="1"><span>보기</span></button>');
+    else if (setSec === 'easy') body =
+      toggle('boxSpin', '상자 룰렛 연출', '끄면 크리스탈 상자를 열자마자 결과가 바로 나옵니다') +
+      seg('boxMulti', '상자 한 번에 열기', '한 번 누를 때 여는 상자 수 (무료권이 먼저 쓰이고, 여러 개는 결과를 한 번에 보여줍니다)', [[1, '1개'], [10, '10개'], [50, '50개']]) +
+      toggle('pkgConfirm', '패키지 구매 확인', '이벤트 패키지를 살 때 한 번 더 눌러야 구매되게 합니다 (실수 방지)') +
+      toggle('offlineAuto', '오프라인 보상 자동으로 받기', '돌아왔을 때 창을 띄우지 않고 바로 받고 알림만 띄웁니다') +
+      toggle('wakeLock', '화면 꺼짐 방지', '게임을 켜두는 동안 화면이 자동으로 꺼지지 않게 합니다 (자동 채굴을 볼 때)', G.canWakeLock() ? '' : '이 브라우저에서는 지원되지 않습니다') +
+      toggle('vibrate', '진동', '치명타 · 파쇄 · 높은 등급 광물이 나올 때 폰을 진동시킵니다', G.canVibrate() ? '' : '이 기기에서는 지원되지 않습니다 (주로 안드로이드 폰에서 동작)');
+    else body =
+      action('튜토리얼 다시 보기', '처음 시작할 때 나오는 안내를 다시 재생합니다', '<button class="buy bevel small" data-retutorial="1"><span>시작</span></button>') +
+      action('진행 데이터 백업', '브라우저 저장소가 지워져도(캐시/쿠키 삭제, 기기 변경 등) 복구할 수 있는 코드를 만들거나 불러옵니다',
+        '<button class="buy bevel small" data-savecode="export"><span>코드 만들기</span></button><button class="buy bevel small" data-savecode="import"><span>코드 불러오기</span></button>') +
+      action('설정 초기화', '모든 설정을 처음 값으로 되돌립니다 (게임 진행은 그대로)', '<button class="buy bevel small" data-resetset="1"><span>초기화</span></button>');
+    return `<div class="ph"><h2>SETTINGS <small>설정</small></h2><span>바꾸면 바로 적용되고 저장됩니다</span></div>
+      <div class="chips setchips">${SECS.map(([id, label]) => `<button class="chip bevel ${setSec === id ? 'on' : ''}" data-setsec="${id}"><b>${label}</b></button>`).join('')}</div>
+      <div class="list">${body}</div>`;
   }
 
   const views = { shop, up: upgrades, map, codex, crystal: crystalShop, settings: settingsView };
@@ -335,8 +362,14 @@
       const ok = el.dataset.exch === 'max' ? G.act.exchangeMax() : G.act.exchange(+el.dataset.exch);
       if (ok) { G.audio.buy(); toast('크리스탈로 교환했습니다'); } else { G.audio.deny(); toast('코인이 부족합니다 (' + G.fmt(G.data.exchange.rate) + ' = 1 크리스탈)'); }
     } else if (el.dataset.box) {
-      const pt = G.act.openBox(el.dataset.box);
-      if (!pt) { G.audio.deny(); toast('크리스탈이 부족합니다'); } else G.audio.buy();
+      // 설정 - 상자 한 번에 열기: several boxes in one tap, summarised in a single banner
+      const n = G.opt('boxMulti'), box = G.data.boxes.find(b => b.id === el.dataset.box), got = {};
+      let opened = 0;
+      boxBatch = n > 1;
+      for (let i = 0; i < n; i++) { const pt = G.act.openBox(box.id); if (!pt) break; opened++; got[pt.id] = (got[pt.id] || 0) + 1; }
+      boxBatch = false;
+      if (!opened) { G.audio.deny(); toast('크리스탈이 부족합니다'); }
+      else { G.audio.buy(); if (n > 1) showBoxBatch(box, got, opened, n); }
     } else if (el.dataset.puse) {
       const pu = G.stats.potion(el.dataset.puse);
       if (G.act.armPotion(el.dataset.puse)) { G.audio.potion(); toast(pu && pu.grantCut ? '장전됨 - 다음 클릭에 한정 광물이 확정으로 나옵니다' : '장전됨 - 다음 클릭에 럭이 중첩됩니다'); } else { G.audio.deny(); toast('보유한 크리스탈이 없습니다'); }
@@ -349,6 +382,10 @@
       toast(off ? '이 컷신은 더 이상 재생되지 않습니다 (보상은 그대로)' : '컷신이 다시 재생됩니다');
     } else if (el.dataset.cz) {
       codexZone = +el.dataset.cz; G.audio.tab(); render(); panel.scrollTop = 0;
+    } else if (el.dataset.setsec) {
+      setSec = el.dataset.setsec; G.audio.tab(); render(); panel.scrollTop = 0;
+    } else if (el.dataset.resetset) {
+      if (confirm('모든 설정을 처음 값으로 되돌릴까요? (게임 진행은 그대로입니다)')) { G.act.resetSettings(); toast('설정을 초기화했습니다'); }
     } else if (el.dataset.set) {
       const raw = el.dataset.val, val = raw === 'true' ? true : raw === 'false' ? false : isNaN(+raw) ? raw : +raw;
       G.act.setSetting(el.dataset.set, val); G.audio.tab();
@@ -441,13 +478,23 @@
       setTimeout(() => { spinEl.hidden = true; onDone(); }, 300);
     }, 3350);
   }
+  let boxBatch = false;
   G.on('box', ({ box, potion, idx }) => {
-    playBoxSpin(potion, () => {
+    if (boxBatch) return;                               // a multi-open shows one summary instead
+    const done = () => {
       const col = `hsl(${potion.hue},90%,66%)`;
       fireWin(`<small>${box.en} OPENED</small><b>${potion.name}</b><span>${potion.en}</span><em style="color:${col}">LUCK +${G.fmt(potion.luck)}</em>`, col, 2800);
       G.audio.potion(); if (idx >= 4) G.audio.blast(idx);
-    });
+    };
+    if (G.opt('boxSpin')) playBoxSpin(potion, done); else done();   // 설정 - 상자 룰렛 연출
   });
+  function showBoxBatch(box, got, opened, asked) {
+    const list = Object.keys(got).map(id => G.stats.potion(id)).sort((a, b) => (b.luck || 0) - (a.luck || 0));
+    const best = list[0], col = `hsl(${best.hue},90%,66%)`;
+    const rows = list.map(p => `<i style="color:hsl(${p.hue},90%,70%)">${p.name.replace(' 크리스탈', '')} x${got[p.id]}</i>`).join(' · ');
+    fireWin(`<small>${box.en} x${opened}${opened < asked ? ` (크리스탈 부족 · ${asked}개 중)` : ''}</small><b>${box.name} ${opened}개 개봉</b><span style="font-size:12px;line-height:1.5">${rows}</span><em style="color:${col}">최고 ${best.name}</em>`, col, 3400);
+    G.audio.potion(); G.audio.blast(Math.min(8, G.data.potions.indexOf(best)));
+  }
   G.on('tutorialDone', () => toast('견습생의 크리스탈을 받았습니다 - 크리스탈 탭에서 마셔보세요'));
   G.on('tutorialReplayDone', () => toast('튜토리얼을 다시 봤습니다 (크리스탈은 처음 한 번만 지급돼요)'));
   G.on('coinArrive', () => {

@@ -1,6 +1,9 @@
 /* AMETHYST - synthesized sound. No audio files needed. */
 G.audio = (() => {
-  let ctx = null, master = null, noiseBuf = null, muted = false, lastCoin = 0;
+  let ctx = null, master = null, noiseBuf = null, muted = false, lastCoin = 0, cutVolNode = null;
+  /* player sound settings (js/settings.js): master volume, cutscene volume, and two mute groups */
+  const opt = { vol: 1, cutVol: 1, mine: true, ui: true };
+  const masterLevel = () => (muted ? 0 : 0.8 * opt.vol);
   const SCALE = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24]; // pentatonic climb for combos
 
   function init() {
@@ -9,7 +12,7 @@ G.audio = (() => {
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = muted ? 0 : 0.8;
+    master.gain.value = masterLevel();
     const comp = ctx.createDynamicsCompressor();
     master.connect(comp); comp.connect(ctx.destination);
     // reverb send shared by the two cutscene buses
@@ -21,8 +24,10 @@ G.audio = (() => {
     const conv = ctx.createConvolver(); conv.buffer = impulse;
     const revOut = ctx.createGain(); revOut.gain.value = 0.5;
     conv.connect(revOut); revOut.connect(master);
+    // every cutscene sound passes through cutVol (설정 - 컷신 소리) before the master volume
+    cutVolNode = ctx.createGain(); cutVolNode.gain.value = opt.cutVol; cutVolNode.connect(master);
     const mkBus = send => {
-      const b = ctx.createGain(); b.connect(master);
+      const b = ctx.createGain(); b.connect(cutVolNode);
       const s = ctx.createGain(); s.gain.value = send; b.connect(s); s.connect(conv);
       return b;
     };
@@ -71,11 +76,18 @@ G.audio = (() => {
     /* internals for G.sfx (the cutscene sound designer) */
     core: () => (ctx ? { ctx, master, cutBus, hitBus } : null),
     get muted() { return muted; },
-    setMuted(m) { muted = m; if (master) master.gain.value = m ? 0 : 0.8; },
+    setMuted(m) { muted = m; if (master) master.gain.value = masterLevel(); },
+    setOptions(o) {
+      Object.assign(opt, o);
+      if (master) master.gain.value = masterLevel();
+      if (cutVolNode) cutVolNode.gain.value = opt.cutVol;
+    },
+    /* the page going into the background: pause everything (설정 - 백그라운드에서 소리 끄기) */
+    suspend(on) { if (!ctx) return; if (on) ctx.suspend(); else ctx.resume(); },
 
     /* every click: bright coin ping, climbs the scale with the combo */
     coin(combo = 0, quiet = false, kind = 'stone') {
-      if (!ctx) return;
+      if (!ctx || !opt.mine) return;
       const now = performance.now();
       if (now - lastCoin < 35) return;
       lastCoin = now;
@@ -151,13 +163,13 @@ G.audio = (() => {
       noise({ d: 0.5, v: 0.25, f: 3000, f2: 90, q: 0.5, type: 'lowpass' });
     },
     crit() {
-      if (!ctx) return;
+      if (!ctx || !opt.mine) return;
       [0, 4, 7, 12].forEach((s, i) => tone({ f: hz(660, s), type: 'sawtooth', t: i * 0.035, d: 0.25, v: 0.07 }));
       noise({ d: 0.25, v: 0.12, f: 3000, f2: 9000, q: 0.8 });
     },
     /* the "cracking" layer of a mining hit. kind = zone.snd, prog = 0..1 progress to shatter */
     crack(kind = 'stone', prog = 0, quiet = false) {
-      if (!ctx) return;
+      if (!ctx || !opt.mine) return;
       const v = (0.10 + 0.16 * prog) * (quiet ? 0.4 : 1), r = Math.random();
       switch (kind) {
         case 'ore': // metallic tink + dull grind
@@ -191,7 +203,7 @@ G.audio = (() => {
     },
     /* the crystal breaks apart - same family as crack() but big */
     shatter(kind = 'stone') {
-      if (!ctx) return;
+      if (!ctx || !opt.mine) return;
       tone({ f: 200, f2: 40, type: 'sine', d: 0.4, v: 0.5 });
       switch (kind) {
         case 'ore':
@@ -218,17 +230,17 @@ G.audio = (() => {
       [0, 7, 12, 19].forEach((s, i) => tone({ f: hz(523, s), type: 'triangle', t: 0.06 + i * 0.05, d: 0.35, v: 0.07 }));
     },
     buy() {
-      if (!ctx) return;
+      if (!ctx || !opt.ui) return;
       tone({ f: 523, type: 'square', d: 0.08, v: 0.07 });
       tone({ f: 784, type: 'square', t: 0.07, d: 0.08, v: 0.07 });
       tone({ f: 1047, type: 'triangle', t: 0.14, d: 0.25, v: 0.1 });
     },
     deny() {
-      if (!ctx) return;
+      if (!ctx || !opt.ui) return;
       tone({ f: 160, f2: 110, type: 'sawtooth', d: 0.16, v: 0.08 });
     },
     tab() {
-      if (!ctx) return;
+      if (!ctx || !opt.ui) return;
       tone({ f: 1400, f2: 900, type: 'square', d: 0.04, v: 0.04 });
     },
     /* cutscene build-up: rising sweep + accelerating heartbeat. Routed through cutBus so a skip can kill it. */

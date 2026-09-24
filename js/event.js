@@ -118,7 +118,7 @@
     const pb = t.closest('[data-pkg]');
     if (!pb) return;
     const id = pb.dataset.pkg, pk = G.event.current().packages.find(p => p.id === id);
-    if (confirmId !== id) {                                   // first tap arms it, second tap buys
+    if (confirmId !== id && G.opt('pkgConfirm')) {            // first tap arms it, second tap buys (설정 - 구매 확인)
       if (G.state.crystals < pk.sale) { G.audio.deny(); G.emit('toast', `크리스탈이 부족합니다 (${G.fmtInt(pk.sale)} 필요)`); pb.classList.add('shake'); setTimeout(() => pb.classList.remove('shake'), 400); return; }
       setConfirm(modal.querySelector(`[data-pkg="${confirmId}"]`), false);
       confirmId = id; G.audio.tab(); setConfirm(pb, true);

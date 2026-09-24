@@ -161,6 +161,7 @@
       g.restore();
     },
     flash(g, e, a) {
+      a *= G.flashMul();
       if (a <= 0) return;
       g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(0, 0, e.W, e.H);
     },
@@ -419,7 +420,7 @@
     // reveal flash
     const revealMs = d.duration * d.revealAt, rt = a.time - revealMs;
     const fl = grand ? 1100 : 700;
-    if (rt > 0 && rt < fl) { g.fillStyle = `rgba(255,255,255,${(grand ? 0.7 : 0.55) * (1 - rt / fl)})`; g.fillRect(0, 0, W, H); }
+    if (rt > 0 && rt < fl) { g.fillStyle = `rgba(255,255,255,${(grand ? 0.7 : 0.55) * (1 - rt / fl) * G.flashMul()})`; g.fillRect(0, 0, W, H); }
 
     // letterbox
     const bar = H * (grand ? 0.12 : 0.085) * E.outCubic(seg(a.time, 0, 800));
@@ -434,7 +435,7 @@
     // not every line has to sit at the bottom, Sol's-RNG-style reveal text drifts around the frame.
     for (const c of d.captions) {
       const t0 = c.a * d.duration, t1 = c.b * d.duration, t = a.time;
-      const txt = c.en || c.ko; if (!txt) continue;
+      const txt = c.en || c.ko; if (!txt || !G.opt('captions')) continue;
       if (t < t0 || t > t1) continue;
       const k = Math.min(E.outCubic(seg(t, t0, t0 + 500)), 1 - E.inQuad(seg(t, t1 - 450, t1)));
       if (c.v) {

@@ -244,7 +244,14 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 
 /* ------------- settings ------------- */
 .setcard { grid-template-columns: 1fr auto; }
-.setcard .meta span { max-width: 220px; }
+.setcard .meta span { max-width: 340px; }
+.setcard.na { opacity: .5; }
+.setcard.na .meta span { color: var(--bad); }
+.chips.setchips { grid-template-columns: repeat(5, 1fr); }
+.chips.setchips .chip b { color: #e8e0ff; letter-spacing: .08em; }
+.chips.setchips .chip.on { --line: var(--acc); --fill: linear-gradient(180deg, #2b1a52, #160e2c); }
+.chips.setchips .chip.on b { color: #fff; }
+.setcard .side { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .toggle { --c: 16px; width: 46px; height: 26px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); position: relative; flex: none; }
 .toggle i { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #8e86a8; transition: transform .15s, background .15s; display: block; }
 .toggle.on { background: rgba(169,112,255,.35); border-color: var(--acc); }

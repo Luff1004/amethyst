@@ -21,6 +21,11 @@
     const coins = Math.floor(rate * perHit * sec * OFF.eff), hits = Math.floor(rate * sec * OFF.eff);
     if (coins <= 0) return;
     const h = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60), capped = sec >= OFF.capH * 3600 - 1;
+    if (G.opt('offlineAuto')) {                 // 설정 - 오프라인 보상 자동으로 받기: no card, just the coins
+      G.addCoins(coins); G.save(); G.emit('change'); G.audio.pour(10);
+      G.emit('toast', `자리를 비운 동안 +${G.fmt(coins)} 코인 (${h ? h + '시간 ' : ''}${mm}분)`);
+      return;
+    }
     m.innerHTML = `<div class="scrim"></div><div class="ofcard bevel">
       <div class="ofspin">${G.icon('crystal', 34)}</div>
       <small>WHILE YOU WERE AWAY</small>

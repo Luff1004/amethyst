@@ -7,11 +7,13 @@
   let W = 0, H = 0, DPR = 1;
 
   function resize() {
-    DPR = Math.min(2, window.devicePixelRatio || 1);
+    const capQ = { high: 2, mid: 1.5, low: 1 }[G.opt('quality')] || 2;     // 설정 - 그래픽 품질
+    DPR = Math.min(capQ, window.devicePixelRatio || 1);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   }
   window.addEventListener('resize', resize);
+  G.on('settings', k => { if (k === 'quality' || k === '*') resize(); });
   resize();
 
   /* ---------------- state of the world ---------------- */
@@ -99,17 +101,20 @@
 
   /* ---------------- particles ---------------- */
   function cap() { if (fxs.length > 260) fxs.splice(0, fxs.length - 260); }
+  const fewer = () => Math.random() > G.opt('particles');          // 설정 - 파티클 양
   function shard(x, y, hue, sp = 1) {
+    if (fewer()) return;
     const a = Math.random() * TAU, v = (120 + Math.random() * 380) * sp;
     fxs.push({ k: 'shard', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 14,
       s: 3 + Math.random() * 6, life: 0, max: 0.6 + Math.random() * 0.6, hue, l: 45 + Math.random() * 30 });
   }
   function spark(x, y, col, sp = 1) {
+    if (fewer()) return;
     const a = Math.random() * TAU, v = (180 + Math.random() * 420) * sp;
     fxs.push({ k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: 0.25 + Math.random() * 0.25, col });
   }
   function ring(x, y, col, r1 = 90, w = 2, max = 0.45) { fxs.push({ k: 'ring', x, y, life: 0, max, r1, col, w }); }
-  function text(x, y, str, col, size = 16, max = 0.9) { let n = 0; for (const p of fxs) if (p.k === 'text') n++; if (n > 8) return; fxs.push({ k: 'text', x, y, vy: -60, life: 0, max, str, col, size }); }
+  function text(x, y, str, col, size = 16, max = 0.9) { if (!G.opt('floatText')) return; let n = 0; for (const p of fxs) if (p.k === 'text') n++; if (n > 8) return; fxs.push({ k: 'text', x, y, vy: -60, life: 0, max, str, col, size }); }
   /* single small coins (capped hard - hundreds of sprites is what made it laggy) */
   function coins(x, y, n, spread = 1) {
     n = Math.min(n, 3);
@@ -171,7 +176,7 @@
     if (!auto || crit) ring(x, y, crit ? '#ffffff' : `hsl(${h},90%,70%)`, crit ? 120 : 60, crit ? 3 : 1.5, crit ? 0.6 : 0.35);
     coins(x, y, auto ? (Math.random() < 0.25 ? 1 : 0) : crit ? 3 : 1 + (Math.random() < 0.35 ? 1 : 0));
     if (!auto || crit) text(x + (Math.random() - 0.5) * 30, y - 14, (crit ? 'CRIT +' : '+') + G.fmt(gain), crit ? '#ffffff' : '#ffe08a', crit ? 22 : 15, crit ? 1.1 : 0.8);
-    if (crit) flashA = Math.max(flashA, 0.18);
+    if (crit) { flashA = Math.max(flashA, 0.18); if (!auto) G.buzz(12); }
 
     // crystal HP - each hit opens a new crack where it landed (a gated hard-zone gem barely dents)
     if (!gated) hits++;
@@ -187,7 +192,7 @@
       bundle(c.x, c.y, bonus, 3, 1.1);
       text(c.x, c.y - R * 0.3, 'SHATTER +' + G.fmt(bonus), '#ffffff', 22, 1.3);
       text(c.x, c.y + R * 0.05, 'LUCK x5', `hsl(${h},95%,80%)`, 17, 1.1);
-      shake = 1; flashA = 0.35;
+      shake = 1; flashA = 0.35; G.buzz(40);
       shatterLuck = true;
       crystal = makeCrystal((Math.random() * 1e9) | 0);
     }
@@ -505,11 +510,12 @@
     g.setTransform(DPR, 0, 0, DPR, 0, 0);
     g.clearRect(0, 0, W, H);
     g.save();
-    if (shake > 0) g.translate((Math.random() - 0.5) * shake * 10, (Math.random() - 0.5) * shake * 10);
+    const sk = shake * G.opt('shake');                                // 설정 - 화면 흔들림
+    if (sk > 0) g.translate((Math.random() - 0.5) * sk * 10, (Math.random() - 0.5) * sk * 10);
     drawBackground(t);
     if (G.state.level1.crystalGone) drawVoidWhereCrystalWas(t); else drawCrystal(t, now);
     drawParticles();
-    if (flashA > 0) { g.fillStyle = `rgba(255,255,255,${flashA})`; g.fillRect(-20, -20, W + 40, H + 40); }
+    if (flashA > 0) { g.fillStyle = `rgba(255,255,255,${flashA * G.flashMul()})`; g.fillRect(-20, -20, W + 40, H + 40); }
     g.restore();
     G.cutscenes.draw(g, W, H);
     if (G.cutscenes.active) drawParticles();   // coins from a finished cutscene still fly above it
