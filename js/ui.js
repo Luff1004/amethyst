@@ -12,6 +12,15 @@
   const mapTab = document.querySelector('[data-tab=map]');
   mapTab.insertAdjacentHTML('beforeend', '<i class="badge"></i>');
   const mapBadge = mapTab.querySelector('.badge');
+  // a NEW dot on 도감 while anything found hasn't been looked at in the codex yet
+  const codexTab = document.querySelector('[data-tab=codex]');
+  codexTab.insertAdjacentHTML('beforeend', '<i class="badge newb">N</i>');
+  const codexBadge = codexTab.querySelector('.badge');
+  function paintCodexBadge() {
+    const seen = G.state.codexSeen; if (!seen || G.config.viewer) return;
+    let any = false; for (const id in G.state.codex) if (G.state.codex[id].n > 0 && !seen[id]) { any = true; break; }
+    codexBadge.classList.toggle('show', any);
+  }
   const paintSound = () => { btnSound.innerHTML = G.icon(G.audio.muted ? 'mute' : 'sound', 20); };
 
   function toast(msg) {
@@ -118,15 +127,23 @@
       }).join('')}</div>`;
   }
 
+  /* 강화: buy 1 / 10 / as many as you can afford per tap; the card you just upgraded flashes */
+  let lastUp = null, lastUpT = 0;
   function upgrades() {
+    const mode = G.opt('upgMulti');
+    const modes = [[1, 'x1'], [10, 'x10'], ['max', '최대']].map(([v, l]) => `<button class="seg bevel ${mode === v ? 'on' : ''}" data-upm="${v}">${l}</button>`).join('');
     return `<div class="ph"><h2>UPGRADE <small>강화</small></h2><span>영구 적용</span></div>
+      <div class="upmode"><span>한 번에</span><div class="segset">${modes}</div></div>
       <div class="list">${G.data.upgrades.map(u => {
         const l = G.stats.level(u.id), maxed = l >= u.max;
-        return `<div class="card bevel">
+        const plan = G.act.upgradePlan(u.id, mode), n = Math.max(1, plan.n), cost = plan.n ? plan.cost : u.cost(l);
+        const to = Math.min(u.max, l + n), pct = u.max < 1e6 ? Math.round(l / u.max * 100) : 0;
+        return `<div class="card bevel upcard ${lastUp === u.id && performance.now() - lastUpT < 700 ? 'flash' : ''}">
           <div class="meta"><b>${u.name}</b><small>${u.en} &nbsp; LV ${l}${u.max < 1e6 ? ' / ' + u.max : ''}</small>
             <span>${u.desc}</span>
-            <span class="val">${u.show(u.value(l))}${maxed ? '' : ' <i>&rsaquo;</i> ' + u.show(u.value(l + 1))}</span></div>
-          <div class="side">${maxed ? '<button class="buy bevel max" disabled><span>MAX</span></button>' : coinBtn(u.cost(l), `data-up="${u.id}"`)}</div></div>`;
+            <span class="val">${u.show(u.value(l))}${maxed ? '' : ` <i>&rsaquo;</i> ${u.show(u.value(to))}${to - l > 1 ? ` <em class="lvup">+${to - l}레벨</em>` : ''}`}</span>
+            ${u.max < 1e6 ? `<i class="bar"><u style="width:${pct}%"></u></i>` : ''}</div>
+          <div class="side">${maxed ? '<button class="buy bevel max" disabled><span>MAX</span></button>' : coinBtn(cost, `data-up="${u.id}" data-upn="${mode === 'max' ? n : mode}"`)}</div></div>`;
       }).join('')}</div>`;
   }
 
@@ -185,7 +202,23 @@
       }).join('')}</div>`;
   }
 
-  let codexZone = -1;
+  let codexZone = -1, codexFilter = 'all', codexQuery = '';
+  const pendingSeen = new Set();       // NEW cards currently on screen - marked seen when you leave them
+  function commitSeen() {
+    if (!pendingSeen.size || !G.state.codexSeen) { pendingSeen.clear(); return; }
+    pendingSeen.forEach(id => { G.state.codexSeen[id] = 1; }); pendingSeen.clear(); G.save();
+  }
+  // search filters the rendered cards in place (re-rendering would steal the input's focus)
+  function applySearch() {
+    const q = codexQuery.trim().toLowerCase();
+    const cards = panel.querySelectorAll('.cxcard');
+    cards.forEach(c => { c.hidden = !!q && !c.dataset.name.includes(q); });
+    panel.querySelectorAll('.list > .band').forEach(b => {
+      let n = b.nextElementSibling, any = false;
+      while (n && !n.classList.contains('band')) { if (!n.hidden) { any = true; break; } n = n.nextElementSibling; }
+      b.hidden = !!q && !any;
+    });
+  }
   const known = c => G.config.unlockCodex || ((G.state.codex[c.id] || {}).n > 0);
   const mapOpen = i => G.config.unlockCodex || i <= G.state.maxZone;
 
@@ -196,15 +229,21 @@
     const SP = Z.length, specials = () => G.cutscenes.list.filter(c => c.special).sort((a, b) => a.month - b.month);
     const zc = c => (c === SP ? specials() : G.cutscenes.inZone(c));
     const foundOf = i => zc(i).filter(c => (s.codex[c.id] || {}).n > 0).length;
-    const spChip = n => `<button class="chip bevel spchip ${codexZone === SP ? 'on' : ''}" data-cz="${SP}" style="--zh:45"><b>SP</b><span>${n}</span></button>`;
+    const seenMap = s.codexSeen || {}, isFound = c => (s.codex[c.id] || {}).n > 0, isNew = c => !G.config.viewer && isFound(c) && !seenMap[c.id];
+    const dot = i => (zc(i).some(isNew) ? '<i class="cdot"></i>' : '');
+    const spChip = n => `<button class="chip bevel spchip ${codexZone === SP ? 'on' : ''}" data-cz="${SP}" style="--zh:45"><b>SP</b><span>${n}</span>${dot(SP)}</button>`;
     const chips = Z.map((z, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''} ${mapOpen(i) ? '' : 'off'}" data-cz="${i}" style="--zh:${z.hue}">
-        <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span></button>`).join('') + spChip(foundOf(SP) + '/' + zc(SP).length);
+        <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span>${dot(i)}</button>`).join('') + spChip(foundOf(SP) + '/' + zc(SP).length);
     const z = codexZone === SP ? { name: '스페셜', en: 'SPECIAL · 월별 이벤트 한정 광물', hue: 45 } : Z[codexZone];
-    const L = zc(codexZone), open = codexZone === SP || mapOpen(codexZone);
+    // 필터: 전체 / 발견 / 미발견 / NEW
+    const keep = c => codexFilter === 'found' ? isFound(c) : codexFilter === 'unfound' ? !isFound(c) : codexFilter === 'new' ? isNew(c) : true;
+    const L = zc(codexZone).filter(c => G.config.viewer || keep(c)), open = codexZone === SP || mapOpen(codexZone);
     const oddsTxt = c => c.special ? `SPECIAL · ${c.month}월 ${c.eventName} 한정` : `1 in ${G.fmtInt(c.odds)}`;
     let head = '', body = '';
     if (!open) {
       body = `<div class="empty">${G.icon('lock', 20)}<span>아직 도달하지 못한 지역입니다</span></div>`;
+    } else if (!L.length) {
+      body = `<div class="empty">${G.icon('book', 20)}<span>${codexFilter === 'new' ? '새로 발견한 광물이 없습니다' : '해당하는 광물이 없습니다'}</span></div>`;
     } else {
       let last = -1;
       L.forEach(c => {
@@ -221,9 +260,10 @@
             <div class="side"><button class="buy bevel" data-replay="${c.id}">${G.icon('play', 14)}<span>보기</span></button></div></div>`;
           return;
         }
-        body += `<div class="card bevel ${ok ? '' : 'dim'} ${off ? 'skipped' : ''}" style="--tc:${t.color}">
+        const fresh = isNew(c); if (fresh) pendingSeen.add(c.id);
+        body += `<div class="card bevel cxcard ${ok ? '' : 'dim'} ${off ? 'skipped' : ''} ${fresh ? 'isnew' : ''}" style="--tc:${t.color}" data-name="${ok ? c.name.toLowerCase() : ''}">
           <div class="stripe"></div>
-          <div class="meta"><b>${ok ? c.name : '???'}</b>${off ? '<small class="skip">SKIP</small>' : ''}
+          <div class="meta"><b>${ok ? c.name : '???'}${fresh ? '<small class="newtag">NEW</small>' : ''}</b>${off ? '<small class="skip">SKIP</small>' : ''}
             <span class="odds">${oddsTxt(c)}</span>
             ${luck > 1.001 && !c.special ? `<span class="eff">현재 1 in ${G.fmtInt(eff)}</span>` : ''}
             <span>${seen ? `발견 ${G.fmtInt(rec.n)}회 &nbsp;/&nbsp; 최고 +${G.fmt(rec.best)}` : '미발견'}</span></div>
@@ -241,9 +281,13 @@
         <div class="zhead" style="--zh:${z.hue}"><b>${z.name}</b><small>${z.en}</small></div>
         <div class="list">${body}</div>`;
     }
-    head = `<div class="ph"><h2>CODEX <small>도감</small></h2><span>전체 발견 <b>${found}</b> / ${total}</span></div>
+    const newCount = G.cutscenes.list.filter(isNew).length;
+    const filters = [['all', '전체'], ['found', '발견'], ['unfound', '미발견'], ['new', `NEW${newCount ? ' ' + newCount : ''}`]]
+      .map(([v, l]) => `<button class="seg bevel ${codexFilter === v ? 'on' : ''} ${v === 'new' && newCount ? 'hasnew' : ''}" data-cf="${v}">${l}</button>`).join('');
+    head = `<div class="ph"><h2>CODEX <small>도감</small></h2><span>전체 발견 <b>${found}</b> / ${total} <em class="pct">(${Math.floor(found / total * 100)}%)</em></span></div>
       <div class="chips">${chips}</div>
       <div class="zhead" style="--zh:${z.hue}"><b>${z.name}</b><small>${z.en}</small></div>
+      <div class="cxtools"><input type="search" class="cxsearch" placeholder="이 지도에서 광물 이름 검색" value="${codexQuery.replace(/"/g, '&quot;')}" data-cxq><div class="segset">${filters}</div></div>
       ${G.config.unlockCodex ? '<div class="review">검토 모드: 모든 컷신이 열려 있습니다 (js/config.js)</div>' : ''}`;
     return `${head}<div class="list">${body}</div><div class="reset"><button data-reset>데이터 초기화</button></div>`;
   }
@@ -309,7 +353,9 @@
       toggle('pkgConfirm', '패키지 구매 확인', '이벤트 패키지를 살 때 한 번 더 눌러야 구매되게 합니다 (실수 방지)') +
       toggle('offlineAuto', '오프라인 보상 자동으로 받기', '돌아왔을 때 창을 띄우지 않고 바로 받고 알림만 띄웁니다') +
       toggle('wakeLock', '화면 꺼짐 방지', '게임을 켜두는 동안 화면이 자동으로 꺼지지 않게 합니다 (자동 채굴을 볼 때)', G.canWakeLock() ? '' : '이 브라우저에서는 지원되지 않습니다') +
-      toggle('vibrate', '진동', '치명타 · 파쇄 · 높은 등급 광물이 나올 때 폰을 진동시킵니다', G.canVibrate() ? '' : '이 기기에서는 지원되지 않습니다 (주로 안드로이드 폰에서 동작)');
+      toggle('vibrate', '진동', '치명타 · 파쇄 · 높은 등급 광물이 나올 때 폰을 진동시킵니다', G.canVibrate() ? '' : '이 기기에서는 지원되지 않습니다 (주로 안드로이드 폰에서 동작)') +
+      `<div class="card bevel setcard"><div class="meta"><b>키보드 단축키 (PC)</b><span>
+        <span class="kbds"><kbd>Space</kbd> 채굴 · 컷신 넘기기 <kbd>1</kbd>~<kbd>5</kbd> 탭 열기 <kbd>S</kbd> 설정 <kbd>E</kbd> 이벤트 <kbd>M</kbd> 소리 <kbd>A</kbd> 자동 채굴 <kbd>Esc</kbd> 닫기</span></span></div></div>`;
     else body =
       action('튜토리얼 다시 보기', '처음 시작할 때 나오는 안내를 다시 재생합니다', '<button class="buy bevel small" data-retutorial="1"><span>시작</span></button>') +
       action('진행 데이터 백업', '브라우저 저장소가 지워져도(캐시/쿠키 삭제, 기기 변경 등) 복구할 수 있는 코드를 만들거나 불러옵니다',
@@ -324,16 +370,24 @@
 
   function render() {
     if (!open) return;
+    // don't rebuild the codex under the player's fingers while they're typing a search
+    if (open === 'codex' && document.activeElement && document.activeElement.matches && document.activeElement.matches('[data-cxq]')) return;
     const top = panel.scrollTop;
     panel.innerHTML = views[open]();
     panel.scrollTop = top;
+    if (open === 'codex') applySearch();
   }
 
+  // every tab remembers where you'd scrolled to
+  const scrollMem = {};
   function setOpen(name) {
+    if (open) scrollMem[open] = panel.scrollTop;
+    if (open === 'codex') commitSeen();
     open = open === name ? null : name;
     tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === open));
     panel.hidden = !open;
-    if (open) { panel.scrollTop = 0; render(); }
+    if (open) { panel.scrollTop = 0; render(); panel.scrollTop = scrollMem[open] || 0; }
+    paintCodexBadge();
   }
   G.ui = { closePanel() { if (open && !G.config.viewer) setOpen(open); } };
   if (G.config.viewer) setOpen('codex');
@@ -369,8 +423,14 @@
       else if (r === 'ok') { G.audio.buy(); toast('맛있게 먹었습니다 - 행운 상승'); }
       else if (r === 'already') { G.audio.deny(); toast('이미 영구 적용 중입니다'); }
       else { G.audio.deny(); toast('보유한 음식이 없습니다'); }
+    } else if (el.dataset.upm) {
+      const v = el.dataset.upm === 'max' ? 'max' : +el.dataset.upm;
+      G.act.setSetting('upgMulti', v); G.audio.tab();
     } else if (el.dataset.up) {
-      if (G.act.buyUpgrade(el.dataset.up)) G.audio.buy(); else { G.audio.deny(); toast('코인이 부족합니다'); }
+      lastUp = el.dataset.up; lastUpT = performance.now();
+      const n = G.act.buyUpgrade(el.dataset.up, Math.max(1, +el.dataset.upn || 1));
+      if (n) { G.audio.buy(); if (n > 1) toast(`${G.data.upgrades.find(u => u.id === el.dataset.up).name} +${n}레벨`); }
+      else { lastUp = null; G.audio.deny(); toast('코인이 부족합니다'); }
     } else if (el.dataset.zone) {
       const i = +el.dataset.zone, z = G.data.zones[i];
       if (G.act.travel(i)) { G.audio.buy(); } else { G.audio.deny(); toast(z && z.unlock ? '아직 해금 조건을 만족하지 않았습니다' : '코인이 부족합니다'); }
@@ -399,7 +459,10 @@
       const off = G.act.toggleSkip(el.dataset.skip); G.audio.tab();
       toast(off ? '이 컷신은 더 이상 재생되지 않습니다 (보상은 그대로)' : '컷신이 다시 재생됩니다');
     } else if (el.dataset.cz) {
-      codexZone = +el.dataset.cz; G.audio.tab(); render(); panel.scrollTop = 0;
+      if (+el.dataset.cz !== codexZone) commitSeen();
+      codexZone = +el.dataset.cz; G.audio.tab(); render(); panel.scrollTop = 0; paintCodexBadge();
+    } else if (el.dataset.cf) {
+      codexFilter = el.dataset.cf; G.audio.tab(); render(); panel.scrollTop = 0;
     } else if (el.dataset.themeuse) {
       if (G.act.setTheme(el.dataset.themeuse)) { G.audio.potion(); toast(`${G.data.themes.find(t => t.id === el.dataset.themeuse).name} 테마를 적용했습니다`); }
     } else if (el.dataset.themetry) {
@@ -440,6 +503,10 @@
   });
 
   G.on('change', render);
+  panel.addEventListener('input', ev => {
+    if (!ev.target.matches('[data-cxq]')) return;
+    codexQuery = ev.target.value; applySearch();
+  });
 
   /* reward banner for cutscenes that were switched off / filtered by settings, and potion box results.
      style comes from settings ('banner' | 'toast' | 'flash') - see 설정 tab. */
@@ -556,14 +623,97 @@
     if (str !== lastShown) { coinVal.textContent = str; lastShown = str; }
   }
   let last = performance.now();
-  (function loop(now) { hud(Math.min(0.1, (now - last) / 1000)); last = now; requestAnimationFrame(loop); })(last);
+  requestAnimationFrame(function loop(now) { const dt = Math.min(0.1, (now - last) / 1000); hud(dt); crysRoll(dt); last = now; requestAnimationFrame(loop); });
+
+  /* ---------------- HUD details ---------------- */
+  const cpsEl = $('#cps'), buffsEl = $('#buffs'), luckPop = $('#luckPop');
+  let crysShown = null, lastBuffs = '';
+  const fmtB = v => (v < 100 && v % 1 ? v.toFixed(1) : G.fmt(v));      // food bonuses like +0.5 / +1.5
+  // crystals roll toward their real value like the coin counter does
+  function crysRoll(dt) {
+    const c = G.state.crystals;
+    if (crysShown === null) crysShown = c;
+    const d = c - crysShown; crysShown += Math.abs(d) < 1 ? d : d * (1 - Math.exp(-dt * 8));
+    const str = G.fmt(crysShown); if (crysVal.textContent !== str) crysVal.textContent = str;
+  }
+  function paintHud() {
+    const s = G.state;
+    // coins per second from the auto-miner (expected value, crits included)
+    const rate = s.autoOn ? G.stats.autoRate() : 0;
+    const cps = rate * G.stats.clickValue() * (1 + G.stats.critChance() * (G.stats.critMul() - 1));
+    cpsEl.textContent = cps > 0 ? `+${G.fmt(cps)}/s` : '';
+    // active food buffs as small chips with a countdown
+    const list = G.data.foods.filter(f => !f.perm && G.stats.buffLeft(f.id) > 0);
+    const key = list.map(f => f.id).join();
+    if (key !== lastBuffs) {
+      lastBuffs = key;
+      buffsEl.innerHTML = list.map(f => `<span class="bchip" data-bf="${f.id}" title="${f.name}">${G.icon(f.icon, 13)}<b>+${fmtB(f.bonus)}</b><em></em><i></i></span>`).join('');
+    }
+    list.forEach(f => {
+      const el = buffsEl.querySelector(`[data-bf="${f.id}"]`); if (!el) return;
+      const left = G.stats.buffLeft(f.id);
+      el.querySelector('em').textContent = G.fmtTime(left);
+      el.querySelector('i').style.width = Math.min(100, left / f.duration * 100) + '%';
+      el.classList.toggle('low', left < 15);
+    });
+  }
+  // tap the luck chip: where your luck comes from
+  function showLuckBreakdown() {
+    const rows = [['기본', 1]], s = G.state;
+    const core = G.stats.val('luck'); if (core > 0) rows.push([`행운의 핵 Lv.${G.stats.level('luck')}`, core]);
+    for (const f of G.data.foods) {
+      if (f.perm && s.perm[f.id]) rows.push([`${f.name} (영구)`, f.bonus]);
+      else if (!f.perm && G.stats.buffLeft(f.id) > 0) rows.push([`${f.name} · ${G.fmtTime(G.stats.buffLeft(f.id))}`, f.bonus]);
+    }
+    const armed = G.stats.armedLuck();
+    const total = G.stats.luck();
+    luckPop.innerHTML = `<b>LUCK 구성</b>${rows.map(([n, v]) => `<div><span>${n}</span><em>${n === '기본' ? 'x1' : '+' + fmtB(v)}</em></div>`).join('')}
+      <div class="tot"><span>합계</span><em>${G.fmtLuck(total)}</em></div>
+      ${armed ? `<div class="arm"><span>다음 클릭 (장전 크리스탈)</span><em>+${G.fmt(armed)}</em></div>` : ''}
+      <small>파쇄 직후 클릭은 행운 x5</small>`;
+    luckPop.hidden = false; void luckPop.offsetWidth; luckPop.classList.add('show');
+    clearTimeout(showLuckBreakdown.t);
+    showLuckBreakdown.t = setTimeout(hideLuck, 4500);
+  }
+  function hideLuck() { luckPop.classList.remove('show'); setTimeout(() => { if (!luckPop.classList.contains('show')) luckPop.hidden = true; }, 200); }
+  luckChip.addEventListener('click', () => { G.audio.init(); G.audio.tab(); if (luckPop.classList.contains('show')) hideLuck(); else showLuckBreakdown(); });
+  luckChip.style.cursor = 'pointer';
+
+  // a "no" sound also shakes the button that was pressed, so it's obvious what failed
+  let pressed = null;
+  document.addEventListener('pointerdown', e => { pressed = e.target.closest && e.target.closest('button'); }, true);
+  const deny0 = G.audio.deny.bind(G.audio);
+  G.audio.deny = () => {
+    deny0();
+    const b = pressed; if (!b || !b.isConnected) return;
+    b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope');
+    setTimeout(() => b.classList.remove('nope'), 400);
+  };
+
+  /* PC shortcuts: 1-5 tabs, S settings, E event, M sound, A auto, Esc closes whatever is open */
+  window.addEventListener('keydown', ev => {
+    if (ev.repeat || ev.ctrlKey || ev.metaKey || ev.altKey || G.config.viewer) return;
+    if (ev.target.matches && ev.target.matches('input, textarea')) { if (ev.key === 'Escape') ev.target.blur(); return; }
+    if (G.cutscenes.active || document.getElementById('level1').classList.contains('show')) return;
+    const k = ev.key.toLowerCase(), order = ['shop', 'map', 'up', 'codex', 'crystal'];
+    if (k >= '1' && k <= '5') { const b = document.querySelector(`[data-tab="${order[+k - 1]}"]`); if (b) b.click(); }
+    else if (k === 's') $('#btnGear').click();
+    else if (k === 'e') { const b = $('#btnEvent'); if (!b.hidden) b.click(); }
+    else if (k === 'm') btnSound.click();
+    else if (k === 'a') btnAuto.click();
+    else if (k === 'escape') {
+      const em = $('#eventModal');
+      if (!em.hidden) { const x = em.querySelector('.pkdone [data-pdok]') || em.querySelector('[data-eclose]'); if (x) x.click(); }
+      else if (!luckPop.hidden) hideLuck();
+      else G.ui.closePanel();
+    }
+  });
 
   /* slow tick: timers, affordability, luck chip, footer */
   function tick() {
     const luck = G.stats.luck();
     // crystals, auto button, armed-crystals luck chip (several can stack now)
     const s = G.state, ap = G.stats.armedTop(), armedLuck = G.stats.armedLuck();
-    crysVal.textContent = G.fmt(s.crystals);
     btnAuto.classList.toggle('off', !s.autoOn); btnAuto.classList.toggle('idle', G.stats.autoRate() <= 0);
     const guaranteeTop = G.stats.armedList().find(p => p.guarantee), grantTop = G.stats.armedList().find(p => p.grantCut);
     luckChip.classList.toggle('potion', !!ap);
@@ -576,6 +726,8 @@
     // a fresh map unlock badge on the 지도 tab, until the player actually travels there
     const nz = G.data.zones[G.state.maxZone + 1];
     mapBadge.classList.toggle('show', !!(nz && nz.unlock && G.stats.meetsUnlock(nz.unlock)));
+    paintCodexBadge();
+    paintHud();
     if (!open) return;
     panel.querySelectorAll('[data-cost]').forEach(b => b.classList.toggle('poor', G.state.coins < +b.dataset.cost));
     panel.querySelectorAll('[data-ccost]').forEach(b => b.classList.toggle('poor', G.state.crystals < +b.dataset.ccost));

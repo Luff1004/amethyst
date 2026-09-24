@@ -10,6 +10,7 @@ G.defaultSettings = () => ({
   autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner', bannerTime: 1, captions: true,
   // convenience
   boxSpin: true, boxMulti: 1, pkgConfirm: true, wakeLock: false, vibrate: false, offlineAuto: false,
+  upgMulti: 1,                       // 강화 tab: how many levels one tap buys (1 / 10 / 'max')
 });
 G.opt = key => {
   const s = G.state && G.state.settings;
@@ -28,6 +29,7 @@ G.opt = key => {
     tickets: {}, foodInv: {}, perm: {}, pkgBought: {},
     lastSeen: 0,                     // when the game was last saved - offline mining (js/offline.js)
     theme: 'amethyst', themesOwned: { amethyst: true },   // 설정 - 테마 (js/data/themes.js)
+    codexSeen: null,                 // minerals already looked at in the codex (anything found but not in here shows NEW)
     settings: G.defaultSettings(),
     /* LEVEL 1 - the secret ARG-ish sequence gating the real 5th map (js/level1.js).
        gauge: 0..1 progress this run through the crystal-crack ending (resets each playthrough).
@@ -47,6 +49,8 @@ G.opt = key => {
       const raw = localStorage.getItem(KEY);
       if (raw) { G.state = Object.assign(fresh(), JSON.parse(raw)); G.state.settings = Object.assign(G.defaultSettings(), G.state.settings); }
       if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};   // older saves had a single id string
+      // saves from before the NEW badge: everything already found counts as seen
+      if (!G.state.codexSeen) { G.state.codexSeen = {}; for (const id in G.state.codex) if (G.state.codex[id].n > 0) G.state.codexSeen[id] = 1; }
     } catch (e) { /* storage blocked - play without saving */ }
     G.audio.setMuted(G.state.muted);
   };
@@ -141,13 +145,27 @@ G.opt = key => {
 
   /* ---- actions (return true on success) ---- */
   G.act = {
-    buyUpgrade(id) {
-      const u = upg(id), l = lv(id);
-      if (l >= u.max) return false;
-      const c = u.cost(l);
-      if (G.state.coins < c) return false;
-      G.state.coins -= c; G.state.upg[id] = l + 1;
-      G.save(); G.emit('change'); return true;
+    buyUpgrade(id, n = 1) {
+      const u = upg(id);
+      let bought = 0;
+      while (bought < n) {
+        const l = lv(id), c = u.cost(l);
+        if (l >= u.max || G.state.coins < c) break;
+        G.state.coins -= c; G.state.upg[id] = l + 1; bought++;
+      }
+      if (!bought) return 0;
+      G.save(); G.emit('change'); return bought;
+    },
+    /* how many levels `mode` (1 / 10 / 'max') would buy right now, and what they cost together */
+    upgradePlan(id, mode) {
+      const u = upg(id), want = mode === 'max' ? Infinity : mode;
+      let l = lv(id), n = 0, cost = 0;
+      while (n < want && l < u.max && n < 5000) {
+        const c = u.cost(l);
+        if (mode === 'max' && cost + c > G.state.coins) break;
+        cost += c; l++; n++;
+      }
+      return { n, cost };
     },
     buyFood(id) {
       const f = G.data.foods.find(x => x.id === id);
@@ -289,6 +307,7 @@ G.opt = key => {
         if (!data || typeof data !== 'object' || !('coins' in data)) return false;
         G.state = Object.assign(fresh(), data);
         G.state.settings = Object.assign(G.defaultSettings(), G.state.settings);
+        if (!G.state.codexSeen) { G.state.codexSeen = {}; for (const id in G.state.codex) if (G.state.codex[id].n > 0) G.state.codexSeen[id] = 1; }
         if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};
         G.save(); G.audio.setMuted(G.state.muted); G.emit('change'); return true;
       } catch (e) { return false; }

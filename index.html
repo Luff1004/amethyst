@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#07060c">
 <title>AMETHYST</title>
+<meta name="description" content="화면 전체가 게임인 확률형 채굴 게임 - 크리스탈을 캐고 희귀 광물 컷신을 모아보세요">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,7 +19,7 @@
 <header id="hud">
   <div class="wrap">
     <div id="topline">
-      <div id="coinBox"><i id="coinIco"></i><div><small>COINS</small><b id="coinVal">0</b><em id="crysRow"><i id="crysIco"></i><span id="crysVal">0</span></em></div></div>
+      <div id="coinBox"><i id="coinIco"></i><div><small>COINS</small><b id="coinVal">0</b><em id="crysRow"><i id="crysIco"></i><span id="crysVal">0</span><span id="cps"></span></em></div></div>
       <button id="btnEvent" class="bevel" hidden></button>
       <div id="rightBox">
         <div id="luckChip" class="bevel"><span>LUCK</span><b id="luckVal">x1.00</b></div>
@@ -29,6 +35,7 @@
       <button class="tab bevel" data-tab="codex"><span>도감</span></button>
       <button class="tab bevel" data-tab="crystal"><span>크리스탈</span></button>
     </nav>
+    <div id="buffs"></div>
     <section id="panel" class="bevel" hidden></section>
   </div>
 </header>
@@ -36,6 +43,7 @@
 <div id="hint"><b>TAP</b><span>화면을 터치해 채굴하세요</span></div>
 <div id="foot"></div>
 <div id="toast"></div>
+<div id="luckPop" hidden></div>
 <div id="win"></div>
 <div id="tutorial" hidden></div>
 <div id="eventModal" hidden></div>
