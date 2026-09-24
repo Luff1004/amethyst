@@ -250,7 +250,10 @@
   const ODDS_STEPS = [0, 1e3, 1e4, 1e5, 1e6, 1e7];
   const ODDS_LABEL = v => v === 0 ? '전체' : G.fmt(v) + '+';
   const BANNERS = [['banner', '큰 배너'], ['card', '카드'], ['toast', '작은 알림'], ['ticker', '상단 한 줄'], ['bottom', '하단 알림'],
-    ['chip', '미니'], ['cinema', '시네마'], ['neon', '네온'], ['flash', '플래시만'], ['off', '끄기']];
+    ['chip', '미니'], ['cinema', '시네마'], ['neon', '네온'], ['stamp', '도장'], ['glitch', '글리치'], ['receipt', '영수증'],
+    ['hologram', '홀로그램'], ['comic', '만화'], ['pixel', '레트로'], ['sticky', '포스트잇'], ['scroll', '두루마리'],
+    ['rain', '글자 비'], ['typer', '타자기'], ['flash', '플래시만'], ['off', '끄기']];
+  const PER_CHAR = ['rain', 'typer', 'pixel'];
 
   /* 설정: five sections of settings (defaults + meaning in js/core/state.js G.defaultSettings).
      Every row is either an on/off toggle or a row of choices; both write through data-set/data-val. */
@@ -427,6 +430,13 @@
     winEl.style.setProperty('--tc', tc);
     winEl.style.setProperty('--dur', ms + 'ms');
     winEl.innerHTML = html;
+    // letter-by-letter styles: split the title into one element per character (text only, so it stays safe)
+    const bEl = winEl.querySelector('b');
+    if (bEl && PER_CHAR.includes(style)) {
+      const chars = [...bEl.textContent];
+      bEl.innerHTML = ''; chars.forEach((ch, i) => { const s = document.createElement('i'); s.style.setProperty('--i', i); s.textContent = ch === ' ' ? ' ' : ch; bEl.appendChild(s); });
+      winEl.style.setProperty('--n', chars.length);
+    }
     void winEl.offsetWidth; winEl.classList.add('show');
     clearTimeout(winT); winT = setTimeout(() => winEl.classList.remove('show'), ms);
   };
