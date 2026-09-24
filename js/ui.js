@@ -7,7 +7,7 @@
   let open = null, shown = 0, lastShown = '', bumpT = 0, toastT = 0;
 
   $('#coinIco').innerHTML = G.icon('coin', 28);
-  const tabIcon = { shop: 'shop', map: 'map', up: 'up', codex: 'book', crystal: 'crystal', mission: 'medal' };
+  const tabIcon = { shop: 'shop', map: 'map', up: 'up', codex: 'book', crystal: 'crystal' };
   tabs.forEach(b => { b.insertAdjacentHTML('afterbegin', G.icon(tabIcon[b.dataset.tab], 18)); });
   const mapTab = document.querySelector('[data-tab=map]');
   mapTab.insertAdjacentHTML('beforeend', '<i class="badge"></i>');
@@ -275,7 +275,7 @@
           <button class="buy bevel small" data-savecode="import"><span>코드 불러오기</span></button></div></div>`;
   }
 
-  const views = { shop, up: upgrades, map, codex, crystal: crystalShop, settings: settingsView, mission: () => G.missions.view() };
+  const views = { shop, up: upgrades, map, codex, crystal: crystalShop, settings: settingsView };
 
   function render() {
     if (!open) return;
@@ -316,7 +316,6 @@
   panel.addEventListener('click', ev => {
     G.audio.init();
     const el = ev.target.closest('button'); if (!el || el.disabled) return;
-    if (open === 'mission' && G.missions && G.missions.click(el)) return;
     if (el.dataset.food) {
       if (G.act.buyFood(el.dataset.food)) { G.audio.buy(); } else { G.audio.deny(); toast('코인이 부족합니다'); }
     } else if (el.dataset.eat) {
@@ -385,7 +384,6 @@
     void winEl.offsetWidth; winEl.classList.add('show');
     clearTimeout(winT); winT = setTimeout(() => winEl.classList.remove('show'), ms);
   };
-  G.ui.fireWin = fireWin;
   G.on('win', ({ def, reward, tier }) => {
     fireWin(`<small>${tier.en}</small><b>${def.name}</b><span>${def.special ? 'SPECIAL' : '1 in ' + G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
   });
@@ -490,7 +488,6 @@
     const nz = G.data.zones[G.state.maxZone + 1];
     mapBadge.classList.toggle('show', !!(nz && nz.unlock && G.stats.meetsUnlock(nz.unlock)));
     if (!open) return;
-    if (open === 'mission' && G.missions) G.missions.tick(panel);
     panel.querySelectorAll('[data-cost]').forEach(b => b.classList.toggle('poor', G.state.coins < +b.dataset.cost));
     panel.querySelectorAll('[data-ccost]').forEach(b => b.classList.toggle('poor', G.state.crystals < +b.dataset.ccost));
     const exMax = Math.floor(G.state.coins / G.data.exchange.rate);

@@ -130,6 +130,7 @@ G.audio = (() => {
     arm() { if (!ctx) return; tone({ f: 300, f2: 1200, type: 'sawtooth', d: 0.35, v: 0.06 }); tone({ f: 1760, type: 'sine', t: 0.3, d: 0.6, v: 0.1 }); },
     blast(level = 0) {  // the potion click itself: everything at once, bigger for stronger potions
       if (!ctx) return;
+      level = Math.min(8, Math.max(0, level));
       tone({ f: 170, f2: 30, type: 'sine', d: 0.9, v: 0.7 });
       noise({ d: 0.7, v: 0.35, f: 7000, f2: 200, q: 0.5 });
       tone({ f: 200, f2: 2600, type: 'sawtooth', d: 0.5, v: 0.08 });
