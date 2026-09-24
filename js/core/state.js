@@ -89,8 +89,10 @@
        LEVEL 1 - and ENDING 1 - is reachable locally without grinding out all 4 secrets first. */
     allSecretsFound() {
       if (G.config.unlockCodex) return true;
-      const total = G.cutscenes.list.filter(c => c.tierIdx >= 8).length;
-      return total > 0 && this.secretFound() >= total;
+      // only maps BEFORE the LEVEL 1 zone count - that zone's own secret is unreachable until LEVEL 1 is done
+      const gate = G.data.zones.findIndex(z => z.unlock && z.unlock.type === 'level1');
+      const pre = G.cutscenes.list.filter(c => c.tierIdx >= 8 && (gate < 0 || c.zone < gate));
+      return pre.length > 0 && pre.every(c => G.state.codex[c.id] && G.state.codex[c.id].n > 0);
     },
     /* does the player currently satisfy a zone's `unlock` requirement? */
     meetsUnlock(req) {
