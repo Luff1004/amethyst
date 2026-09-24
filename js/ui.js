@@ -268,7 +268,7 @@
           <div class="segset">${opts.map(([v, label]) => `<button class="seg bevel ${st[key] === v ? 'on' : ''}" data-set="${key}" data-val="${v}">${label}</button>`).join('')}</div></div></div>`;
     const action = (title, desc, btns) => `<div class="card bevel setcard"><div class="meta"><b>${title}</b><span>${desc}</span></div><div class="side">${btns}</div></div>`;
     const VOL = [[0, '끔'], [25, '25%'], [50, '50%'], [75, '75%'], [100, '100%']];
-    const SECS = [['sound', '소리'], ['screen', '화면'], ['cut', '컷신'], ['easy', '편의'], ['data', '데이터']];
+    const SECS = [['sound', '소리'], ['screen', '화면'], ['theme', '테마'], ['cut', '컷신'], ['easy', '편의'], ['data', '데이터']];
     let body = '';
     if (setSec === 'sound') body =
       seg('volume', '전체 볼륨', '게임의 모든 소리 크기 (위쪽 스피커 버튼은 완전 음소거)', VOL) +
@@ -283,6 +283,19 @@
       toggle('lessFlash', '번쩍임 줄이기', '화면 전체가 하얗게 번쩍이는 효과를 크게 줄입니다 (눈이 피로하거나 빛에 민감할 때)') +
       toggle('floatText', '떠오르는 숫자', '채굴할 때 크리스탈 위로 떠오르는 +코인 · CRIT 글자') +
       seg('numFmt', '숫자 표기', `예시: ${[['short', '1.23M'], ['kr', '123만'], ['full', '1,230,000']].map(([, e]) => e).join(' / ')}`, [['short', '1.23M'], ['kr', '123만'], ['full', '전체 숫자']]);
+    else if (setSec === 'theme') body = `<div class="sub">게임 전체의 색과 배경 분위기를 바꿉니다 · 한 번 사면 언제든 바꿔 쓸 수 있어요 · 보유 크리스탈 <b class="cy">${G.fmtInt(G.state.crystals)}</b></div>` +
+      G.data.themes.map(t => {
+        const own = G.state.themesOwned[t.id], using = G.state.theme === t.id, trying = G.isPreviewing && G.isPreviewing(t.id);
+        const [bg, acc, btn] = t.preview;
+        const btns = using ? '<button class="buy bevel small max" disabled><span>사용 중</span></button>'
+          : own ? `<button class="buy bevel small ready" data-themeuse="${t.id}"><span>적용</span></button>`
+          : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>${crystalBtn(t.price, `data-themebuy="${t.id}"`)}`;
+        return `<div class="card bevel themecard ${using ? 'using' : ''}" style="--tbg:${bg};--tacc:${acc};--tbtn:${btn}">
+          <div class="tswatch"><i></i><i></i><i></i><em class="amb-${t.ambient}"></em></div>
+          <div class="meta"><b>${t.name}</b><small>${t.en}</small><span>${t.desc}</span>
+            <span class="tprice">${t.price ? (own ? '보유 중' : `${G.icon('crystal', 11)} ${G.fmtInt(t.price)}`) : '기본 테마'}</span></div>
+          <div class="side">${btns}</div></div>`;
+      }).join('');
     else if (setSec === 'cut') body =
       toggle('autoSkipSeen', '이미 본 컷신은 항상 건너뛰기', '도감에서 개별로 켠 것과 상관없이, 다시 뜬 컷신은 재생하지 않고 바로 보상만 받습니다') +
       seg('minOdds', '최소 확률부터 컷신 표시', '이보다 흔한 컷신은 처음 보는 것이라도 재생 없이 보상만 받습니다', ODDS_STEPS.map(v => [v, ODDS_LABEL(v)])) +
@@ -387,6 +400,16 @@
       toast(off ? '이 컷신은 더 이상 재생되지 않습니다 (보상은 그대로)' : '컷신이 다시 재생됩니다');
     } else if (el.dataset.cz) {
       codexZone = +el.dataset.cz; G.audio.tab(); render(); panel.scrollTop = 0;
+    } else if (el.dataset.themeuse) {
+      if (G.act.setTheme(el.dataset.themeuse)) { G.audio.potion(); toast(`${G.data.themes.find(t => t.id === el.dataset.themeuse).name} 테마를 적용했습니다`); }
+    } else if (el.dataset.themetry) {
+      G.previewTheme(el.dataset.themetry); G.audio.tab(); render(); toast('6초 동안 미리보기 중입니다');
+    } else if (el.dataset.themebuy) {
+      const t = G.data.themes.find(x => x.id === el.dataset.themebuy);
+      if (G.state.crystals < t.price) { G.audio.deny(); toast(`크리스탈이 부족합니다 (${G.fmtInt(t.price)} 필요)`); }
+      else if (confirm(`${t.name} 테마를 ${G.fmtInt(t.price)} 크리스탈에 구매할까요?`)) {
+        if (G.act.buyTheme(t.id) === 'ok') { G.audio.buy(); G.audio.blast(5); toast(`${t.name} 테마를 구매하고 적용했습니다`); }
+      }
     } else if (el.dataset.setsec) {
       setSec = el.dataset.setsec; G.audio.tab(); render(); panel.scrollTop = 0;
     } else if (el.dataset.resetset) {

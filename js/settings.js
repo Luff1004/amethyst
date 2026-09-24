@@ -30,5 +30,21 @@
     if (k === 'wakeLock' || k === '*') wake();
     if (k === 'bgMute' && !G.opt('bgMute')) G.audio.suspend(false);
   });
-  G.on('ready', () => { applySound(); wake(); window.dispatchEvent(new Event('resize')); });
+  /* 테마: the palette lives in css (html[data-theme]); the backdrop is read by js/game.js each frame.
+     `previewId` lets the settings panel try a theme on for a few seconds without owning it. */
+  let previewId = null, previewT = 0;
+  const applyTheme = () => {
+    const t = previewId ? G.data.themes.find(x => x.id === previewId) : G.theme();
+    if (t.css) document.documentElement.dataset.theme = t.css; else delete document.documentElement.dataset.theme;
+    const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = t.preview[0];
+  };
+  G.activeTheme = () => (previewId ? G.data.themes.find(x => x.id === previewId) : G.theme());
+  G.previewTheme = id => {
+    previewId = id; applyTheme(); clearTimeout(previewT);
+    previewT = setTimeout(() => { previewId = null; applyTheme(); G.emit('change'); }, 6000);
+  };
+  G.isPreviewing = id => previewId === id;
+  G.on('theme', () => { previewId = null; clearTimeout(previewT); applyTheme(); });
+
+  G.on('ready', () => { applySound(); wake(); applyTheme(); window.dispatchEvent(new Event('resize')); });
 })();

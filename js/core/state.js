@@ -27,6 +27,7 @@ G.opt = key => {
        eaten, permanent foods already eaten, and how many of each package were bought */
     tickets: {}, foodInv: {}, perm: {}, pkgBought: {},
     lastSeen: 0,                     // when the game was last saved - offline mining (js/offline.js)
+    theme: 'amethyst', themesOwned: { amethyst: true },   // 설정 - 테마 (js/data/themes.js)
     settings: G.defaultSettings(),
     /* LEVEL 1 - the secret ARG-ish sequence gating the real 5th map (js/level1.js).
        gauge: 0..1 progress this run through the crystal-crack ending (resets each playthrough).
@@ -242,6 +243,19 @@ G.opt = key => {
     },
     toggleAuto() { G.state.autoOn = !G.state.autoOn; G.save(); G.emit('change'); return G.state.autoOn; },
     setSetting(key, val) { G.state.settings[key] = val; G.save(); G.emit('settings', key); G.emit('change'); },
+    /* themes: buy once with crystals, then switch freely */
+    buyTheme(id) {
+      const t = G.data.themes.find(x => x.id === id), s = G.state;
+      if (!t) return 'none';
+      if (s.themesOwned[id]) return 'owned';
+      if (s.crystals < t.price) return 'poor';
+      s.crystals -= t.price; s.themesOwned[id] = true; s.theme = id;
+      G.save(); G.emit('theme'); G.emit('change'); return 'ok';
+    },
+    setTheme(id) {
+      if (!G.state.themesOwned[id]) return false;
+      G.state.theme = id; G.save(); G.emit('theme'); G.emit('change'); return true;
+    },
     resetSettings() { G.state.settings = G.defaultSettings(); G.save(); G.emit('settings', '*'); G.emit('change'); },
     /* tutorial: step forward, or finish. The practice potion is granted exactly once ever -
        replaying the tutorial from settings walks through it again but never re-grants it. */

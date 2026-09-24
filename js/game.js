@@ -347,28 +347,83 @@
   }
 
   /* ---------------- render ---------------- */
+  /* the drifting effect behind the crystal, one per theme (js/data/themes.js). Positions are pure
+     functions of time + index, so there's no particle state to keep. */
+  function ambient(kind, t, h) {
+    const fr = (v) => v - Math.floor(v);
+    if (kind === 'bubbles') {
+      g.lineWidth = 1;
+      for (let i = 0; i < 30; i++) {
+        const sx = fr(i * 0.618), spd = 18 + (i % 6) * 9, r = 2 + (i % 5) * 1.6;
+        const y = H + 20 - fr(t * spd / (H + 40) + i * 0.137) * (H + 40), x = sx * W + Math.sin(t * 1.3 + i) * 8;
+        g.strokeStyle = `hsla(195,90%,80%,${0.18 + 0.12 * (i % 3)})`;
+        g.beginPath(); g.arc(x, y, r, 0, TAU); g.stroke();
+        g.fillStyle = 'rgba(220,250,255,.35)'; g.fillRect(x - r * 0.4, y - r * 0.5, 1.5, 1.5);
+      }
+    } else if (kind === 'petals') {
+      for (let i = 0; i < 34; i++) {
+        const sx = fr(i * 0.618), spd = 14 + (i % 5) * 7;
+        const y = fr(t * spd / (H + 40) + i * 0.29) * (H + 40) - 20, x = fr(sx + t * 0.012 * (1 + i % 3)) * W + Math.sin(t * 0.9 + i) * 18;
+        const flip = Math.cos(t * (1.2 + (i % 4) * 0.3) + i);
+        g.save(); g.translate(x, y); g.rotate(t * 0.6 + i); g.scale(Math.max(0.2, Math.abs(flip)), 1);
+        g.fillStyle = `hsla(${335 + (i % 3) * 8},85%,${72 + (i % 2) * 8}%,.55)`;
+        g.beginPath(); g.ellipse(0, 0, 4.5, 3, 0, 0, TAU); g.fill(); g.restore();
+      }
+    } else if (kind === 'embers') {
+      for (let i = 0; i < 40; i++) {
+        const sx = fr(i * 0.618), spd = 20 + (i % 7) * 8;
+        const y = H + 10 - fr(t * spd / (H + 20) + i * 0.173) * (H + 20), x = sx * W + Math.sin(t * 1.7 + i * 2) * 12;
+        const fl = 0.5 + 0.5 * Math.sin(t * 9 + i * 3);
+        g.fillStyle = `hsla(${22 + (i % 4) * 8},100%,${55 + fl * 20}%,${0.25 + 0.45 * fl * (y / H)})`;
+        g.fillRect(x, y, 2 + (i % 2), 2 + (i % 2));
+      }
+    } else if (kind === 'fireflies') {
+      for (let i = 0; i < 22; i++) {
+        const x = fr(i * 0.618) * W + Math.sin(t * 0.35 + i * 1.7) * 40 + Math.sin(t * 0.9 + i) * 10;
+        const y = fr(i * 0.382 + 0.1) * H + Math.cos(t * 0.3 + i * 2.1) * 34;
+        const glow = Math.pow(Math.max(0, Math.sin(t * (0.8 + (i % 5) * 0.2) + i * 1.3)), 3);
+        if (glow < 0.02) continue;
+        const r = 10 * glow + 2, gr = g.createRadialGradient(x, y, 0, x, y, r);
+        gr.addColorStop(0, `rgba(210,255,140,${0.8 * glow})`); gr.addColorStop(1, 'rgba(120,255,120,0)');
+        g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+    } else if (kind === 'gold') {
+      for (let i = 0; i < 46; i++) {
+        const sx = fr(i * 0.618), spd = 4 + (i % 6) * 2;
+        const x = sx * W + Math.sin(t * 0.4 + i) * 6, y = fr(t * spd / H + i * 0.231) * H;
+        const tw = Math.pow(Math.max(0, Math.sin(t * (1.5 + (i % 4) * 0.4) + i * 2.3)), 4);
+        g.fillStyle = `rgba(255,${210 + (i % 3) * 15},120,${0.12 + 0.6 * tw})`;
+        const s = 1.5 + tw * 1.8; g.fillRect(x - s / 2, y - s / 2, s, s);
+        if (tw > 0.7) { g.fillStyle = `rgba(255,240,190,${tw * 0.5})`; g.fillRect(x - 5, y - 0.5, 10, 1); g.fillRect(x - 0.5, y - 5, 1, 10); }
+      }
+    } else {
+      for (let i = 0; i < 46; i++) {
+        const sx = (i * 137.5) % 1, sy = (i * 61.8) % 1, spd = 6 + (i % 7) * 3;
+        const x = sx * W, y = ((sy * H - t * spd) % H + H) % H;
+        g.fillStyle = `hsla(${h},80%,80%,${0.12 + 0.2 * ((i % 5) / 5)})`;
+        g.fillRect(x, y, 2, 2);
+      }
+    }
+  }
+
   function drawBackground(t) {
-    const h = hue();
+    // 설정 - 테마: the backdrop tone + ambient effect come from the theme; the crystal glow keeps the map hue
+    const th = G.activeTheme ? G.activeTheme() : null, tb = th ? th.bg : { hue: null, s: 45, l: 7 };
+    const h = hue(), bh = tb.hue == null ? h : tb.hue;
     const bg = g.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, `hsl(${h},45%,7%)`); bg.addColorStop(1, `hsl(${h},55%,3%)`);
+    bg.addColorStop(0, `hsl(${bh},${tb.s}%,${tb.l}%)`); bg.addColorStop(1, `hsl(${bh},${tb.s + 10}%,${Math.max(2, tb.l - 4)}%)`);
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
     const c = center(), R = crystalR();
     const gl = g.createRadialGradient(c.x, c.y, 0, c.x, c.y, R * 3.2);
     gl.addColorStop(0, `hsla(${h},80%,50%,${0.22 + pulse * 0.2})`); gl.addColorStop(1, `hsla(${h},80%,50%,0)`);
     g.fillStyle = gl; g.fillRect(0, 0, W, H);
     // moving diagonal lattice
-    g.strokeStyle = `hsla(${h},70%,70%,0.045)`; g.lineWidth = 1;
+    g.strokeStyle = `hsla(${bh},70%,70%,0.045)`; g.lineWidth = 1;
     const sp = 64, off = (t * 8) % sp;
     g.beginPath();
     for (let x = -H; x < W + H; x += sp) { g.moveTo(x + off, 0); g.lineTo(x + off - H, H); g.moveTo(x - off, 0); g.lineTo(x - off + H, H); }
     g.stroke();
-    // dust
-    for (let i = 0; i < 46; i++) {
-      const sx = (i * 137.5) % 1, sy = (i * 61.8) % 1, spd = 6 + (i % 7) * 3;
-      const x = sx * W, y = ((sy * H - t * spd) % H + H) % H;
-      g.fillStyle = `hsla(${h},80%,80%,${0.12 + 0.2 * ((i % 5) / 5)})`;
-      g.fillRect(x, y, 2, 2);
-    }
+    ambient(th ? th.ambient : 'dust', t, bh);
     // vignette
     const vg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) * 0.6);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.65)');
