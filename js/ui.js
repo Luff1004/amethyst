@@ -46,20 +46,24 @@
     const boxes = G.data.boxes.map(b => {
       const tot = b.w.reduce((a, v) => a + v, 0);
       const odds = b.w.map((w, i) => (w > 0 ? `<i style="--hc:hsl(${G.data.potions[i].hue},85%,66%)">${G.data.potions[i].name} <b>${(w / tot * 100).toFixed(w / tot < 0.01 ? 2 : w / tot < 0.1 ? 1 : 0)}%</b></i>` : '')).join('');
+      const tk = s.tickets[b.id] || 0;
       return `<div class="card bevel box" style="--bc:${b.color}">
         <div class="ico bico">${G.icon('shop', 26)}</div>
         <div class="meta"><b style="color:${b.color}">${b.name}</b><small style="color:${b.color}">${b.en}</small>
           <span>열면 <b>크리스탈 1개</b>가 나옵니다 (종류는 확률)</span>
           <div class="odds2">${odds}</div></div>
-        <div class="side">${crystalBtn(b.cost, `data-box="${b.id}"`)}</div></div>`;
+        <div class="side">${tk ? `<em class="tk">${G.icon('ticket', 13)} 무료권 ${tk}</em><button class="buy bevel ticketbtn" data-box="${b.id}">${G.icon('ticket', 15)}<span>무료로 열기</span></button>` : crystalBtn(b.cost, `data-box="${b.id}"`)}</div></div>`;
     }).join('');
-    const hidden = pt => (pt.id === 'tutorial' || pt.id === 'hodumaroo') && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0);
+    // limited event crystals only show up (and only work) during their own month's event
+    const hidden = pt => ((pt.id === 'tutorial' || pt.id === 'hodumaroo') && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0))
+      || (pt.event && !G.event.isActive(pt.event));
     const potions = G.data.potions.filter(pt => !hidden(pt)).map(pt => {
       const have = s.potions[pt.id] || 0, armedN = s.armed[pt.id] || 0;
-      const valTxt = pt.guarantee ? `${G.tiers[pt.guarantee].en}+ 확정 <i>/ 1 CLICK, 1회 한정</i>` : `LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK, 중첩 가능</i>`;
-      return `<div class="card bevel potion ${armedN ? 'on' : ''} ${have || armedN ? '' : 'dim'}" style="--ph:${pt.hue}">
+      const valTxt = pt.grantCut ? `${G.cutscenes.byId[pt.grantCut] ? G.cutscenes.byId[pt.grantCut].name : '한정 광물'} 확정 <i>/ SPECIAL</i>`
+        : pt.guarantee ? `${G.tiers[pt.guarantee].en}+ 확정 <i>/ 1 CLICK, 1회 한정</i>` : `LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK, 중첩 가능</i>`;
+      return `<div class="card bevel potion ${armedN ? 'on' : ''} ${have || armedN ? '' : 'dim'} ${pt.event ? 'evpot' : ''}" style="--ph:${pt.hue}">
         <div class="ico pico">${G.icon('potion', 26)}</div>
-        <div class="meta"><b>${pt.name}</b><small>${pt.en}</small>
+        <div class="meta"><b>${pt.name}</b><small>${pt.event ? '이벤트 한정 · ' : ''}${pt.en}</small>
           <span class="val">${valTxt}</span></div>
         <div class="side"><em>${armedN ? '장전 ' + armedN + (have ? ' · 보유 ' + have : '') : '보유 ' + have}</em>
           <div class="pair">
@@ -77,13 +81,33 @@
       <div class="list">${potions}</div>`;
   }
 
+  /* event foods from packages: eaten from here instead of bought. Permanent ones stay listed once active. */
+  function foodInventory() {
+    const s = G.state, list = G.data.foods.filter(f => f.inv && ((s.foodInv[f.id] || 0) > 0 || (f.perm && s.perm[f.id]) || G.stats.buffLeft(f.id) > 0));
+    if (!list.length) return '';
+    return `<div class="ph mini"><h2>MY FOOD <small>보유 음식 · 이벤트</small></h2></div>
+      <div class="list">${list.map(f => {
+        const have = s.foodInv[f.id] || 0, left = G.stats.buffLeft(f.id), permOn = f.perm && s.perm[f.id], on = permOn || left > 0;
+        const eff = f.perm ? `LUCK +${G.fmtInt(f.bonus)} · 코인 x${f.coinMul} &nbsp;/&nbsp; <b class="permtag">영구</b>` : `LUCK +${G.fmtInt(f.bonus)} &nbsp;/&nbsp; ${G.fmtTime(f.duration)}`;
+        const btn = permOn ? '<button class="buy bevel small max" disabled><span>영구 적용 중</span></button>'
+          : `<button class="buy bevel small ${have ? '' : 'poor'}" data-eat="${f.id}"><span>먹기</span></button>`;
+        return `<div class="card bevel evfood ${on ? 'on' : ''}">
+          <div class="ico">${G.icon(f.icon, 26)}</div>
+          <div class="meta"><b>${f.name}</b><small>${f.en}</small><span>${eff}</span>
+            ${f.perm ? '' : `<i class="bar"><u data-bar="${f.id}" data-dur="${f.duration}" style="width:${Math.min(100, left / f.duration * 100)}%"></u></i>`}</div>
+          <div class="side">${f.perm ? '' : `<em data-timer="${f.id}">${left > 0 ? G.fmtTime(left) : ''}</em>`}
+            ${have && !permOn ? `<em>보유 ${have}</em>` : ''}${btn}</div></div>`;
+      }).join('')}</div>`;
+  }
+
   function shop() {
     const luck = G.stats.luck();
     return `<div class="ph"><h2>SHOP <small>상점</small></h2><span>음식을 먹으면 컷신 확률이 올라갑니다</span></div>
       <div class="sub">현재 행운 <b>${G.fmtLuck(luck)}</b></div>
       ${exchangeCard()}
+      ${foodInventory()}
       <div class="ph mini"><h2>FOOD <small>음식</small></h2></div>
-      <div class="list">${G.data.foods.map(f => {
+      <div class="list">${G.data.foods.filter(f => !f.inv).map(f => {
         const left = G.stats.buffLeft(f.id), on = left > 0;
         return `<div class="card bevel ${on ? 'on' : ''}">
           <div class="ico">${G.icon(f.icon, 26)}</div>
@@ -167,12 +191,17 @@
 
   function codex() {
     const s = G.state, luck = G.stats.luck(), Z = G.data.zones;
-    if (codexZone < 0 || codexZone >= Z.length) codexZone = s.zone;
-    const zc = c => G.cutscenes.inZone(c);
+    if (codexZone < 0 || codexZone > Z.length) codexZone = s.zone;
+    // index Z.length = the SPECIAL shelf: the monthly event minerals, which belong to no map
+    const SP = Z.length, specials = () => G.cutscenes.list.filter(c => c.special).sort((a, b) => a.month - b.month);
+    const zc = c => (c === SP ? specials() : G.cutscenes.inZone(c));
     const foundOf = i => zc(i).filter(c => (s.codex[c.id] || {}).n > 0).length;
+    const spChip = n => `<button class="chip bevel spchip ${codexZone === SP ? 'on' : ''}" data-cz="${SP}" style="--zh:45"><b>SP</b><span>${n}</span></button>`;
     const chips = Z.map((z, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''} ${mapOpen(i) ? '' : 'off'}" data-cz="${i}" style="--zh:${z.hue}">
-        <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span></button>`).join('');
-    const z = Z[codexZone], L = zc(codexZone), open = mapOpen(codexZone);
+        <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span></button>`).join('') + spChip(foundOf(SP) + '/' + zc(SP).length);
+    const z = codexZone === SP ? { name: '스페셜', en: 'SPECIAL · 월별 이벤트 한정 광물', hue: 45 } : Z[codexZone];
+    const L = zc(codexZone), open = codexZone === SP || mapOpen(codexZone);
+    const oddsTxt = c => c.special ? `SPECIAL · ${c.month}월 ${c.eventName} 한정` : `1 in ${G.fmtInt(c.odds)}`;
     let head = '', body = '';
     if (!open) {
       body = `<div class="empty">${G.icon('lock', 20)}<span>아직 도달하지 못한 지역입니다</span></div>`;
@@ -188,15 +217,15 @@
         const eff = Math.max(1, Math.ceil(c.odds / luck)), off = rec && rec.skip;
         if (G.config.viewer) {
           body += `<div class="card bevel" style="--tc:${t.color}"><div class="stripe"></div>
-            <div class="meta"><b>${c.name}</b><span class="odds">1 in ${G.fmtInt(c.odds)}</span></div>
+            <div class="meta"><b>${c.name}</b><span class="odds">${oddsTxt(c)}</span></div>
             <div class="side"><button class="buy bevel" data-replay="${c.id}">${G.icon('play', 14)}<span>보기</span></button></div></div>`;
           return;
         }
         body += `<div class="card bevel ${ok ? '' : 'dim'} ${off ? 'skipped' : ''}" style="--tc:${t.color}">
           <div class="stripe"></div>
           <div class="meta"><b>${ok ? c.name : '???'}</b>${off ? '<small class="skip">SKIP</small>' : ''}
-            <span class="odds">1 in ${G.fmtInt(c.odds)}</span>
-            ${luck > 1.001 ? `<span class="eff">현재 1 in ${G.fmtInt(eff)}</span>` : ''}
+            <span class="odds">${oddsTxt(c)}</span>
+            ${luck > 1.001 && !c.special ? `<span class="eff">현재 1 in ${G.fmtInt(eff)}</span>` : ''}
             <span>${seen ? `발견 ${G.fmtInt(rec.n)}회 &nbsp;/&nbsp; 최고 +${G.fmt(rec.best)}` : '미발견'}</span></div>
           <div class="side">${ok ? `<button class="buy bevel" data-replay="${c.id}">${G.icon('play', 14)}<span>보기</span></button>
             ${seen ? `<button class="buy bevel small ${off ? 'offbtn' : ''}" data-skip="${c.id}"><span>${off ? '컷신 켜기' : '그만 보기'}</span></button>`
@@ -206,7 +235,7 @@
     const total = G.cutscenes.list.length, found = G.cutscenes.list.filter(c => (s.codex[c.id] || {}).n > 0).length;
     if (G.config.viewer) {
       const vchips = Z.map((zz, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''}" data-cz="${i}" style="--zh:${zz.hue}">
-        <b>${String(i + 1).padStart(2, '0')}</b><span>${zc(i).length}</span></button>`).join('');
+        <b>${String(i + 1).padStart(2, '0')}</b><span>${zc(i).length}</span></button>`).join('') + spChip(zc(SP).length);
       return `<div class="ph"><h2>AMETHYST <small>도감</small></h2><span>컷신 전체 <b>${total}</b>종 · 눌러서 감상</span></div>
         <div class="chips">${vchips}</div>
         <div class="zhead" style="--zh:${z.hue}"><b>${z.name}</b><small>${z.en}</small></div>
@@ -289,6 +318,12 @@
     const el = ev.target.closest('button'); if (!el || el.disabled) return;
     if (el.dataset.food) {
       if (G.act.buyFood(el.dataset.food)) { G.audio.buy(); } else { G.audio.deny(); toast('코인이 부족합니다'); }
+    } else if (el.dataset.eat) {
+      const r = G.act.eatFood(el.dataset.eat);
+      if (r === 'perm') { G.audio.potion(); toast('영구 효과가 적용되었습니다'); }
+      else if (r === 'ok') { G.audio.buy(); toast('맛있게 먹었습니다 - 행운 상승'); }
+      else if (r === 'already') { G.audio.deny(); toast('이미 영구 적용 중입니다'); }
+      else { G.audio.deny(); toast('보유한 음식이 없습니다'); }
     } else if (el.dataset.up) {
       if (G.act.buyUpgrade(el.dataset.up)) G.audio.buy(); else { G.audio.deny(); toast('코인이 부족합니다'); }
     } else if (el.dataset.zone) {
@@ -303,7 +338,8 @@
       const pt = G.act.openBox(el.dataset.box);
       if (!pt) { G.audio.deny(); toast('크리스탈이 부족합니다'); } else G.audio.buy();
     } else if (el.dataset.puse) {
-      if (G.act.armPotion(el.dataset.puse)) { G.audio.potion(); toast('장전됨 - 다음 클릭에 럭이 중첩됩니다'); } else { G.audio.deny(); toast('보유한 크리스탈이 없습니다'); }
+      const pu = G.stats.potion(el.dataset.puse);
+      if (G.act.armPotion(el.dataset.puse)) { G.audio.potion(); toast(pu && pu.grantCut ? '장전됨 - 다음 클릭에 한정 광물이 확정으로 나옵니다' : '장전됨 - 다음 클릭에 럭이 중첩됩니다'); } else { G.audio.deny(); toast('보유한 크리스탈이 없습니다'); }
     } else if (el.dataset.punarm) {
       if (G.act.unarmPotion(el.dataset.punarm)) { G.audio.tab(); toast('크리스탈을 되돌렸습니다'); } else { G.audio.deny(); }
     } else if (el.dataset.replay) {
@@ -349,7 +385,7 @@
     clearTimeout(winT); winT = setTimeout(() => winEl.classList.remove('show'), ms);
   };
   G.on('win', ({ def, reward, tier }) => {
-    fireWin(`<small>${tier.en}</small><b>${def.name}</b><span>1 in ${G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
+    fireWin(`<small>${tier.en}</small><b>${def.name}</b><span>${def.special ? 'SPECIAL' : '1 in ' + G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
   });
   /* crystal box opened: spin a roulette strip past a run of crystals before landing on the real
      result, then show the usual reward banner. The outcome is already decided (G.act.openBox already
@@ -361,7 +397,7 @@
      than a single flat deceleration. */
   const spinEl = $('#boxSpin'), spinTrack = spinEl.querySelector('.spintrack'), spinStrip = spinEl.querySelector('.spinstrip');
   function playBoxSpin(potion, onDone) {
-    const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo');
+    const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo' && !p.event);
     const winIndex = 32, n = 40;
     const items = [];
     for (let i = 0; i < n; i++) items.push(i === winIndex ? potion : pool[(Math.random() * pool.length) | 0]);
@@ -440,10 +476,10 @@
     const s = G.state, ap = G.stats.armedTop(), armedLuck = G.stats.armedLuck();
     crysVal.textContent = G.fmt(s.crystals);
     btnAuto.classList.toggle('off', !s.autoOn); btnAuto.classList.toggle('idle', G.stats.autoRate() <= 0);
-    const guaranteeTop = G.stats.armedList().find(p => p.guarantee);
+    const guaranteeTop = G.stats.armedList().find(p => p.guarantee), grantTop = G.stats.armedList().find(p => p.grantCut);
     luckChip.classList.toggle('potion', !!ap);
-    luckChip.querySelector('span').textContent = guaranteeTop ? G.tiers[guaranteeTop.guarantee].en + '+' : ap ? 'NEXT CLICK' : 'LUCK';
-    luckVal.textContent = guaranteeTop ? '확정' : ap ? G.fmtLuck(luck + armedLuck) : G.fmtLuck(luck);
+    luckChip.querySelector('span').textContent = grantTop ? 'SPECIAL' : guaranteeTop ? G.tiers[guaranteeTop.guarantee].en + '+' : ap ? 'NEXT CLICK' : 'LUCK';
+    luckVal.textContent = grantTop || guaranteeTop ? '확정' : ap ? G.fmtLuck(luck + armedLuck) : G.fmtLuck(luck);
     if (ap) luckChip.style.setProperty('--pc', `hsl(${ap.hue},100%,66%)`);
     luckChip.classList.toggle('hot', luck > 1.001);
     const z = G.stats.zone();

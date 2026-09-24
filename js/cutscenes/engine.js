@@ -477,7 +477,7 @@
       // odds
       k = E.outCubic(seg(rt, 300, 900)); g.globalAlpha = k;
       g.fillStyle = tier.color; g.font = `700 ${18 * s}px ${MONO}`; spc('0px');
-      g.fillText(`1 in ${G.fmtInt(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
+      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : `1 in ${G.fmtInt(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
       // reward
       if (!a.replay) {
         k = E.outCubic(seg(rt, 500, 900)); g.globalAlpha = k;

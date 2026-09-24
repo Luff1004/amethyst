@@ -58,18 +58,18 @@ html.viewer body.cut #game { filter: none; }
 #luckChip.hot { --line: rgba(255, 207, 90, .7); }
 #luckChip.hot b { color: var(--gold); text-shadow: 0 0 10px rgba(255, 207, 90, .5); }
 #btnSound { --c: 7px; width: 40px; display: grid; place-items: center; color: var(--ink); }
-#btnEvent { --c: 7px; --line: rgba(180, 255, 140, .5); display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 40px; color: #baffb0; font: 700 11.5px/1 var(--mono); white-space: nowrap; animation: eventpulse 2.2s ease-in-out infinite; }
-#btnEvent .i { color: #baffb0; }
-@keyframes eventpulse { 0%, 100% { box-shadow: 0 0 0 rgba(160, 255, 130, 0); } 50% { box-shadow: 0 0 14px rgba(160, 255, 130, .35); } }
-@media (max-width: 460px) { #btnEvent span { display: none; } #btnEvent { padding: 0 10px; } }
-
-/* exam-themed event button: a torn scrap of an exam paper pinned to the header */
-#btnEvent.exam { --line: rgba(20, 10, 5, .5); --fill: linear-gradient(178deg, #f7ecd2 0%, #ecdfb8 100%); position: relative; color: #3a2a14; font-family: "Noto Serif KR", "Nanum Myeongjo", "Batang", Georgia, serif; animation: none; box-shadow: 0 3px 10px rgba(0, 0, 0, .35); }
-#btnEvent.exam .i { color: #7a4318; }
-#btnEvent.exam::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(rgba(120, 90, 40, .12) 0 1px, transparent 1px 7px); pointer-events: none; mix-blend-mode: multiply; }
-#btnEvent.exam .xmark { position: absolute; top: -9px; right: -7px; width: 20px; height: 20px; border-radius: 50%; background: #d62839; color: #fff; font: 800 12px/20px var(--mono); text-align: center; transform: rotate(-14deg); box-shadow: 0 2px 6px rgba(0, 0, 0, .5), 0 0 0 2px #fff2; animation: xmarkpop 2.4s ease-in-out infinite; }
-@keyframes xmarkpop { 0%, 80%, 100% { transform: rotate(-14deg) scale(1); } 90% { transform: rotate(-14deg) scale(1.18); } }
-@media (max-width: 460px) { #btnEvent.exam span { display: inline; } }
+/* monthly event banner: stretches across the empty middle of the top bar (js/event.js) */
+#btnEvent { --c: 8px; --eh: 40; --line: hsla(var(--eh), 90%, 65%, .6); --fill: linear-gradient(100deg, hsla(var(--eh), 70%, 22%, .95), hsla(var(--eh), 60%, 10%, .95) 60%, hsla(var(--eh), 80%, 18%, .95));
+  position: relative; overflow: hidden; flex: 1 1 auto; min-width: 0; margin: 0 2px; height: 44px; padding: 0 10px 0 12px; display: flex; align-items: center; gap: 9px; color: #fff; text-align: left; animation: eventpulse 2.4s ease-in-out infinite; }
+#btnEvent .i { color: hsl(var(--eh), 95%, 72%); flex: none; }
+#btnEvent .evt { display: grid; gap: 3px; min-width: 0; flex: 1; }
+#btnEvent .evt small { font: 700 9.5px/1 var(--mono); letter-spacing: .12em; color: hsl(var(--eh), 90%, 72%); }
+#btnEvent .evt b { font-size: 13.5px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#btnEvent .dday { flex: none; font: 800 11px/1 var(--mono); font-style: normal; color: #1a1206; background: hsl(var(--eh), 95%, 66%); padding: 4px 6px; border-radius: 4px; }
+#btnEvent::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.18) 45%, transparent 60%); transform: translateX(-100%); animation: evshine 3.6s ease-in-out infinite; pointer-events: none; }
+@keyframes evshine { 60%, 100% { transform: translateX(100%); } }
+@keyframes eventpulse { 0%, 100% { box-shadow: 0 0 0 hsla(var(--eh), 90%, 60%, 0); } 50% { box-shadow: 0 0 16px hsla(var(--eh), 90%, 60%, .45); } }
+@media (max-width: 460px) { #btnEvent { height: 42px; gap: 7px; padding: 0 8px; } #btnEvent .evt b { font-size: 12px; } #btnEvent .evt small { font-size: 8.5px; } }
 
 #tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .tab { --c: 9px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 7px; font-weight: 700; letter-spacing: .12em; color: #cfc6ea; transition: color .15s; }
@@ -320,18 +320,59 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 .spinfade.l { left: 0; background: linear-gradient(90deg, #0a0714, rgba(10,7,20,0)); }
 .spinfade.r { right: 0; background: linear-gradient(270deg, #0a0714, rgba(10,7,20,0)); }
 
-/* exam-theme popup: styled like a Korean 모의고사 answer sheet, pinned onto the usual dark card */
-#eventModal .tcard.exam { --fill: rgba(16, 11, 26, .98); border: 1px solid rgba(255, 207, 90, .18); }
-#eventModal .examhead { display: flex; align-items: baseline; justify-content: space-between; font-family: "Noto Serif KR", "Nanum Myeongjo", "Batang", Georgia, serif; border-bottom: 1px dashed rgba(255, 255, 255, .18); padding-bottom: 8px; }
-#eventModal .examhead b { font-size: 18px; color: #fff; }
-#eventModal .examhead span { font: 700 11px var(--mono); color: var(--gold); }
-#eventModal .exintro { font-size: 12.5px; }
-#eventModal .exampaper { position: relative; background: linear-gradient(178deg, #fbf4de 0%, #efe4c2 100%); color: #241a0c; border-radius: 6px; padding: 18px 16px 16px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08), 0 6px 18px rgba(0, 0, 0, .35); }
-#eventModal .exampaper::before { content: ""; position: absolute; inset: 0; border-radius: 6px; background: repeating-linear-gradient(rgba(120, 90, 40, .08) 0 1px, transparent 1px 26px); pointer-events: none; }
-#eventModal .qtext { position: relative; font-family: "Noto Serif KR", "Nanum Myeongjo", "Batang", Georgia, serif; font-size: 14.5px; line-height: 1.85; }
-#eventModal .qtext sup { font-size: 65%; }
-#eventModal .qmeta { position: relative; margin-top: 12px; font: 700 10px var(--mono); color: #8a6a2e; letter-spacing: .04em; }
-#eventModal .exam .ecode input { font-family: "Noto Serif KR", "Nanum Myeongjo", "Batang", Georgia, serif; }
+/* monthly package shop popup: same bevel/card language as the panels, tinted by the event's hue */
+#eventModal .tcard.pkgshop { --eh: 40; width: min(94vw, 560px); max-height: 88vh; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px 14px; gap: 12px; scrollbar-width: thin; scrollbar-color: #3a2a63 transparent; }
+#eventModal .evhero { position: relative; margin: 0 -14px; padding: 20px 44px 16px 18px; background:
+    radial-gradient(120% 140% at 88% -20%, hsla(var(--eh), 90%, 60%, .45), transparent 60%),
+    radial-gradient(60% 90% at 0% 120%, hsla(calc(var(--eh) + 40), 80%, 50%, .25), transparent 70%),
+    linear-gradient(180deg, hsla(var(--eh), 50%, 14%, 1), rgba(14,10,26,0));
+  border-bottom: 1px solid hsla(var(--eh), 80%, 65%, .25); display: grid; gap: 6px; }
+#eventModal .evhero small { font: 700 10.5px/1 var(--mono); letter-spacing: .14em; color: hsl(var(--eh), 90%, 72%); }
+#eventModal .evhero h3 { font-size: 22px; letter-spacing: .02em; text-shadow: 0 0 18px hsla(var(--eh), 90%, 60%, .55); }
+#eventModal .evhero p { font-size: 12.5px; color: #d8cfee; }
+#eventModal .evhero .mn { color: hsl(var(--eh), 95%, 74%); }
+#eventModal .devmonth { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 8px; border: 1px dashed rgba(255,255,255,.25); border-radius: 8px; }
+#eventModal .devmonth span { font: 700 10px var(--mono); color: #ff9a6a; margin-right: 4px; letter-spacing: .08em; }
+#eventModal .devmonth button { width: 30px; height: 26px; border-radius: 5px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.04); color: var(--dim); font: 700 11px var(--mono); cursor: pointer; }
+#eventModal .devmonth button.on { background: hsl(var(--eh), 80%, 55%); color: #120a02; border-color: transparent; }
+#eventModal .pkgs { display: grid; gap: 10px; }
+#eventModal .pkg { --c: 12px; --line: color-mix(in srgb, var(--pc) 55%, transparent); --fill: linear-gradient(170deg, color-mix(in srgb, var(--pc) 16%, #120d22), #0d0a18 55%); padding: 12px 12px 10px; display: grid; gap: 8px; }
+#eventModal .pk-hyper { --fill: linear-gradient(170deg, color-mix(in srgb, var(--pc) 26%, #140d1c), #0d0a18 60%); box-shadow: 0 0 22px color-mix(in srgb, var(--pc) 30%, transparent); }
+#eventModal .pkhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#eventModal .pkhead b { font-size: 15px; color: var(--pc); text-shadow: 0 0 12px color-mix(in srgb, var(--pc) 45%, transparent); }
+#eventModal .pkhead .off { font: 800 11px/1 var(--mono); color: #fff; background: var(--bad); padding: 4px 6px; border-radius: 4px; }
+#eventModal .pkitems { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 5px; }
+#eventModal .pkitems li { --ih: 270; display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 6px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.06); min-width: 0; }
+#eventModal .pkitems .iic { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 5px; color: var(--ic, hsl(var(--ih), 90%, 70%)); background: color-mix(in srgb, var(--ic, hsl(var(--ih), 90%, 60%)) 16%, transparent); }
+#eventModal .pkitems span { display: grid; gap: 2px; min-width: 0; flex: 1; }
+#eventModal .pkitems span b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#eventModal .pkitems span small { font: 600 9.5px/1.2 var(--mono); color: var(--dim); }
+#eventModal .pkitems em { flex: none; font: 800 12px var(--mono); font-style: normal; color: var(--gold); }
+#eventModal .pkitems li.sp { grid-column: 1 / -1; border-color: hsla(var(--eh), 95%, 65%, .55); background: linear-gradient(90deg, hsla(var(--eh), 90%, 55%, .22), rgba(255,255,255,.03)); animation: sppulse 2s ease-in-out infinite; }
+#eventModal .pkitems li.sp span small { color: hsl(var(--eh), 95%, 74%); }
+#eventModal .pkitems li.perm { grid-column: 1 / -1; border-color: rgba(255, 207, 90, .45); }
+#eventModal .pkitems li.perm span small { color: var(--gold); }
+@keyframes sppulse { 50% { box-shadow: 0 0 14px hsla(var(--eh), 95%, 60%, .45); } }
+#eventModal .pkfoot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+#eventModal .price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+#eventModal .price s { display: inline-flex; align-items: center; gap: 3px; font: 700 12px var(--mono); color: #8e86a8; text-decoration: line-through; text-decoration-color: var(--bad); text-decoration-thickness: 2px; }
+#eventModal .price b { display: inline-flex; align-items: center; gap: 4px; font: 800 18px var(--mono); color: #7ff3ff; }
+#eventModal .price b .i { color: #7ff3ff; }
+#eventModal .price small { font: 700 10px var(--mono); color: var(--dim); }
+#eventModal .pkfoot .buy { min-width: 110px; }
+#eventModal .pkfoot .buy.confirm { color: #120a02; --fill: var(--gold); animation: sppulse 1s ease-in-out infinite; }
+#eventModal .evnote { font: 600 10.5px/1.6 var(--mono); color: var(--dim); text-align: center; }
+#eventModal .evnote b { color: #7ff3ff; }
+
+/* event items elsewhere: box tickets, limited crystals, the food inventory */
+.card.box .tk { display: flex; align-items: center; gap: 3px; color: #7ff3ff; font-style: normal; }
+.ticketbtn { color: #7ff3ff; --line: rgba(127, 243, 255, .55); }
+.ticketbtn .i { color: #7ff3ff; }
+.card.potion.evpot { --line: hsla(var(--ph), 90%, 65%, .6); }
+.card.evfood.on { --line: rgba(255, 207, 90, .6); }
+.permtag { color: var(--gold); }
+.chip.spchip { --line: rgba(255, 212, 90, .5); }
+.chip.spchip b { color: var(--gold); }
 
 /* ------------- map unlock: codex-milestone gate + tab badge ------------- */
 .tab { position: relative; }

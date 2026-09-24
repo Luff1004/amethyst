@@ -14,5 +14,6 @@ const VIEWER = !!window.AMETHYST_VIEWER || new URLSearchParams(location.search).
 G.config = {
   unlockCodex: LOCAL_HOST || VIEWER,
   viewer: VIEWER,
+  dev: LOCAL_HOST && !VIEWER,      // local only: the event popup gets a month switcher (js/event.js)
 };
 if (VIEWER) document.documentElement.classList.add('viewer');

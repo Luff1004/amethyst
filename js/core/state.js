@@ -7,6 +7,9 @@
     upg: {}, buffs: {}, codex: {}, muted: false,
     crystals: 0, potions: {}, armed: {}, autoOn: true,
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
+    /* monthly event packages (js/data/events.js): free box openings, limited foods waiting to be
+       eaten, permanent foods already eaten, and how many of each package were bought */
+    tickets: {}, foodInv: {}, perm: {}, pkgBought: {},
     settings: { autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner' },
     /* LEVEL 1 - the secret ARG-ish sequence gating the real 5th map (js/level1.js).
        gauge: 0..1 progress this run through the crystal-crack ending (resets each playthrough).
@@ -29,6 +32,16 @@
     } catch (e) { /* storage blocked - play without saving */ }
     G.audio.setMuted(G.state.muted);
   };
+  /* local dev (js/config.js dev, localhost only): coins and crystals are effectively unlimited -
+     anything spent is topped straight back up, so every shop/package/box can be tested freely */
+  const devTopUp = () => {
+    if (!G.config.dev) return;
+    if (!(G.state.coins >= 1e20)) G.state.coins = 1e21;
+    if (!(G.state.crystals >= 1e14)) G.state.crystals = 1e15;
+  };
+  G.on('change', devTopUp);
+  const load0 = G.load;
+  G.load = () => { load0(); devTopUp(); };
   G.save = () => { if (G.config.viewer) return; try { localStorage.setItem(KEY, JSON.stringify(G.state)); } catch (e) {} };
   G.reset = () => { G.state = fresh(); G.save(); G.emit('change'); };
 
@@ -40,14 +53,15 @@
     zone: () => G.data.zones[G.state.zone],
     level: lv,
     val: id => upg(id).value(lv(id)),
-    coinMul() { return this.val('value') * this.zone().coinMul; },
+    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul(); },
+    permCoinMul() { let m = 1; for (const f of G.data.foods) if (f.perm && G.state.perm[f.id]) m *= f.coinMul || 1; return m; },
     clickValue() { return this.val('power') * this.coinMul(); },
     critChance() { return this.val('crit'); },
     critMul() { return this.val('critMul'); },
     autoRate() { return this.val('auto'); },
     foodLuck() {
       let s = 0;
-      for (const f of G.data.foods) if ((G.state.buffs[f.id] || 0) > now()) s += f.bonus;
+      for (const f of G.data.foods) if (f.perm ? G.state.perm[f.id] : (G.state.buffs[f.id] || 0) > now()) s += f.bonus;
       return s;
     },
     luck() { return 1 + this.val('luck') + this.foodLuck(); },
@@ -64,7 +78,7 @@
        crystal (event rewards etc.) wins out over sorting by luck, since it has none */
     armedTop() {
       const list = this.armedList();
-      return list.find(p => p.guarantee) || list.slice().sort((a, b) => (b.luck || 0) - (a.luck || 0))[0] || null;
+      return list.find(p => p.grantCut) || list.find(p => p.guarantee) || list.slice().sort((a, b) => (b.luck || 0) - (a.luck || 0))[0] || null;
     },
     /* chance to see at least one mineral of tier >= `tier` in the current zone on a click with this luck */
     chanceAtLeast(luck, tier, cap = 0.5) {
@@ -76,13 +90,13 @@
     /* how many DISTINCT 1억+ (DIVINE tier and up) cutscenes you've ever discovered, across every map */
     divineFound() {
       let n = 0;
-      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6) n++; }
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6 && !d.special) n++; }
       return n;
     },
     /* how many DISTINCT SECRET-tier cutscenes (the one-per-map hidden mineral) you've ever found */
     secretFound() {
       let n = 0;
-      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8) n++; }
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8 && !d.special) n++; }
       return n;
     },
     /* every SECRET-tier cutscene in the whole game found at least once - the gate for LEVEL 1.
@@ -92,7 +106,7 @@
       if (G.config.unlockCodex) return true;
       // only maps BEFORE the LEVEL 1 zone count - that zone's own secret is unreachable until LEVEL 1 is done
       const gate = G.data.zones.findIndex(z => z.unlock && z.unlock.type === 'level1');
-      const pre = G.cutscenes.list.filter(c => c.tierIdx >= 8 && (gate < 0 || c.zone < gate));
+      const pre = G.cutscenes.list.filter(c => c.tierIdx >= 8 && !c.special && (gate < 0 || c.zone < gate));
       return pre.length > 0 && pre.every(c => G.state.codex[c.id] && G.state.codex[c.id].n > 0);
     },
     /* does the player currently satisfy a zone's `unlock` requirement? */
@@ -135,9 +149,11 @@
     exchangeMax() { return this.exchange(Math.floor(G.state.coins / G.data.exchange.rate)); },
     /* 1 box = 1 crystal item; which one is a weighted dice roll */
     openBox(id) {
-      const b = G.data.boxes.find(x => x.id === id);
-      if (!b || G.state.crystals < b.cost) return null;
-      G.state.crystals -= b.cost;
+      const b = G.data.boxes.find(x => x.id === id), t = G.state.tickets;
+      if (!b) return null;
+      if (t[id] > 0) { t[id]--; if (!t[id]) delete t[id]; }            // a free-open ticket goes first
+      else if (G.state.crystals < b.cost) return null;
+      else G.state.crystals -= b.cost;
       const total = b.w.reduce((a, v) => a + v, 0);
       let r = Math.random() * total, idx = 0;
       for (let i = 0; i < b.w.length; i++) { r -= b.w[i]; if (r < 0) { idx = i; break; } }
@@ -149,8 +165,9 @@
     /* drink (arm) a crystal for the next manual click - several can be armed at once and their
        luck stacks; arming the same one again drinks another unit rather than replacing it */
     armPotion(id) {
-      const s = G.state;
+      const s = G.state, pt = G.stats.potion(id);
       if (!(s.potions[id] > 0)) return false;
+      if (pt && pt.event && !G.event.isActive(pt.event)) return false;   // limited items only work in their month
       s.potions[id]--; s.armed[id] = (s.armed[id] || 0) + 1;
       G.save(); G.emit('change'); return 'on';
     },
@@ -162,20 +179,30 @@
       s.potions[id] = (s.potions[id] || 0) + 1;
       G.save(); G.emit('change'); return 'off';
     },
-    /* redeem a promo-event code (see js/data/event.js) - each event's reward can be claimed once
-       ever per player, regardless of how many codes they try */
-    redeemEventCode(code) {
-      const ev = G.data.event;
-      if (!ev || !ev.reward) return 'invalid';
-      const s = G.state;
-      if (s.eventRedeemed[ev.id]) return 'already';
-      const clean = (code || '').trim().toUpperCase();
-      const ok = ev.validate ? ev.validate(clean) : (ev.codes || []).some(c => c.toUpperCase() === clean);
-      if (!ok) return 'invalid';
-      s.eventRedeemed[ev.id] = true;
-      s.potions[ev.reward.id] = (s.potions[ev.reward.id] || 0) + 1;
-      G.save(); G.emit('change');
-      return 'ok';
+    /* monthly event package (js/data/events.js): pay the sale price in crystals, receive every item.
+       Only the package of the event that's running right now can be bought. */
+    buyPackage(pkgId) {
+      const ev = G.event.current(), pk = ev && ev.packages.find(p => p.id === pkgId), s = G.state;
+      if (!pk) return 'closed';
+      if (s.crystals < pk.sale) return 'poor';
+      s.crystals -= pk.sale;
+      for (const it of pk.items) {
+        const bag = it.k === 'potion' ? s.potions : it.k === 'ticket' ? s.tickets : s.foodInv;
+        bag[it.id] = (bag[it.id] || 0) + it.n;
+      }
+      s.pkgBought[pk.id] = (s.pkgBought[pk.id] || 0) + 1;
+      G.save(); G.emit('change'); return 'ok';
+    },
+    /* eat a food from the inventory (event foods): timed ones stack time like shop food, a
+       permanent one switches its effect on forever (a second one of the same kind does nothing) */
+    eatFood(id) {
+      const s = G.state, f = G.data.foods.find(x => x.id === id);
+      if (!f || !(s.foodInv[id] > 0)) return 'none';
+      if (f.perm && s.perm[id]) return 'already';
+      s.foodInv[id]--; if (!s.foodInv[id]) delete s.foodInv[id];
+      if (f.perm) s.perm[id] = true;
+      else s.buffs[id] = Math.max(now(), s.buffs[id] || 0) + f.duration * 1000;
+      G.save(); G.emit('change'); return f.perm ? 'perm' : 'ok';
     },
     /* LEVEL 1 (js/level1.js): one "?" and one gauge tick per click on its crystal */
     level1Click() {

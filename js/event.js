@@ -1,62 +1,90 @@
-/* AMETHYST - promo event banner button + popup. Edit js/data/event.js to change or remove the
-   active event; this file just wires whatever is there up to the UI. `theme: 'exam'` renders the
-   body as a math-exam question instead of the plain banner/link layout. */
+/* AMETHYST - the monthly event banner (wide button in the top bar) + its package shop popup.
+   Data lives in js/data/events.js; this file only renders whatever event is running this month.
+   Locally (js/config.js dev) the popup also gets a 1~12 month switcher to preview every event. */
 (() => {
   const btn = document.getElementById('btnEvent'), modal = document.getElementById('eventModal');
-  const ev = G.data.event;
-  if (!btn || !modal || !ev) return;
+  if (!btn || !modal || !G.data.events) return;
+  let confirmId = null, confirmT = 0;
 
-  const exam = ev.theme === 'exam';
-  btn.hidden = false;
-  btn.className = 'bevel' + (exam ? ' exam' : '');
-  btn.innerHTML = exam
-    ? `${G.icon('book', 15)}<span>${ev.teaser}</span><i class="xmark">X</i>`
-    : `${G.icon('gift', 16)}<span>${ev.teaser}</span>`;
+  const itemInfo = it => {
+    if (it.k === 'potion') { const p = G.stats.potion(it.id); return { name: p.name, icon: 'potion', hue: p.hue, special: !!p.grantCut, note: p.grantCut ? '한정 광물 확정 · SPECIAL' : p.event ? `LUCK +${G.fmt(p.luck)} · 이벤트 한정` : `LUCK +${G.fmt(p.luck)}` }; }
+    if (it.k === 'ticket') { const b = G.data.boxes.find(x => x.id === it.id); return { name: `${b.name} 무료권`, icon: 'ticket', color: b.color, note: '크리스탈 상점에서 무료 오픈' }; }
+    const f = G.data.foods.find(x => x.id === it.id);
+    return { name: f.name, icon: f.icon, perm: !!f.perm, note: f.perm ? `영구 LUCK +${G.fmtInt(f.bonus)} · 코인 x${f.coinMul}` : `LUCK +${G.fmtInt(f.bonus)} · ${G.fmtTime(f.duration)}` };
+  };
 
-  const redeemed = () => !!G.state.eventRedeemed[ev.id];
+  function paintButton() {
+    const ev = G.event.current();
+    btn.hidden = !ev;
+    if (!ev) return;
+    btn.className = 'bevel evbtn';
+    btn.style.setProperty('--eh', ev.hue);
+    btn.innerHTML = `${G.icon('gift', 17)}<span class="evt"><small>${ev.m}월 한정 이벤트</small><b>${ev.title}</b></span><em class="dday">D-${G.event.daysLeft()}</em>`;
+  }
 
-  function paint(msg) {
-    const done = redeemed();
-    const codeBlock = ev.reward ? `<div class="ecode">
-        <input type="text" maxlength="40" placeholder="${ev.codeLabel || '코드 입력'}" data-ecode ${done ? 'disabled' : ''}>
-        <button class="buy bevel small" data-esubmit ${done ? 'disabled' : ''}><span>${exam ? '채점' : '확인'}</span></button>
-      </div>
-      <div class="emsg${done ? ' ok' : msg === 'invalid' ? ' bad' : ''}">${done ? (exam ? '이미 정답 처리되었습니다 (만점)' : '이미 수령했습니다') : msg === 'invalid' ? (exam ? '오답입니다 - 다시 풀어보세요' : '올바르지 않은 코드입니다') : ''}</div>` : '';
-
+  function paint() {
+    const ev = G.event.current(), s = G.state;
+    if (!ev) { close(); return; }
+    const mineral = G.cutscenes.byId[ev.cut];
+    const months = G.config.dev ? `<div class="devmonth"><span>DEV · 월 전환</span>${G.data.events.map(e => `<button class="${e.m === ev.m ? 'on' : ''}" data-month="${e.m}">${e.m}</button>`).join('')}</div>` : '';
+    const pkgs = ev.packages.map(pk => {
+      const off = Math.round((1 - pk.sale / pk.price) * 100), poor = s.crystals < pk.sale, bought = s.pkgBought[pk.id] || 0;
+      const items = pk.items.map(it => {
+        const inf = itemInfo(it);
+        return `<li class="${inf.special ? 'sp' : ''}${inf.perm ? ' perm' : ''}" style="${inf.hue != null ? `--ih:${inf.hue}` : ''}${inf.color ? `;--ic:${inf.color}` : ''}">
+          <i class="iic">${G.icon(inf.icon, 15)}</i><span><b>${inf.name}</b><small>${inf.note}</small></span><em>x${it.n}</em></li>`;
+      }).join('');
+      const confirming = confirmId === pk.id;
+      return `<div class="pkg bevel pk-${pk.tier}" style="--pc:${pk.color}">
+        <div class="pkhead"><b>${pk.name}</b><span class="off">-${off}%</span></div>
+        <ul class="pkitems">${items}</ul>
+        <div class="pkfoot">
+          <div class="price"><s>${G.icon('crystal', 11)}${G.fmtInt(pk.price)}</s><b>${G.icon('crystal', 15)}${G.fmtInt(pk.sale)}</b>${bought ? `<small>구매 ${bought}회</small>` : ''}</div>
+          <button class="buy bevel ${poor ? 'poor' : ''} ${confirming ? 'confirm' : ''}" data-pkg="${pk.id}"><span>${confirming ? '한 번 더 눌러 구매' : '구매'}</span></button>
+        </div></div>`;
+    }).join('');
     modal.innerHTML = `<div class="scrim"></div>
-      <div class="tcard bevel${exam ? ' exam' : ''}">
+      <div class="tcard bevel pkgshop ev-${ev.id}" style="--eh:${ev.hue}">
         <button class="xclose" data-eclose aria-label="닫기">&times;</button>
-        ${exam ? `
-          <div class="examhead"><b>${ev.title}</b><span>${ev.points || ''}</span></div>
-          <p class="exintro">${ev.body.split('\n').map(l => l || '&nbsp;').join('<br>')}</p>
-          <div class="exampaper">
-            <div class="qtext">${ev.problem}</div>
-            ${ev.meta ? `<div class="qmeta">${ev.meta}</div>` : ''}
-          </div>
-          ${codeBlock}
-        ` : `
+        <div class="evhero">
+          <small>${ev.m}월 한정 이벤트 &nbsp;·&nbsp; D-${G.event.daysLeft()}</small>
           <h3>${ev.title}</h3>
-          <p>${ev.body.split('\n').map(l => l || '&nbsp;').join('<br>')}</p>
-          ${ev.linkUrl ? `<a class="buy bevel eventlink" href="${ev.linkUrl}" target="_blank" rel="noopener"><span>${ev.linkLabel || '바로가기'}</span></a>` : ''}
-          ${codeBlock}
-        `}
+          <p>${ev.name} 기간에만 판매하는 한정 패키지입니다. 메가 · 하이퍼 패키지에는 도감 <b>SPECIAL</b>에 기록되는 한정 광물
+            <b class="mn">${mineral ? mineral.name : ''}</b>이(가) 확정으로 나오는 특별 한정 광물 포션이 들어 있습니다.</p>
+        </div>
+        ${months}
+        <div class="pkgs">${pkgs}</div>
+        <div class="evnote">보유 크리스탈 <b>${G.fmtInt(s.crystals)}</b> &nbsp;·&nbsp; 포션은 크리스탈 탭, 음식은 상점 탭에서 사용 &nbsp;·&nbsp; 한정 포션은 이벤트 기간에만 사용할 수 있습니다</div>
       </div>`;
   }
 
-  function open() { modal.hidden = false; paint(); requestAnimationFrame(() => modal.classList.add('show')); }
+  function open() { confirmId = null; modal.hidden = false; paint(); requestAnimationFrame(() => modal.classList.add('show')); }
   function close() { modal.classList.remove('show'); setTimeout(() => { modal.hidden = true; }, 320); }
-
-  function submit() {
-    const input = modal.querySelector('[data-ecode]'); if (!input || redeemed()) return;
-    const r = G.act.redeemEventCode(input.value);
-    if (r === 'ok' || r === 'already') { G.audio.buy(); paint(); }
-    else { G.audio.deny(); paint('invalid'); input.focus(); }
-  }
 
   btn.addEventListener('click', () => { G.audio.init(); G.audio.tab(); open(); });
   modal.addEventListener('click', ev2 => {
-    if (ev2.target.closest('[data-eclose]') || ev2.target.classList.contains('scrim')) { G.audio.tab(); close(); }
-    else if (ev2.target.closest('[data-esubmit]')) submit();
+    const t = ev2.target;
+    if (t.closest('[data-eclose]') || t.classList.contains('scrim')) { G.audio.tab(); close(); return; }
+    const mb = t.closest('[data-month]');
+    if (mb) { G.audio.tab(); confirmId = null; G.event.setDevMonth(+mb.dataset.month); paint(); paintButton(); return; }
+    const pb = t.closest('[data-pkg]');
+    if (!pb) return;
+    const id = pb.dataset.pkg;
+    if (confirmId !== id) {                                   // first tap arms it, second tap buys
+      const pk = G.event.current().packages.find(p => p.id === id);
+      if (G.state.crystals < pk.sale) { G.audio.deny(); G.emit('toast', '크리스탈이 부족합니다'); return; }
+      confirmId = id; G.audio.tab(); paint();
+      clearTimeout(confirmT); confirmT = setTimeout(() => { confirmId = null; if (!modal.hidden) paint(); }, 2600);
+      return;
+    }
+    confirmId = null;
+    const r = G.act.buyPackage(id);
+    if (r === 'ok') { G.audio.buy(); G.audio.potion(); G.emit('toast', '구매 완료 - 아이템이 지급되었습니다'); }
+    else { G.audio.deny(); G.emit('toast', r === 'poor' ? '크리스탈이 부족합니다' : '지금은 구매할 수 없습니다'); }
+    paint();
   });
-  modal.addEventListener('keydown', ev2 => { if (ev2.key === 'Enter' && ev2.target.matches('[data-ecode]')) submit(); });
+
+  G.on('change', () => { if (!modal.hidden && modal.classList.contains('show')) paint(); });
+  paintButton();
+  setInterval(paintButton, 60000);
 })();

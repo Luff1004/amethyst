@@ -200,14 +200,14 @@
   /* one-click luck bomb: everything flashes, the roll uses luck + all armed crystals' luck stacked, with a higher cap */
   function potionBurst(list, x, y) {
     const c = center(), R = crystalR();
-    const guaranteeItem = list.find(p => p.guarantee);
-    const top = guaranteeItem || list.slice().sort((a, b) => (b.luck || 0) - (a.luck || 0))[0], col = `hsl(${top.hue},100%,68%)`;
+    const grantItem = list.find(p => p.grantCut), guaranteeItem = list.find(p => p.guarantee);
+    const top = grantItem || guaranteeItem || list.slice().sort((a, b) => (b.luck || 0) - (a.luck || 0))[0], col = `hsl(${top.hue},100%,68%)`;
     const totalLuck = list.reduce((a, p) => a + (p.luck || 0), 0);
-    G.audio.blast(G.data.potions.indexOf(top));
+    G.audio.blast(top.event ? 7 : G.data.potions.indexOf(top));
     for (let i = 0; i < 4; i++) ring(c.x, c.y, i % 2 ? "#ffffff" : col, R * (2.4 + i), 3 - i * 0.4, 0.7 + i * 0.15);
     for (let i = 0; i < 22; i++) spark(c.x, c.y, i % 3 ? col : "#ffffff", 1.8);
     coins(c.x, c.y, 3, 1.5);
-    const label = guaranteeItem ? top.en + '  ' + G.tiers[guaranteeItem.guarantee].en + '+ CONFIRMED'
+    const label = grantItem ? 'SPECIAL MINERAL CONFIRMED' : guaranteeItem ? top.en + '  ' + G.tiers[guaranteeItem.guarantee].en + '+ CONFIRMED'
       : list.length > 1 ? list.length + ' CRYSTALS  LUCK +' + G.fmt(totalLuck) : top.en + '  LUCK +' + G.fmt(totalLuck);
     text(c.x, c.y - R * 0.9, label, col, 20, 1.6);
     flashA = 0.5; shake = 1;
@@ -216,6 +216,9 @@
     // a "guarantee" crystal (event rewards etc.) skips the normal odds roll entirely and hands
     // back a random mineral of at least that tier from the current zone - a real guarantee, not
     // just a very high luck number that could still theoretically miss
+    // a limited mineral crystal hands over its one specific SPECIAL mineral, wherever you are
+    const grant = armed && armed.find(p => p.grantCut && G.cutscenes.byId[p.grantCut]);
+    if (grant) { startCut(G.cutscenes.byId[grant.grantCut], false); return; }
     const guarantee = armed ? armed.reduce((m, p) => p.guarantee ? Math.max(m, p.guarantee) : m, 0) : 0;
     if (guarantee) {
       const pool = G.cutscenes.inZone(G.state.zone).filter(c => c.tierIdx >= guarantee);

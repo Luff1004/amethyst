@@ -67,6 +67,9 @@ G.tiers = [
   { key: 'divine',    ko: '신성',   en: 'DIVINE',       below: 1e9,      color: '#7ff3ff' }, // 1억대
   { key: 'celestial', ko: '초월',   en: 'TRANSCENDENT', below: 1e10,     color: '#ffe08a' }, // 10억대
   { key: 'secret',    ko: '시크릿', en: 'SECRET',       below: Infinity, color: '#ff2b4a' }, // 100억~
+  /* never rolled by odds: the monthly event minerals (js/data/events.js), only obtainable from that
+     month's limited mineral crystal. Registered with tier:'special' + special:true */
+  { key: 'special',   ko: '스페셜', en: 'SPECIAL',      below: Infinity, color: '#ffd45a' },
 ];
 G.tierIndex = odds => G.tiers.findIndex(t => odds < t.below);
 G.GRAND = 6; // tiers at or above this index get the cinematic treatment
@@ -110,6 +113,14 @@ const P = {
   pause: '<path d="M8 5v14M16 5v14"/>',
   exchange: '<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
   gift: '<rect x="4" y="10" width="16" height="4"/><rect x="5" y="14" width="14" height="7"/><path d="M12 10v11"/><path d="M12 10c-1-4-6-4-6-1s5 1 6 1zm0 0c1-4 6-4 6-1s-5 1-6 1z"/>',
+  ticket: '<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',
+  can: '<rect x="5" y="7" width="14" height="12" rx="1"/><path d="M5 11h14M8 4h8l1 3H7z"/>',
+  bottle: '<path d="M10 2h4v4l2 3v12H8V9l2-3z"/><path d="M8 13h8"/>',
+  bowl: '<path d="M3 11h18a9 7 0 0 1-18 0z"/><path d="M8 19h8"/><path d="M10 7c0-2 2-2 2-4"/>',
+  candy: '<circle cx="12" cy="12" r="4"/><path d="M8.5 10L4 7v10l4.5-3M15.5 10L20 7v10l-4.5-3"/>',
+  leaf: '<path d="M12 21V11M12 3l2 4 4-1-1 4 4 2-4 2 1 4-4-1-2 4-2-4-4 1 1-4-4-2 4-2-1-4 4 1z"/>',
+  moon: '<path d="M16 3a9 9 0 1 0 5 12A7 7 0 0 1 16 3z"/>',
+  heart: '<path d="M12 20S4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.5-8 11-8 11z"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.2-1.6l2-1.4-2-3.4-2.3.9a7 7 0 0 0-2.7-1.6L13.4 2h-2.8l-.4 2.9a7 7 0 0 0-2.7 1.6l-2.3-.9-2 3.4 2 1.4a7 7 0 0 0 0 3.2l-2 1.4 2 3.4 2.3-.9a7 7 0 0 0 2.7 1.6l.4 2.9h2.8l.4-2.9a7 7 0 0 0 2.7-1.6l2.3.9 2-3.4-2-1.4c.13-.5.2-1.05.2-1.6z"/>',
 };
 G.icon = (name, size = 22) =>
