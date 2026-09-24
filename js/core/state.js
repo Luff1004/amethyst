@@ -10,6 +10,9 @@
     /* monthly event packages (js/data/events.js): free box openings, limited foods waiting to be
        eaten, permanent foods already eaten, and how many of each package were bought */
     tickets: {}, foodInv: {}, perm: {}, pkgBought: {},
+    /* missions (js/missions.js): lifetime counters, achievements {id: {t, claimed}}, today's daily
+       missions, the login calendar, and when the game was last open (offline mining) */
+    ct: {}, ach: {}, daily: null, login: { last: '', streak: 0, best: 0 }, lastSeen: 0,
     settings: { autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner' },
     /* LEVEL 1 - the secret ARG-ish sequence gating the real 5th map (js/level1.js).
        gauge: 0..1 progress this run through the crystal-crack ending (resets each playthrough).
@@ -42,7 +45,7 @@
   G.on('change', devTopUp);
   const load0 = G.load;
   G.load = () => { load0(); devTopUp(); };
-  G.save = () => { if (G.config.viewer) return; try { localStorage.setItem(KEY, JSON.stringify(G.state)); } catch (e) {} };
+  G.save = () => { if (G.config.viewer) return; G.state.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(G.state)); } catch (e) {} };
   G.reset = () => { G.state = fresh(); G.save(); G.emit('change'); };
 
   const now = () => Date.now();
@@ -64,7 +67,9 @@
       for (const f of G.data.foods) if (f.perm ? G.state.perm[f.id] : (G.state.buffs[f.id] || 0) > now()) s += f.bonus;
       return s;
     },
-    luck() { return 1 + this.val('luck') + this.foodLuck(); },
+    luck() { return 1 + this.val('luck') + this.foodLuck() + this.achLuck(); },
+    /* every claimed achievement is a small permanent luck bonus */
+    achLuck() { let n = 0; for (const id in G.state.ach) if (G.state.ach[id].claimed) n++; return n * (G.data.ACH_LUCK || 0); },
     potion: id => G.data.potions.find(p => p.id === id),
     /* several crystals can be armed at once now - their luck stacks (adds up) for the next click */
     armedList() {
@@ -129,7 +134,7 @@
       const c = u.cost(l);
       if (G.state.coins < c) return false;
       G.state.coins -= c; G.state.upg[id] = l + 1;
-      G.save(); G.emit('change'); return true;
+      G.emit('upgrade', id); G.save(); G.emit('change'); return true;
     },
     buyFood(id) {
       const f = G.data.foods.find(x => x.id === id);
@@ -137,14 +142,14 @@
       G.state.coins -= f.cost;
       const base = Math.max(now(), G.state.buffs[id] || 0);
       G.state.buffs[id] = base + f.duration * 1000;
-      G.save(); G.emit('change'); return true;
+      G.emit('food', id); G.save(); G.emit('change'); return true;
     },
     /* coins -> crystals */
     exchange(n) {
       const cost = n * G.data.exchange.rate;
       if (n < 1 || G.state.coins < cost) return false;
       G.state.coins -= cost; G.state.crystals += n;
-      G.save(); G.emit('change'); return true;
+      G.emit('exch', n); G.save(); G.emit('change'); return true;
     },
     exchangeMax() { return this.exchange(Math.floor(G.state.coins / G.data.exchange.rate)); },
     /* 1 box = 1 crystal item; which one is a weighted dice roll */
@@ -191,7 +196,7 @@
         bag[it.id] = (bag[it.id] || 0) + it.n;
       }
       s.pkgBought[pk.id] = (s.pkgBought[pk.id] || 0) + 1;
-      G.save(); G.emit('change'); return 'ok';
+      G.emit('pkg', pk); G.save(); G.emit('change'); return 'ok';
     },
     /* eat a food from the inventory (event foods): timed ones stack time like shop food, a
        permanent one switches its effect on forever (a second one of the same kind does nothing) */
@@ -202,7 +207,7 @@
       s.foodInv[id]--; if (!s.foodInv[id]) delete s.foodInv[id];
       if (f.perm) s.perm[id] = true;
       else s.buffs[id] = Math.max(now(), s.buffs[id] || 0) + f.duration * 1000;
-      G.save(); G.emit('change'); return f.perm ? 'perm' : 'ok';
+      G.emit('food', id); G.save(); G.emit('change'); return f.perm ? 'perm' : 'ok';
     },
     /* LEVEL 1 (js/level1.js): one "?" and one gauge tick per click on its crystal */
     level1Click() {

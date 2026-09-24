@@ -155,7 +155,7 @@
     const gain = G.stats.clickValue() * (crit ? G.stats.critMul() : 1) * (gated ? 0.05 : 1);
     G.addCoins(gain); s.clicks++;
     let armed = null;
-    if (!gated && !auto && G.stats.armedCount() > 0) { armed = G.stats.armedList(); s.armed = {}; G.save(); G.emit("change"); }
+    if (!gated && !auto && G.stats.armedCount() > 0) { armed = G.stats.armedList(); s.armed = {}; G.emit('drink', armed); G.save(); G.emit("change"); }
     G.audio.coin(auto ? 0 : combo, auto, zone().snd);
     G.audio.crack(zone().snd, hits / zone().hp, auto);
     if (crit) G.audio.crit();
@@ -192,7 +192,7 @@
       crystal = makeCrystal((Math.random() * 1e9) | 0);
     }
     cap();
-    G.emit('mine');
+    G.emit('mine', { auto, crit, shatter: shatterLuck, combo, gain });
     if (armed) potionBurst(armed, x, y);
     if (!gated) roll(armed, shatterLuck ? 5 : 1);
   }
@@ -237,6 +237,7 @@
       G.addCoins(reward);
       const cx = s.codex[def.id] || (s.codex[def.id] = { n: 0, t: Date.now(), best: 0 });
       first = cx.n === 0; cx.n++; cx.best = Math.max(cx.best, reward);
+      G.emit('found', { def, first, reward });
       G.save();
     }
     // decide whether to actually play the film, or just hand over the reward
