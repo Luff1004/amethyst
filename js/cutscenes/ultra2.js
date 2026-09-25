@@ -50,7 +50,7 @@
   };
 
   G.cutscenes.register({
-    id: 'reverie', name: 'The Reverie', odds: 15000000000, zone: 1, duration: 18000, revealAt: 0.7,
+    id: 'reverie', name: 'The Reverie', odds: 1000000000000, zone: 1, duration: 18000, revealAt: 0.7,
     snd: 'rise:crystalline hit:celesta tail:musicbox amb:whisper root:220 scale:lydian',
     colors: ['#ff9ae0', '#6affe0', '#1a0a2e'],
     captions: [

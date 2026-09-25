@@ -70,7 +70,7 @@
   };
 
   G.cutscenes.register({
-    id: 'staticmemory', name: 'STATIC.avi', odds: 15000000000, zone: 2, duration: 17500, revealAt: 0.7,
+    id: 'staticmemory', name: 'STATIC.avi', odds: 1000000000000, zone: 2, duration: 17500, revealAt: 0.7,
     snd: 'rise:granular hit:laser tail:chime amb:machine root:180 scale:phrygian',
     colors: ['#8fe8ff', '#ff5ec4', '#050308'],
     captions: [

@@ -209,9 +209,15 @@
 
   /* roll once per mining action. Rarest first, at most one cutscene. Only this zone's minerals. */
   C.roll = (zone, luck, cap = 0.5) => {
+    const wxId = G.weather ? G.weather.current().id : null;
+    // a special sky (one with its own exclusive mineral) holds back the regular secrets - only its own 100억 can drop
+    const specialSky = wxId && C.list.some(c => c.weather === wxId);
     for (let i = C.list.length - 1; i >= 0; i--) {
       const c = C.list[i];
-      if (!c.zones.includes(zone)) continue;
+      if (!c.zones.includes(zone) || c.boss) continue;
+      // weather-exclusive minerals only exist while their weather is overhead
+      if (c.weather && wxId !== c.weather) continue;
+      if (specialSky && !c.weather && c.tierIdx >= 8) continue;
       if (Math.random() < Math.min(cap, luck / c.odds)) return c;
     }
     return null;
@@ -224,7 +230,7 @@
     // TRANSCENDENT and above open with a short blackout (time runs negative during it)
     const pre = def.tierIdx >= 7 ? 1800 : 0;
     C.active = {
-      def, reward: opt.reward || 0, first: !!opt.first, replay: !!opt.replay,
+      def, reward: opt.reward || 0, first: !!opt.first, replay: !!opt.replay, mut: opt.mut || null,
       t0: performance.now() + pre, pre, revealed: false, time: -pre, guard: 0, audioOn: pre === 0,
     };
     if (pre) G.audio.blackout(def.tierIdx);
@@ -414,7 +420,11 @@
     g.save();
     g.globalAlpha = E.outCubic(seg(a.time, 0, grand ? 900 : 450));
     g.beginPath(); g.rect(0, 0, W, H); g.clip();
+    const ms = a.mut && G.weather ? G.weather.mutScale(a.mut) : 1;        // 거대한: the whole film, bigger
+    if (ms !== 1) { g.save(); g.translate(e.cx, e.cy); g.scale(ms, ms); g.translate(-e.cx, -e.cy); }
     d.draw(g, e);
+    if (ms !== 1) g.restore();
+    if (a.mut && G.weather) G.weather.mutOverlay(g, e, a.mut, a.time);
     g.restore();
 
     // reveal flash
@@ -459,6 +469,18 @@
       let k = E.outCubic(seg(rt, 0, 400));
       g.globalAlpha = k; g.fillStyle = tier.color; g.font = `700 ${12 * s}px ${FONT}`; spc(`${(grand ? 8 : 4) * s}px`);
       g.fillText(`${tier.en}  /  ${tier.ko}`, W / 2, y0);
+      if (a.mut) {   // MUTATION tag above the tier line, in the mutation's colour
+        const mk = E.outBack(seg(rt, 200, 700));
+        g.save(); g.globalAlpha = Math.min(1, mk); g.translate(W / 2, y0 - 26 * s); g.scale(0.6 + 0.4 * mk, 0.6 + 0.4 * mk);
+        const mt = `MUTATION  ·  ${a.mut.en}  x${a.mut.mul}`;
+        g.font = `800 ${11 * s}px ${MONO}`; spc(`${3 * s}px`);
+        const mw2 = g.measureText(mt).width + 24 * s;
+        g.fillStyle = a.mut.id === 'rainbow' ? `hsl(${(a.time * 0.2) % 360},90%,60%)` : a.mut.color;
+        g.shadowColor = g.fillStyle; g.shadowBlur = 16;
+        g.fillRect(-mw2 / 2, -11 * s, mw2, 22 * s);
+        g.shadowBlur = 0; g.fillStyle = '#0a0612'; g.fillText(mt, 0, 1 * s);
+        g.restore();
+      }
       if (grand) {   // flanking lines
         const L = E.outCubic(seg(rt, 100, 1100)) * W * 0.28;
         g.fillStyle = rgba(tier.color, 0.8); g.globalAlpha = 1;
@@ -470,7 +492,8 @@
       let fs = grand ? 40 * s : Math.min(32 * s, W * 0.1);
       const sp = grand ? (6 + (1 - k) * 26) * s : 2 * s;
       g.font = `${grand ? 800 : 800} ${fs}px ${FONT}`; spc(`${sp}px`);
-      const label = grand ? d.name.toUpperCase() : d.name, mw = g.measureText(label).width;
+      const nm = a.mut ? `${d.name}: ${a.mut.name}` : d.name;
+      const label = grand ? nm.toUpperCase() : nm, mw = g.measureText(label).width;
       if (mw > W * 0.9) { const f = (W * 0.9) / mw; fs *= f; g.font = `800 ${fs}px ${FONT}`; spc(`${sp * f}px`); }
       if (grand) { g.shadowColor = rgba(tier.color, 0.7); g.shadowBlur = 24; }
       g.fillText(label, W / 2, y0 + (grand ? 44 : 36) * s + (1 - k) * 10);
@@ -478,7 +501,8 @@
       // odds
       k = E.outCubic(seg(rt, 300, 900)); g.globalAlpha = k;
       g.fillStyle = tier.color; g.font = `700 ${18 * s}px ${MONO}`; spc('0px');
-      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : `1 in ${G.fmtInt(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
+      const wxName = d.weather && G.data.weathers[d.weather] ? G.data.weathers[d.weather].name : '';
+      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : d.boss ? `BOSS  ·  ${d.bossName} 처치 보상` : d.weather ? `1 in ${G.fmtInt(d.odds)}  ·  ${wxName} 전용` : `1 in ${G.fmtInt(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
       // reward
       if (!a.replay) {
         k = E.outCubic(seg(rt, 500, 900)); g.globalAlpha = k;

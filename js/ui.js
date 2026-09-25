@@ -226,7 +226,7 @@
     const s = G.state, luck = G.stats.luck(), Z = G.data.zones;
     if (codexZone < 0 || codexZone > Z.length) codexZone = s.zone;
     // index Z.length = the SPECIAL shelf: the monthly event minerals, which belong to no map
-    const SP = Z.length, specials = () => G.cutscenes.list.filter(c => c.special).sort((a, b) => a.month - b.month);
+    const SP = Z.length, specials = () => G.cutscenes.list.filter(c => c.special || c.boss).sort((a, b) => (a.boss ? 99 : a.month) - (b.boss ? 99 : b.month));
     const zc = c => (c === SP ? specials() : G.cutscenes.inZone(c));
     const foundOf = i => zc(i).filter(c => (s.codex[c.id] || {}).n > 0).length;
     const seenMap = s.codexSeen || {}, isFound = c => (s.codex[c.id] || {}).n > 0, isNew = c => !G.config.viewer && isFound(c) && !seenMap[c.id];
@@ -234,11 +234,14 @@
     const spChip = n => `<button class="chip bevel spchip ${codexZone === SP ? 'on' : ''}" data-cz="${SP}" style="--zh:45"><b>SP</b><span>${n}</span>${dot(SP)}</button>`;
     const chips = Z.map((z, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''} ${mapOpen(i) ? '' : 'off'}" data-cz="${i}" style="--zh:${z.hue}">
         <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span>${dot(i)}</button>`).join('') + spChip(foundOf(SP) + '/' + zc(SP).length);
-    const z = codexZone === SP ? { name: '스페셜', en: 'SPECIAL · 월별 이벤트 한정 광물', hue: 45 } : Z[codexZone];
+    const z = codexZone === SP ? { name: '스페셜', en: 'SPECIAL · 월별 이벤트 & 보스 처치 광물', hue: 45 } : Z[codexZone];
     // 필터: 전체 / 발견 / 미발견 / NEW
     const keep = c => codexFilter === 'found' ? isFound(c) : codexFilter === 'unfound' ? !isFound(c) : codexFilter === 'new' ? isNew(c) : true;
     const L = zc(codexZone).filter(c => G.config.viewer || keep(c)), open = codexZone === SP || mapOpen(codexZone);
-    const oddsTxt = c => c.special ? `SPECIAL · ${c.month}월 ${c.eventName} 한정` : `1 in ${G.fmtInt(c.odds)}`;
+    const oddsTxt = c => c.special ? `SPECIAL · ${c.month}월 ${c.eventName} 한정` : c.boss ? `BOSS · ${c.bossName} 처치 보상`
+      : c.weather ? `1 in ${G.fmtInt(c.odds)} · ${G.data.weathers[c.weather].name} 전용` : `1 in ${G.fmtInt(c.odds)}`;
+    // mutations this mineral has been found with
+    const mutChips = rec => rec && rec.mut ? `<span class="mutchips">${Object.keys(rec.mut).map(k => { const m = G.data.mutations[k]; return m ? `<i style="--mc:${m.color}">${m.name} ×${rec.mut[k]}</i>` : ''; }).join('')}</span>` : '';
     let head = '', body = '';
     if (!open) {
       body = `<div class="empty">${G.icon('lock', 20)}<span>아직 도달하지 못한 지역입니다</span></div>`;
@@ -265,8 +268,8 @@
           <div class="stripe"></div>
           <div class="meta"><b>${ok ? c.name : '???'}${fresh ? '<small class="newtag">NEW</small>' : ''}</b>${off ? '<small class="skip">SKIP</small>' : ''}
             <span class="odds">${oddsTxt(c)}</span>
-            ${luck > 1.001 && !c.special ? `<span class="eff">현재 1 in ${G.fmtInt(eff)}</span>` : ''}
-            <span>${seen ? `발견 ${G.fmtInt(rec.n)}회 &nbsp;/&nbsp; 최고 +${G.fmt(rec.best)}` : '미발견'}</span></div>
+            ${luck > 1.001 && !c.special && !c.boss ? `<span class="eff">현재 1 in ${G.fmtInt(eff)}</span>` : ''}
+            <span>${seen ? `발견 ${G.fmtInt(rec.n)}회 &nbsp;/&nbsp; 최고 +${G.fmt(rec.best)}` : '미발견'}</span>${mutChips(rec)}</div>
           <div class="side">${ok ? `<button class="buy bevel" data-replay="${c.id}">${G.icon('play', 14)}<span>보기</span></button>
             ${seen ? `<button class="buy bevel small ${off ? 'offbtn' : ''}" data-skip="${c.id}"><span>${off ? '컷신 켜기' : '그만 보기'}</span></button>`
               : `<span class="firstonly">첫 감상은 건너뛸 수 없음</span>`}` : ''}</div></div>`;
@@ -530,8 +533,8 @@
     void winEl.offsetWidth; winEl.classList.add('show');
     clearTimeout(winT); winT = setTimeout(() => winEl.classList.remove('show'), ms);
   };
-  G.on('win', ({ def, reward, tier }) => {
-    fireWin(`<small>${tier.en}</small><b>${def.name}</b><span>${def.special ? 'SPECIAL' : '1 in ' + G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
+  G.on('win', ({ def, reward, tier, mut }) => {
+    fireWin(`${mut ? `<i class="mut" style="--mc:${mut.color}">MUTATION · ${mut.en}</i>` : ''}<small>${tier.en}</small><b>${mut ? def.name + ': ' + mut.name : def.name}</b><span>${def.special ? 'SPECIAL' : '1 in ' + G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
   });
   /* crystal box opened: spin a roulette strip past a run of crystals before landing on the real
      result, then show the usual reward banner. The outcome is already decided (G.act.openBox already
@@ -666,8 +669,9 @@
       else if (!f.perm && G.stats.buffLeft(f.id) > 0) rows.push([`${f.name} · ${G.fmtTime(G.stats.buffLeft(f.id))}`, f.bonus]);
     }
     const armed = G.stats.armedLuck();
-    const total = G.stats.luck();
+    const total = G.stats.luck(), wxm = G.weather ? G.weather.mul('luck') : 1, wx = G.weather && G.weather.current();
     luckPop.innerHTML = `<b>LUCK 구성</b>${rows.map(([n, v]) => `<div><span>${n}</span><em>${n === '기본' ? 'x1' : '+' + fmtB(v)}</em></div>`).join('')}
+      ${wxm !== 1 ? `<div><span>날씨 · ${wx.name}</span><em>x${fmtB(wxm)}</em></div>` : ''}
       <div class="tot"><span>합계</span><em>${G.fmtLuck(total)}</em></div>
       ${armed ? `<div class="arm"><span>다음 클릭 (장전 크리스탈)</span><em>+${G.fmt(armed)}</em></div>` : ''}
       <small>파쇄 직후 클릭은 행운 x5</small>`;
@@ -694,7 +698,7 @@
   window.addEventListener('keydown', ev => {
     if (ev.repeat || ev.ctrlKey || ev.metaKey || ev.altKey || G.config.viewer) return;
     if (ev.target.matches && ev.target.matches('input, textarea')) { if (ev.key === 'Escape') ev.target.blur(); return; }
-    if (G.cutscenes.active || document.getElementById('level1').classList.contains('show')) return;
+    if (G.cutscenes.active || (G.boss && G.boss.active) || document.getElementById('level1').classList.contains('show')) return;
     const k = ev.key.toLowerCase(), order = ['shop', 'map', 'up', 'codex', 'crystal'];
     if (k >= '1' && k <= '5') { const b = document.querySelector(`[data-tab="${order[+k - 1]}"]`); if (b) b.click(); }
     else if (k === 's') $('#btnGear').click();

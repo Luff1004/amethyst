@@ -30,6 +30,8 @@ G.opt = key => {
     lastSeen: 0,                     // when the game was last saved - offline mining (js/offline.js)
     theme: 'amethyst', themesOwned: { amethyst: true },   // 설정 - 테마 (js/data/themes.js)
     codexSeen: null,                 // minerals already looked at in the codex (anything found but not in here shows NEW)
+    wx: {},                          // each region's current weather {id, until} (js/weather.js)
+    bossKills: {},                   // bosses beaten, by id (js/boss.js)
     settings: G.defaultSettings(),
     /* LEVEL 1 - the secret ARG-ish sequence gating the real 5th map (js/level1.js).
        gauge: 0..1 progress this run through the crystal-crack ending (resets each playthrough).
@@ -75,18 +77,18 @@ G.opt = key => {
     zone: () => G.data.zones[G.state.zone],
     level: lv,
     val: id => upg(id).value(lv(id)),
-    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul(); },
+    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul() * (G.weather ? G.weather.mul('coin') : 1); },
     permCoinMul() { let m = 1; for (const f of G.data.foods) if (f.perm && G.state.perm[f.id]) m *= f.coinMul || 1; return m; },
     clickValue() { return this.val('power') * this.coinMul(); },
     critChance() { return this.val('crit'); },
     critMul() { return this.val('critMul'); },
-    autoRate() { return this.val('auto'); },
+    autoRate() { return this.val('auto') * (G.weather ? G.weather.mul('auto') : 1); },
     foodLuck() {
       let s = 0;
       for (const f of G.data.foods) if (f.perm ? G.state.perm[f.id] : (G.state.buffs[f.id] || 0) > now()) s += f.bonus;
       return s;
     },
-    luck() { return 1 + this.val('luck') + this.foodLuck(); },
+    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1); },
     potion: id => G.data.potions.find(p => p.id === id),
     /* several crystals can be armed at once now - their luck stacks (adds up) for the next click */
     armedList() {
@@ -112,13 +114,13 @@ G.opt = key => {
     /* how many DISTINCT 1억+ (DIVINE tier and up) cutscenes you've ever discovered, across every map */
     divineFound() {
       let n = 0;
-      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6 && !d.special) n++; }
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6 && !d.special && !d.weather && !d.boss) n++; }
       return n;
     },
     /* how many DISTINCT SECRET-tier cutscenes (the one-per-map hidden mineral) you've ever found */
     secretFound() {
       let n = 0;
-      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8 && !d.special) n++; }
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8 && !d.special && !d.weather && !d.boss) n++; }
       return n;
     },
     /* every SECRET-tier cutscene in the whole game found at least once - the gate for LEVEL 1.
@@ -128,7 +130,7 @@ G.opt = key => {
       if (G.config.unlockCodex) return true;
       // only maps BEFORE the LEVEL 1 zone count - that zone's own secret is unreachable until LEVEL 1 is done
       const gate = G.data.zones.findIndex(z => z.unlock && z.unlock.type === 'level1');
-      const pre = G.cutscenes.list.filter(c => c.tierIdx >= 8 && !c.special && (gate < 0 || c.zone < gate));
+      const pre = G.cutscenes.list.filter(c => c.tierIdx >= 8 && !c.special && !c.weather && !c.boss && (gate < 0 || c.zone < gate));
       return pre.length > 0 && pre.every(c => G.state.codex[c.id] && G.state.codex[c.id].n > 0);
     },
     /* does the player currently satisfy a zone's `unlock` requirement? */

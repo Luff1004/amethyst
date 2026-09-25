@@ -39,7 +39,7 @@
   };
 
   G.cutscenes.register({
-    id: 'watcher', name: 'The Watcher', odds: 10000000000, zone: 0, snd: 'rise:heart hit:whomp tail:echo amb:space root:73 scale:phrygian', duration: 17000, revealAt: 0.72,
+    id: 'watcher', name: 'The Watcher', odds: 1000000000000, zone: 0, snd: 'rise:heart hit:whomp tail:echo amb:space root:73 scale:phrygian', duration: 17000, revealAt: 0.72,
     colors: ['#ff4a5e', '#8a0018', '#000000'],
     captions: [
       { a: 0.04, b: 0.2, ko: '고요 속에서', en: 'IN THE SILENCE', pos: 'top', style: 'engrave', font: 'Georgia,"Times New Roman",serif' },

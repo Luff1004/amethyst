@@ -145,7 +145,7 @@
   let lastGateWarn = 0;
 
   function mine(x, y, auto) {
-    if (G.cutscenes.active || G.state.level1.crystalGone || G.config.viewer) return;
+    if (G.cutscenes.active || G.state.level1.crystalGone || G.config.viewer || (G.boss && G.boss.active)) return;
     const s = G.state, now = performance.now();
     const gated = isGated();
     if (gated && !auto && now - lastGateWarn > 1500) {
@@ -198,6 +198,14 @@
     }
     cap();
     G.emit('mine');
+    // 무지개: each hand-swung click has a chance to shake loose a 별의 크리스탈
+    const wx = G.weather.current();
+    if (!auto && wx.starDrop && Math.random() < wx.starDrop) {
+      s.potions.star = (s.potions.star || 0) + 1;
+      text(x, y - 40, '+ 별의 크리스탈', '#d8a0ff', 16, 1.2);
+      for (let i = 0; i < 12; i++) spark(x, y, `hsl(${280 + i * 8},100%,75%)`, 1.2);
+      G.audio.potion(); G.emit('change');
+    }
     if (armed) potionBurst(armed, x, y);
     if (!gated) roll(armed, shatterLuck ? 5 : 1);
   }
@@ -230,29 +238,39 @@
       if (pool.length) { startCut(pool[Math.floor(Math.random() * pool.length)], false); return; }
     }
     const potionLuck = armed ? armed.reduce((a, p) => a + (p.luck || 0), 0) : 0;
+    // 번개: some rolls get struck - luck x100 for this one roll
+    const wx = G.weather.current();
+    if (wx.bolt && Math.random() < wx.bolt) {
+      luckMul *= wx.boltMul;
+      const c = center();
+      text(c.x, c.y - crystalR() * 1.15, 'LIGHTNING  LUCK x' + wx.boltMul, '#ffe84a', 18, 1.1);
+      ring(c.x, c.y, '#ffe84a', crystalR() * 2.4, 3, 0.5); flashA = Math.max(flashA, 0.3);
+    }
     const def = G.cutscenes.roll(G.state.zone, G.stats.luck() * luckMul + potionLuck, armed ? G.data.potionCap : 0.5);
-    if (def) startCut(def, false);
+    if (def) startCut(def, false, G.weather.rollMutation(def));
   }
 
   /* ---------------- cutscene flow ---------------- */
-  function startCut(def, replay) {
-    const s = G.state, reward = replay ? 0 : G.cutscenes.reward(def);
+  function startCut(def, replay, mut = null) {
+    const s = G.state, reward = replay ? 0 : Math.floor(G.cutscenes.reward(def) * (mut ? mut.mul : 1));
     let first = false;
     if (!replay) {
       G.addCoins(reward);
       const cx = s.codex[def.id] || (s.codex[def.id] = { n: 0, t: Date.now(), best: 0 });
       first = cx.n === 0; cx.n++; cx.best = Math.max(cx.best, reward);
+      if (mut) { cx.mut = cx.mut || {}; cx.mut[mut.id] = (cx.mut[mut.id] || 0) + 1; }     // mutations found, per mineral
       G.save();
     }
     // decide whether to actually play the film, or just hand over the reward
     const rec = s.codex[def.id], st = s.settings;
     const belowFloor = !replay && def.odds < (st.minOdds || 0);          // "설정 - 이 확률 미만은 표시 안 함"
     const autoSkip = !replay && st.autoSkipSeen && !first;               // "설정 - 이미 본 컷신은 항상 건너뛰기"
-    if (!replay && (belowFloor || autoSkip || (rec && rec.skip && !first))) { quickWin(def, reward); return; }
+    // a mutation is always worth seeing, even for a mineral you've switched off
+    if (!replay && !mut && (belowFloor || autoSkip || (rec && rec.skip && !first))) { quickWin(def, reward); return; }
     G.hold = !replay;               // freeze the wallet counter until the reveal is collected
     document.body.classList.add('cut');
     if (!replay && G.ui) G.ui.closePanel();   // replays from the codex keep the panel open for browsing
-    G.cutscenes.start(def, { reward, first, replay });
+    G.cutscenes.start(def, { reward, first, replay, mut });
   }
 
   function quickWin(def, reward) {
@@ -262,7 +280,7 @@
     ring(c.x, c.y, t.color, crystalR() * 3, 3, 0.8);
     flashA = Math.max(flashA, 0.25); shake = Math.max(shake, 0.6);
     G.audio.win(def.tierIdx, def.snd);
-    G.emit('win', { def, reward, tier: t });
+    G.emit('win', { def, reward, tier: t, mut: null });
     G.emit('change');
   }
   G.on('cut:reveal', a => { shake = 1; });
@@ -283,12 +301,14 @@
     ev.preventDefault();
     G.audio.init();
     if (G.cutscenes.active) { if (G.cutscenes.tap()) return; }
+    if (G.boss && G.boss.active) { G.boss.tap(ev.clientX, ev.clientY); return; }
     if (hint && !hint.classList.contains('gone')) hint.classList.add('gone');
     mine(ev.clientX, ev.clientY, false);
   });
   cv.addEventListener('contextmenu', e => e.preventDefault());
   window.addEventListener('keydown', ev => {
     if (ev.repeat || ev.target.tagName === 'INPUT') return;
+    if (G.boss && G.boss.active && !G.cutscenes.active) return;      // js/boss.js takes the keyboard during a fight
     if (ev.code === 'Space' || ev.code === 'Enter') {
       ev.preventDefault(); G.audio.init();
       if (G.cutscenes.active) { G.cutscenes.tap(); return; }
@@ -309,7 +329,7 @@
     const r = coinIco.getBoundingClientRect();
     target.x = r.left + r.width / 2; target.y = r.top + r.height / 2;
 
-    if (!G.cutscenes.active && G.state.autoOn) {
+    if (!G.cutscenes.active && G.state.autoOn && !(G.boss && G.boss.active)) {
       const rate = G.stats.autoRate();
       if (rate > 0) {
         autoAcc += dt * rate;
@@ -568,8 +588,11 @@
     const sk = shake * G.opt('shake');                                // 설정 - 화면 흔들림
     if (sk > 0) g.translate((Math.random() - 0.5) * sk * 10, (Math.random() - 0.5) * sk * 10);
     drawBackground(t);
-    if (G.state.level1.crystalGone) drawVoidWhereCrystalWas(t); else drawCrystal(t, now);
+    G.weather.drawBack(g, W, H, t);
+    if (G.boss && G.boss.active) G.boss.draw(g, W, H, now);          // a boss fight replaces the crystal
+    else if (G.state.level1.crystalGone) drawVoidWhereCrystalWas(t); else drawCrystal(t, now);
     drawParticles();
+    G.weather.drawFront(g, W, H, t);
     if (flashA > 0) { g.fillStyle = `rgba(255,255,255,${flashA * G.flashMul()})`; g.fillRect(-20, -20, W + 40, H + 40); }
     g.restore();
     G.cutscenes.draw(g, W, H);
@@ -585,7 +608,14 @@
   /* ---------------- boot ---------------- */
   G.load();
   G.on('zone', () => { hits = 0; crystal = makeCrystal((Math.random() * 1e9) | 0); ring(center().x, center().y, '#ffffff', crystalR() * 3, 3, 0.8); });
-  G.game = { center, crystalR, mine };
+  G.game = {
+    center, crystalR, mine,
+    /* a real find handed over by something other than a roll (boss rewards) */
+    grantCut: def => startCut(def, false),
+    reward: (x, y, amount, n) => bundle(x, y, amount, n, 1.3),
+    shake: v => { shake = Math.max(shake, v); },
+    flash: v => { flashA = Math.max(flashA, v); },
+  };
   G.debug = {
     play: id => { const d = G.cutscenes.byId[id]; if (d) startCut(d, true); },
     /* park a cutscene on progress p (0..1) for inspection:  G.debug.seek('genesis', 0.8) */

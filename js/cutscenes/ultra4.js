@@ -29,7 +29,7 @@
   const PAL = ['#05010a', '#2a0a5a', '#8a0a8a', '#e0202a', '#ff8a1a', '#ffe84a', '#ffffff'];
 
   G.cutscenes.register({
-    id: 'corescan', name: '102.jpg', odds: 20000000000, zone: 3, duration: 18000, revealAt: 0.7,
+    id: 'corescan', name: '102.jpg', odds: 1000000000000, zone: 3, duration: 18000, revealAt: 0.7,
     snd: 'rise:rumble hit:whomp tail:machine amb:machine root:60 scale:phrygian',
     colors: ['#39ff6a', '#ff2b2b', '#050502'],
     captions: [
