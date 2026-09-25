@@ -11,6 +11,7 @@ G.defaultSettings = () => ({
   // convenience
   boxSpin: true, boxMulti: 1, pkgConfirm: true, wakeLock: false, vibrate: false, offlineAuto: false,
   upgMulti: 1,                       // 강화 tab: how many levels one tap buys (1 / 10 / 'max')
+  drinkN: 1,                         // 크리스탈 tab: how many of a crystal one 마시기 drinks (typed by the player)
 });
 G.opt = key => {
   const s = G.state && G.state.settings;
@@ -23,6 +24,7 @@ G.opt = key => {
     zone: 0, maxZone: 0,
     upg: {}, buffs: {}, codex: {}, muted: false,
     crystals: 0, potions: {}, armed: {}, autoOn: true,
+    yellow: 0, red: 0,               // YELLOW crystals (drop from hand-mining, 3rd map on) and RED (crafted, 4th map on)
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
     /* monthly event packages (js/data/events.js): free box openings, limited foods waiting to be
        eaten, permanent foods already eaten, and how many of each package were bought */
@@ -62,6 +64,8 @@ G.opt = key => {
     if (!G.config.dev) return;
     if (!(G.state.coins >= 1e20)) G.state.coins = 1e21;
     if (!(G.state.crystals >= 1e14)) G.state.crystals = 1e15;
+    if (!(G.state.yellow >= 1e6)) G.state.yellow = 1e7;
+    if (!(G.state.red >= 1e5)) G.state.red = 1e6;
   };
   G.on('change', devTopUp);
   const load0 = G.load;
@@ -97,7 +101,24 @@ G.opt = key => {
       return out;
     },
     armedCount() { return this.armedList().length; },
-    armedLuck() { return this.armedList().reduce((a, p) => a + (p.luck || 0), 0); },
+    /* stacked crystals: the strongest counts in full, each further one a bit less (x0.85 per step),
+       so 20 of the same can't brute-force the rarest mineral - then 강화 - 크리스탈 증폭 on top.
+       A red crystal only does anything on its own maps (minZone). */
+    luckOf(list) {
+      const ls = list.filter(p => !(p.minZone && G.state.zone < p.minZone)).map(p => p.luck || 0).sort((a, b) => b - a);
+      let s = 0; ls.forEach((l, i) => { s += l * Math.pow(0.85, i); });
+      return s * (1 + this.val('potency'));
+    },
+    armedLuck() { return this.luckOf(this.armedList()); },
+    boxCost(b) { return Math.ceil(b.cost * (1 - this.val('discount'))); },
+    /* the crystal tab (blue crystals) opens once any 1억+ mineral has been found */
+    crystalsOpen() {
+      if (G.config.unlockCodex) return true;
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && !d.special && d.odds >= 1e8) return true; }
+      return false;
+    },
+    yellowOpen() { return G.config.unlockCodex || G.state.maxZone >= 2; },     // 3rd map unlocked
+    redOpen() { return G.config.unlockCodex || G.state.maxZone >= 3; },        // 4th map unlocked
     /* the crystal to represent with a single accent colour for the HUD/halo - a "guarantee"
        crystal (event rewards etc.) wins out over sorting by luck, since it has none */
     armedTop() {
@@ -120,7 +141,7 @@ G.opt = key => {
     /* how many DISTINCT SECRET-tier cutscenes (the one-per-map hidden mineral) you've ever found */
     secretFound() {
       let n = 0;
-      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 8 && !d.special && !d.weather && !d.boss) n++; }
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && G.isSecret(d) && !d.special && !d.weather && !d.boss) n++; }
       return n;
     },
     /* every SECRET-tier cutscene in the whole game found at least once - the gate for LEVEL 1.
@@ -130,7 +151,7 @@ G.opt = key => {
       if (G.config.unlockCodex) return true;
       // only maps BEFORE the LEVEL 1 zone count - that zone's own secret is unreachable until LEVEL 1 is done
       const gate = G.data.zones.findIndex(z => z.unlock && z.unlock.type === 'level1');
-      const pre = G.cutscenes.list.filter(c => c.tierIdx >= 8 && !c.special && !c.weather && !c.boss && (gate < 0 || c.zone < gate));
+      const pre = G.cutscenes.list.filter(c => G.isSecret(c) && !c.special && !c.weather && !c.boss && (gate < 0 || c.zone < gate));
       return pre.length > 0 && pre.every(c => G.state.codex[c.id] && G.state.codex[c.id].n > 0);
     },
     /* does the player currently satisfy a zone's `unlock` requirement? */
@@ -180,7 +201,7 @@ G.opt = key => {
     /* coins -> crystals */
     exchange(n) {
       const cost = n * G.data.exchange.rate;
-      if (n < 1 || G.state.coins < cost) return false;
+      if (n < 1 || G.state.coins < cost || !G.stats.crystalsOpen()) return false;
       G.state.coins -= cost; G.state.crystals += n;
       G.save(); G.emit('change'); return true;
     },
@@ -190,8 +211,8 @@ G.opt = key => {
       const b = G.data.boxes.find(x => x.id === id), t = G.state.tickets;
       if (!b) return null;
       if (t[id] > 0) { t[id]--; if (!t[id]) delete t[id]; }            // a free-open ticket goes first
-      else if (G.state.crystals < b.cost) return null;
-      else G.state.crystals -= b.cost;
+      else if (G.state.crystals < G.stats.boxCost(b)) return null;
+      else G.state.crystals -= G.stats.boxCost(b);
       const total = b.w.reduce((a, v) => a + v, 0);
       let r = Math.random() * total, idx = 0;
       for (let i = 0; i < b.w.length; i++) { r -= b.w[i]; if (r < 0) { idx = i; break; } }
@@ -202,12 +223,32 @@ G.opt = key => {
     },
     /* drink (arm) a crystal for the next manual click - several can be armed at once and their
        luck stacks; arming the same one again drinks another unit rather than replacing it */
-    armPotion(id) {
+    armPotion(id, n = 1) {
       const s = G.state, pt = G.stats.potion(id);
       if (!(s.potions[id] > 0)) return false;
       if (pt && pt.event && !G.event.isActive(pt.event)) return false;   // limited items only work in their month
-      s.potions[id]--; s.armed[id] = (s.armed[id] || 0) + 1;
-      G.save(); G.emit('change'); return 'on';
+      if (pt && pt.minZone && s.zone < pt.minZone) return 'zone';        // red crystals: 5th map and deeper only
+      if (pt && (pt.grantCut || pt.guarantee)) n = 1;                    // one guarantee per click is all that can matter
+      n = Math.max(1, Math.min(Math.floor(n) || 1, s.potions[id]));
+      s.potions[id] -= n; s.armed[id] = (s.armed[id] || 0) + n;
+      G.save(); G.emit('change'); return n;
+    },
+    /* 30 yellow + 70,000 blue -> 10 red, `times` batches at once */
+    craftRed(times = 1) {
+      const s = G.state, r = G.data.redRecipe;
+      if (!G.stats.redOpen()) return 'locked';
+      times = Math.max(1, Math.floor(times));
+      times = Math.min(times, Math.floor(s.yellow / r.yellow), Math.floor(s.crystals / r.blue));
+      if (times < 1) return 'poor';
+      s.yellow -= r.yellow * times; s.crystals -= r.blue * times; s.red += r.out * times;
+      G.save(); G.emit('change'); return times;
+    },
+    buyRedCrystal(id) {
+      const s = G.state, pt = G.stats.potion(id);
+      if (!pt || !pt.red || !G.stats.redOpen()) return 'locked';
+      if (s.red < pt.red) return 'poor';
+      s.red -= pt.red; s.potions[id] = (s.potions[id] || 0) + 1;
+      G.save(); G.emit('change'); return 'ok';
     },
     /* put one armed unit back into the inventory */
     unarmPotion(id) {
@@ -285,7 +326,7 @@ G.opt = key => {
         G.state.tutorialDone = true;
         if (!G.state.tutorialPotionGiven) {
           G.state.tutorialPotionGiven = true;
-          G.state.potions.tutorial = (G.state.potions.tutorial || 0) + 1;
+          G.state.armed.tutorial = (G.state.armed.tutorial || 0) + 1;      // armed straight away - the crystal tab opens later
           G.emit('tutorialDone');
         } else {
           G.emit('tutorialReplayDone');

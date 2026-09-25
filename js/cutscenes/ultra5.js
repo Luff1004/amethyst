@@ -87,7 +87,7 @@
   const MONO = 'ui-monospace,"SF Mono",Consolas,monospace';
 
   G.cutscenes.register({
-    id: 'labyrinth', name: 'Labyrinth', odds: 1000000000000, zone: 4, duration: 21000, revealAt: 0.66,
+    id: 'labyrinth', name: 'Labyrinth', odds: 1e24, tier: 'secret', zone: 4, duration: 21000, revealAt: 0.66,
     snd: 'rise:heart hit:whomp tail:echo amb:space root:58 scale:phrygian',
     colors: ['#ff3fd0', '#7af0ff', '#030106'],
     captions: [

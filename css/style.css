@@ -863,3 +863,55 @@ body.bossing #hint, body.bossing #foot, body.bossing #wxAnnounce { display: none
 .mutchips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
 .mutchips i { font: 800 9.5px/1 var(--mono); font-style: normal; padding: 3px 5px; color: var(--mc); border: 1px solid color-mix(in srgb, var(--mc) 55%, transparent); background: color-mix(in srgb, var(--mc) 12%, transparent); }
 #win .mut { display: block; font: 900 12px/1 var(--mono); letter-spacing: .25em; color: var(--mc); text-shadow: 0 0 10px var(--mc); margin-bottom: 3px; }
+
+/* ---------------- three crystal currencies: blue / yellow / red ---------------- */
+.yel { color: #ffd84a !important; font-family: var(--mono); }
+.red { color: #ff5a6a !important; font-family: var(--mono); }
+#crysRow.blocked #crysIco { color: #8a84a0; }
+#crysRow .cur { display: inline-flex; align-items: center; gap: 2px; margin-left: 7px; font: 700 12px/1 var(--mono); }
+#crysRow .cur b { font-weight: 700; }
+#crysRow .cur.yel { color: #ffd84a; }
+#crysRow .cur.red { color: #ff6a78; }
+#crysRow .cur svg { filter: drop-shadow(0 0 4px currentColor); }
+#crysRow .cur.lk { color: #6e6888 !important; }
+#crysRow .cur.lk svg { filter: none; }
+html.viewer #crysRow .cur { display: none; }
+
+/* the crystal tab, padlocked until the first 1억+ find */
+.tab .tlock { display: none; position: absolute; top: 3px; right: 5px; color: #b8b0d0; line-height: 0; }
+.tab.locked { color: #6e6888; }
+.tab.locked .tlock { display: block; }
+
+.lockcard { opacity: .8; }
+.lockcard .ico { color: #8a84a0; }
+.lockcard.blue .ico { color: #7fe8ff; }
+.lockcard.red .ico { color: #ff6a78; }
+.lockcard .meta span { color: #b8b0d0; }
+
+.craftcard .redico, .redpot .pico { color: #ff5a6a; }
+.craftcard { --line: rgba(255, 90, 106, .45); }
+.craftcard .recipe { display: flex; align-items: center; gap: 5px; font: 700 12px/1.4 var(--mono); color: #cfc6ea; }
+.craftcard .recipe i { display: inline-flex; align-items: center; gap: 2px; font-style: normal; }
+.craftcard .recipe i.yel { color: #ffd84a; }
+.craftcard .recipe i.cy { color: #7fe8ff; }
+.craftcard .recipe i.red { color: #ff6a78; }
+.redpot { --line: rgba(255, 90, 106, .5); }
+.redpot .meta b { color: #ff9aa4; text-shadow: 0 0 10px rgba(255, 60, 80, .45); }
+.rbuy { color: #ff6a78 !important; }
+.rbuy .i, .rbuy svg { color: #ff6a78; }
+
+.drinkrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 10px; border: 1px dashed rgba(127, 232, 255, .3); font-size: 12px; color: #cfc6ea; }
+.drinkrow em { font-style: normal; font-size: 10.5px; color: var(--dim); }
+.drinkin, .oddsin input { width: 110px; height: 30px; padding: 0 8px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(127, 232, 255, .4); color: #fff; font: 700 13px/1 var(--mono); outline: none; }
+.drinkin:focus, .oddsin input:focus { border-color: #7fe8ff; box-shadow: 0 0 0 2px rgba(127, 232, 255, .2); }
+.oddsin { display: flex; align-items: center; gap: 8px; margin: 8px 0 6px; font: 700 12px/1 var(--mono); color: #cfc6ea; }
+.oddsin input { width: 150px; }
+.oddsin em { font-style: normal; font-size: 10.5px; color: var(--dim); }
+
+/* 컷신 잠깐 안 나오게 하기 - quiet, bottom-right, clickable even while a film is playing */
+#cutPause { position: fixed; right: 10px; bottom: 10px; z-index: 45; padding: 5px 9px; font: 600 10.5px/1 system-ui, "Malgun Gothic", sans-serif; color: rgba(220, 210, 245, .38);
+  background: rgba(10, 8, 20, .25); border: 1px solid rgba(200, 190, 240, .12); border-radius: 4px; cursor: pointer; transition: color .2s, background .2s, border-color .2s; }
+#cutPause:hover { color: rgba(240, 232, 255, .85); background: rgba(20, 14, 40, .7); border-color: rgba(200, 190, 240, .35); }
+#cutPause.on { color: #b9ffcf; border-color: rgba(185, 255, 207, .35); background: rgba(10, 30, 20, .55); }
+#cutPause[hidden] { display: none; }
+body.bossing #cutPause { display: none; }

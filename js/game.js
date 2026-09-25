@@ -139,8 +139,8 @@
   const hue = () => zone().hue;
 
   /* 용융 핵 (zone 3) - the gems have hardened under the pressure, and won't crack open for a weak
-     pickaxe: below 곡괭이 강화 lv.100 you barely dent them (no shatter, no cutscene roll). */
-  const HARD_ZONE = 3, HARD_LV = 100;
+     pickaxe: below 곡괭이 강화 lv.45 you barely dent them (no shatter, no cutscene roll). */
+  const HARD_ZONE = 3, HARD_LV = 45;
   const isGated = () => G.state.zone === HARD_ZONE && G.stats.level('power') < HARD_LV;
   let lastGateWarn = 0;
 
@@ -184,7 +184,7 @@
     let shatterLuck = false;
     if (!gated && hits >= zone().hp) {
       hits = 0; s.shatters++;
-      const bonus = G.stats.clickValue() * 10;
+      const bonus = G.stats.clickValue() * 10 * G.stats.val('shatter');     // 강화 - 파쇄 보너스
       G.addCoins(bonus); G.audio.shatter(zone().snd);
       for (let i = 0; i < 26; i++) shard(c.x, c.y, h, 1.6);
       for (let i = 0; i < 14; i++) spark(c.x, c.y, `hsl(${h},95%,80%)`, 1.5);
@@ -206,6 +206,15 @@
       for (let i = 0; i < 12; i++) spark(x, y, `hsl(${280 + i * 8},100%,75%)`, 1.2);
       G.audio.potion(); G.emit('change');
     }
+    // YELLOW crystals (from the 3rd map on): a hand-swung hit sometimes knocks loose a handful
+    if (!auto && G.stats.yellowOpen() && Math.random() < G.data.yellowDrop.chance * (1 + G.stats.val('yellow'))) {
+      const n = G.data.yellowDrop.n;
+      s.yellow = (s.yellow || 0) + n;
+      text(x, y - 56, `+${n} 옐로우 크리스탈`, '#ffd84a', 16, 1.3);
+      ring(x, y, '#ffd84a', 70, 2, 0.5);
+      for (let i = 0; i < 12; i++) spark(x, y, i % 2 ? '#ffe98a' : '#ffc21a', 1.3);
+      G.audio.potion(); G.emit('change');
+    }
     if (armed) potionBurst(armed, x, y);
     if (!gated) roll(armed, shatterLuck ? 5 : 1);
   }
@@ -215,7 +224,7 @@
     const c = center(), R = crystalR();
     const grantItem = list.find(p => p.grantCut), guaranteeItem = list.find(p => p.guarantee);
     const top = grantItem || guaranteeItem || list.slice().sort((a, b) => (b.luck || 0) - (a.luck || 0))[0], col = `hsl(${top.hue},100%,68%)`;
-    const totalLuck = list.reduce((a, p) => a + (p.luck || 0), 0);
+    const totalLuck = G.stats.luckOf(list);
     G.audio.blast(top.event ? 7 : G.data.potions.indexOf(top));
     for (let i = 0; i < 4; i++) ring(c.x, c.y, i % 2 ? "#ffffff" : col, R * (2.4 + i), 3 - i * 0.4, 0.7 + i * 0.15);
     for (let i = 0; i < 22; i++) spark(c.x, c.y, i % 3 ? col : "#ffffff", 1.8);
@@ -237,7 +246,7 @@
       const pool = G.cutscenes.inZone(G.state.zone).filter(c => c.tierIdx >= guarantee);
       if (pool.length) { startCut(pool[Math.floor(Math.random() * pool.length)], false); return; }
     }
-    const potionLuck = armed ? armed.reduce((a, p) => a + (p.luck || 0), 0) : 0;
+    const potionLuck = armed ? G.stats.luckOf(armed) : 0;     // stacked with diminishing returns + 크리스탈 증폭
     // 번개: some rolls get struck - luck x100 for this one roll
     const wx = G.weather.current();
     if (wx.bolt && Math.random() < wx.bolt) {
@@ -265,24 +274,34 @@
     const rec = s.codex[def.id], st = s.settings;
     const belowFloor = !replay && def.odds < (st.minOdds || 0);          // "설정 - 이 확률 미만은 표시 안 함"
     const autoSkip = !replay && st.autoSkipSeen && !first;               // "설정 - 이미 본 컷신은 항상 건너뛰기"
+    // "컷신 잠깐 안 나오게 하기": for a while every find just pays out, no film at all
+    const paused = !replay && !def.boss && performance.now() < G.cutPauseUntil;
     // a mutation is always worth seeing, even for a mineral you've switched off
-    if (!replay && !mut && (belowFloor || autoSkip || (rec && rec.skip && !first))) { quickWin(def, reward); return; }
+    if (!replay && (paused || (!mut && (belowFloor || autoSkip || (rec && rec.skip && !first))))) { quickWin(def, reward, mut); return; }
     G.hold = !replay;               // freeze the wallet counter until the reveal is collected
     document.body.classList.add('cut');
     if (!replay && G.ui) G.ui.closePanel();   // replays from the codex keep the panel open for browsing
     G.cutscenes.start(def, { reward, first, replay, mut });
   }
 
-  function quickWin(def, reward) {
+  function quickWin(def, reward, mut = null) {
     const c = center(), t = G.tiers[def.tierIdx];
-    const n = 2 + Math.ceil(def.tierIdx / 2);
+    const n = 2 + Math.ceil(Math.min(def.tierIdx, 9) / 2);
     bundle(c.x, c.y + 20, reward, n, 1.2);
     ring(c.x, c.y, t.color, crystalR() * 3, 3, 0.8);
     flashA = Math.max(flashA, 0.25); shake = Math.max(shake, 0.6);
     G.audio.win(def.tierIdx, def.snd);
-    G.emit('win', { def, reward, tier: t, mut: null });
+    G.emit('win', { def, reward, tier: t, mut });
     G.emit('change');
   }
+  /* 컷신 잠깐 안 나오게 하기 (the little button bottom-right): 30s of no films - and the one playing
+     right now ends on the spot (its reward is already in the wallet) */
+  G.cutPauseUntil = 0;
+  G.pauseCuts = (sec = 30) => {
+    G.cutPauseUntil = performance.now() + sec * 1000;
+    if (G.cutscenes.active && !G.cutscenes.active.replay) G.cutscenes.end();
+    G.emit('cutpause');
+  };
   G.on('cut:reveal', a => { shake = 1; });
   G.on('cut:end', a => {
     document.body.classList.remove('cut');

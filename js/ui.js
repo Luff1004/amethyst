@@ -9,13 +9,16 @@
   $('#coinIco').innerHTML = G.icon('coin', 28);
   const tabIcon = { shop: 'shop', map: 'map', up: 'up', codex: 'book', crystal: 'crystal' };
   tabs.forEach(b => { b.insertAdjacentHTML('afterbegin', G.icon(tabIcon[b.dataset.tab], 18)); });
+  // the crystal tab stays padlocked until the first 1억+ find
+  const crystalTab = document.querySelector('[data-tab=crystal]');
+  crystalTab.insertAdjacentHTML('beforeend', `<i class="tlock">${G.icon('lock', 12)}</i>`);
   const mapTab = document.querySelector('[data-tab=map]');
   mapTab.insertAdjacentHTML('beforeend', '<i class="badge"></i>');
   const mapBadge = mapTab.querySelector('.badge');
   // a NEW dot on 도감 while anything found hasn't been looked at in the codex yet
   const codexTab = document.querySelector('[data-tab=codex]');
-  codexTab.insertAdjacentHTML('beforeend', '<i class="badge newb">N</i>');
-  const codexBadge = codexTab.querySelector('.badge');
+  // (the NEW badge on 도감 was removed on request - the codex no longer nags about unseen finds)
+  const codexBadge = { classList: { toggle() {} } };
   function paintCodexBadge() {
     const seen = G.state.codexSeen; if (!seen || G.config.viewer) return;
     let any = false; for (const id in G.state.codex) if (G.state.codex[id].n > 0 && !seen[id]) { any = true; break; }
@@ -36,8 +39,12 @@
   const crystalBtn = (cost, extra = '') =>
     `<button class="buy bevel cbuy ${G.state.crystals < cost ? 'poor' : ''}" ${extra} data-ccost="${cost}">${G.icon('crystal', 15)}<span>${G.fmt(cost)}</span></button>`;
 
+  const lockCard = (title, en, why, cls = '') => `<div class="card bevel lockcard ${cls}">
+      <div class="ico">${G.icon('lock', 24)}</div>
+      <div class="meta"><b>${title} <small style="display:inline">${en}</small></b><span>${why}</span></div></div>`;
   /* coins -> crystals */
   function exchangeCard() {
+    if (!G.stats.crystalsOpen()) return lockCard('블루 크리스탈 교환', 'EXCHANGE', '1억대 이상 광물을 1개 이상 발견하면 열립니다', 'blue');
     const rate = G.data.exchange.rate, max = Math.floor(G.state.coins / rate);
     return `<div class="card bevel exch">
       <div class="ico cyan">${G.icon('exchange', 26)}</div>
@@ -50,8 +57,34 @@
         <button class="buy bevel small ${max < 1 ? 'poor' : ''}" data-exch="max" data-exmin="1"><span>최대</span></button></div></div>`;
   }
 
+  /* the RED workshop (30 yellow + 70,000 blue -> 10 red) and the red shop for the top three crystals */
+  function redSection() {
+    const s = G.state, r = G.data.redRecipe;
+    if (!G.stats.redOpen()) return `<div class="ph mini"><h2>WORKSHOP <small>레드 크리스탈 제작</small></h2></div>
+      ${lockCard('레드 크리스탈 제작', 'WORKSHOP', '4번째 맵(용융 핵)을 해금하면 열립니다', 'red')}
+      ${lockCard('최상위 크리스탈', 'RED SHOP', '4번째 맵(용융 핵)을 해금하면 열립니다', 'red')}`;
+    const canN = Math.min(Math.floor(s.yellow / r.yellow), Math.floor(s.crystals / r.blue));
+    const craft = `<div class="card bevel craftcard">
+      <div class="ico redico">${G.icon('crystal', 26)}</div>
+      <div class="meta"><b>레드 크리스탈 제작 <small style="display:inline">WORKSHOP</small></b>
+        <span class="recipe"><i class="yel">${G.icon('crystal', 12)} ${r.yellow}</i> + <i class="cy">${G.icon('crystal', 12)} ${G.fmtInt(r.blue)}</i> &rarr; <i class="red">${G.icon('crystal', 12)} ${r.out}</i></span>
+        <span>옐로우 <b class="yel">${G.fmtInt(s.yellow)}</b> · 블루 <b class="cy">${G.fmt(s.crystals)}</b> · 지금 <b>${G.fmtInt(canN)}</b>번 만들 수 있음</span></div>
+      <div class="side"><div class="pair"><button class="buy bevel small ${canN < 1 ? 'poor' : ''}" data-craft="1"><span>1번</span></button>
+        <button class="buy bevel small ${canN < 10 ? 'poor' : ''}" data-craft="10"><span>10번</span></button></div>
+        <button class="buy bevel small ${canN < 1 ? 'poor' : ''}" data-craft="max"><span>최대</span></button></div></div>`;
+    const shop = G.data.potions.filter(p => p.red).map(pt => `<div class="card bevel potion redpot" style="--ph:${pt.hue}">
+        <div class="ico pico">${G.icon('potion', 26)}</div>
+        <div class="meta"><b>${pt.name}</b><small>${pt.en} · 5번째 맵 전용</small><span class="val">LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK</i></span></div>
+        <div class="side"><em>보유 ${G.fmtInt(s.potions[pt.id] || 0)}</em><button class="buy bevel rbuy ${s.red < pt.red ? 'poor' : ''}" data-redbuy="${pt.id}">${G.icon('crystal', 15)}<span>${pt.red}</span></button></div></div>`).join('');
+    return `<div class="ph mini"><h2>WORKSHOP <small>레드 크리스탈 제작</small></h2><span>레드 <b class="red">${G.fmtInt(s.red)}</b></span></div>
+      <div class="list">${craft}</div>
+      <div class="ph mini"><h2>RED SHOP <small>최상위 크리스탈 · 레드 크리스탈로 구매</small></h2></div>
+      <div class="list">${shop}</div>`;
+  }
+
   function crystalShop() {
     const s = G.state, multi = G.opt('boxMulti');
+    if (!G.stats.crystalsOpen()) return `<div class="ph"><h2>CRYSTAL <small>크리스탈 상점</small></h2></div>${lockCard('크리스탈', 'CRYSTAL', '1억대 이상 광물을 1개 이상 발견하면 열립니다')}`;
     const boxes = G.data.boxes.map(b => {
       const tot = b.w.reduce((a, v) => a + v, 0);
       const odds = b.w.map((w, i) => (w > 0 ? `<i style="--hc:hsl(${G.data.potions[i].hue},85%,66%)">${G.data.potions[i].name} <b>${(w / tot * 100).toFixed(w / tot < 0.01 ? 2 : w / tot < 0.1 ? 1 : 0)}%</b></i>` : '')).join('');
@@ -61,32 +94,36 @@
         <div class="meta"><b style="color:${b.color}">${b.name}</b><small style="color:${b.color}">${b.en}</small>
           <span>열면 <b>크리스탈 1개</b>가 나옵니다 (종류는 확률)</span>
           <div class="odds2">${odds}</div></div>
-        <div class="side">${tk ? `<em class="tk">${G.icon('ticket', 13)} 무료권 ${tk}</em><button class="buy bevel ticketbtn" data-box="${b.id}">${G.icon('ticket', 15)}<span>무료로 열기${multi > 1 ? ' x' + multi : ''}</span></button>` : crystalBtn(b.cost * multi, `data-box="${b.id}"`)}${multi > 1 && !tk ? `<em class="tk">${multi}개 한 번에</em>` : ''}</div></div>`;
+        <div class="side">${tk ? `<em class="tk">${G.icon('ticket', 13)} 무료권 ${tk}</em><button class="buy bevel ticketbtn" data-box="${b.id}">${G.icon('ticket', 15)}<span>무료로 열기${multi > 1 ? ' x' + multi : ''}</span></button>` : crystalBtn(G.stats.boxCost(b) * multi, `data-box="${b.id}"`)}${multi > 1 && !tk ? `<em class="tk">${multi}개 한 번에</em>` : ''}${G.stats.val('discount') > 0 && !tk ? `<em class="tk">흥정 -${Math.round(G.stats.val('discount') * 100)}%</em>` : ''}</div></div>`;
     }).join('');
-    // limited event crystals only show up (and only work) during their own month's event
+    // limited event crystals only show up (and only work) during their own month's event; red ones live in the red shop until owned
     const hidden = pt => ((pt.id === 'tutorial' || pt.id === 'hodumaroo') && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0))
-      || (pt.event && !G.event.isActive(pt.event));
+      || (pt.event && !G.event.isActive(pt.event)) || (pt.red && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0));
+    const drinkN = Math.max(1, G.opt('drinkN') || 1);
     const potions = G.data.potions.filter(pt => !hidden(pt)).map(pt => {
-      const have = s.potions[pt.id] || 0, armedN = s.armed[pt.id] || 0;
+      const have = s.potions[pt.id] || 0, armedN = s.armed[pt.id] || 0, one = pt.grantCut || pt.guarantee;
       const valTxt = pt.grantCut ? `${G.cutscenes.byId[pt.grantCut] ? G.cutscenes.byId[pt.grantCut].name : '한정 광물'} 확정 <i>/ SPECIAL</i>`
-        : pt.guarantee ? `${G.tiers[pt.guarantee].en}+ 확정 <i>/ 1 CLICK, 1회 한정</i>` : `LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK, 중첩 가능</i>`;
-      return `<div class="card bevel potion ${armedN ? 'on' : ''} ${have || armedN ? '' : 'dim'} ${pt.event ? 'evpot' : ''}" style="--ph:${pt.hue}">
+        : pt.guarantee ? `${G.tiers[pt.guarantee].en}+ 확정 <i>/ 1 CLICK, 1회 한정</i>` : `LUCK +${G.fmt(pt.luck)} <i>/ 1 CLICK, 중첩 가능${pt.minZone ? ' · 5번째 맵 전용' : ''}</i>`;
+      const n = one ? 1 : Math.min(drinkN, Math.max(1, have));
+      return `<div class="card bevel potion ${armedN ? 'on' : ''} ${have || armedN ? '' : 'dim'} ${pt.event ? 'evpot' : ''} ${pt.red ? 'redpot' : ''}" style="--ph:${pt.hue}">
         <div class="ico pico">${G.icon('potion', 26)}</div>
         <div class="meta"><b>${pt.name}</b><small>${pt.event ? '이벤트 한정 · ' : ''}${pt.en}</small>
           <span class="val">${valTxt}</span></div>
-        <div class="side"><em>${armedN ? '장전 ' + armedN + (have ? ' · 보유 ' + have : '') : '보유 ' + have}</em>
+        <div class="side"><em>${armedN ? '장전 ' + G.fmtInt(armedN) + (have ? ' · 보유 ' + G.fmtInt(have) : '') : '보유 ' + G.fmtInt(have)}</em>
           <div class="pair">
             <button class="buy bevel small offbtn ${armedN ? '' : 'poor'}" data-punarm="${pt.id}"><span>취소</span></button>
-            <button class="buy bevel small ${have ? '' : 'poor'}" data-puse="${pt.id}"><span>마시기</span></button>
+            <button class="buy bevel small ${have ? '' : 'poor'}" data-puse="${pt.id}"><span>${n > 1 ? n + '개 ' : ''}마시기</span></button>
           </div></div></div>`;
     }).join('');
     const armedLuck = G.stats.armedLuck();
-    return `<div class="ph"><h2>CRYSTAL <small>크리스탈 상점</small></h2><span>크리스탈은 <b>다음 클릭 한 번</b>에만 적용 · 여러 개 중첩 가능</span></div>
-      <div class="sub">크리스탈 <b class="cy">${G.fmtInt(s.crystals)}</b> &nbsp;/&nbsp; 크리스탈은 상자에서만 나옵니다${armedLuck ? ` &nbsp;/&nbsp; 장전된 럭 <b class="cy">+${G.fmt(armedLuck)}</b>` : ''}</div>
+    return `<div class="ph"><h2>CRYSTAL <small>크리스탈 상점</small></h2><span>크리스탈은 <b>다음 클릭 한 번</b>에만 적용 · 여러 개 중첩 가능 (겹칠수록 효과 감소)</span></div>
+      <div class="sub">블루 <b class="cy">${G.fmtInt(s.crystals)}</b>${G.stats.yellowOpen() ? ` &nbsp;/&nbsp; 옐로우 <b class="yel">${G.fmtInt(s.yellow)}</b>` : ''}${G.stats.redOpen() ? ` &nbsp;/&nbsp; 레드 <b class="red">${G.fmtInt(s.red)}</b>` : ''}${armedLuck ? ` &nbsp;/&nbsp; 장전된 럭 <b class="cy">+${G.fmt(armedLuck)}</b>` : ''}</div>
       ${exchangeCard()}
+      ${redSection()}
       <div class="ph mini"><h2>CRYSTAL BOX <small>크리스탈 상자</small></h2></div>
       <div class="list">${boxes}</div>
       <div class="ph mini"><h2>CRYSTALS <small>보유 크리스탈</small></h2></div>
+      <div class="drinkrow"><span>한 번에 마실 개수</span><input type="number" min="1" step="1" inputmode="numeric" class="drinkin" value="${drinkN}" data-drinkn><em>보유한 만큼까지 · 확정/한정 크리스탈은 1개씩</em></div>
       <div class="list">${potions}</div>`;
   }
 
@@ -229,7 +266,7 @@
     const SP = Z.length, specials = () => G.cutscenes.list.filter(c => c.special || c.boss).sort((a, b) => (a.boss ? 99 : a.month) - (b.boss ? 99 : b.month));
     const zc = c => (c === SP ? specials() : G.cutscenes.inZone(c));
     const foundOf = i => zc(i).filter(c => (s.codex[c.id] || {}).n > 0).length;
-    const seenMap = s.codexSeen || {}, isFound = c => (s.codex[c.id] || {}).n > 0, isNew = c => !G.config.viewer && isFound(c) && !seenMap[c.id];
+    const seenMap = s.codexSeen || {}, isFound = c => (s.codex[c.id] || {}).n > 0, isNew = () => false;   // NEW tags removed on request
     const dot = i => (zc(i).some(isNew) ? '<i class="cdot"></i>' : '');
     const spChip = n => `<button class="chip bevel spchip ${codexZone === SP ? 'on' : ''}" data-cz="${SP}" style="--zh:45"><b>SP</b><span>${n}</span>${dot(SP)}</button>`;
     const chips = Z.map((z, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''} ${mapOpen(i) ? '' : 'off'}" data-cz="${i}" style="--zh:${z.hue}">
@@ -239,7 +276,7 @@
     const keep = c => codexFilter === 'found' ? isFound(c) : codexFilter === 'unfound' ? !isFound(c) : codexFilter === 'new' ? isNew(c) : true;
     const L = zc(codexZone).filter(c => G.config.viewer || keep(c)), open = codexZone === SP || mapOpen(codexZone);
     const oddsTxt = c => c.special ? `SPECIAL · ${c.month}월 ${c.eventName} 한정` : c.boss ? `BOSS · ${c.bossName} 처치 보상`
-      : c.weather ? `1 in ${G.fmtInt(c.odds)} · ${G.data.weathers[c.weather].name} 전용` : `1 in ${G.fmtInt(c.odds)}`;
+      : c.weather ? `1 in ${G.fmtOdds(c.odds)} · ${G.data.weathers[c.weather].name} 전용` : `1 in ${G.fmtOdds(c.odds)}`;
     // mutations this mineral has been found with
     const mutChips = rec => rec && rec.mut ? `<span class="mutchips">${Object.keys(rec.mut).map(k => { const m = G.data.mutations[k]; return m ? `<i style="--mc:${m.color}">${m.name} ×${rec.mut[k]}</i>` : ''; }).join('')}</span>` : '';
     let head = '', body = '';
@@ -285,7 +322,7 @@
         <div class="list">${body}</div>`;
     }
     const newCount = G.cutscenes.list.filter(isNew).length;
-    const filters = [['all', '전체'], ['found', '발견'], ['unfound', '미발견'], ['new', `NEW${newCount ? ' ' + newCount : ''}`]]
+    const filters = [['all', '전체'], ['found', '발견'], ['unfound', '미발견']]
       .map(([v, l]) => `<button class="seg bevel ${codexFilter === v ? 'on' : ''} ${v === 'new' && newCount ? 'hasnew' : ''}" data-cf="${v}">${l}</button>`).join('');
     head = `<div class="ph"><h2>CODEX <small>도감</small></h2><span>전체 발견 <b>${found}</b> / ${total} <em class="pct">(${Math.floor(found / total * 100)}%)</em></span></div>
       <div class="chips">${chips}</div>
@@ -294,7 +331,7 @@
       ${G.config.unlockCodex ? '<div class="review">검토 모드: 모든 컷신이 열려 있습니다 (js/config.js)</div>' : ''}`;
     return `${head}<div class="list">${body}</div><div class="reset"><button data-reset>데이터 초기화</button></div>`;
   }
-  const ODDS_STEPS = [0, 1e3, 1e4, 1e5, 1e6, 1e7];
+  const ODDS_STEPS = [0, 1e5, 1e6, 1e7, 1e8, 1e9];
   const ODDS_LABEL = v => v === 0 ? '전체' : G.fmt(v) + '+';
   const BANNERS = [['banner', '큰 배너'], ['card', '카드'], ['toast', '작은 알림'], ['ticker', '상단 한 줄'], ['bottom', '하단 알림'],
     ['chip', '미니'], ['cinema', '시네마'], ['neon', '네온'], ['stamp', '도장'], ['glitch', '글리치'], ['receipt', '영수증'],
@@ -345,7 +382,9 @@
       }).join('');
     else if (setSec === 'cut') body =
       toggle('autoSkipSeen', '이미 본 컷신은 항상 건너뛰기', '도감에서 개별로 켠 것과 상관없이, 다시 뜬 컷신은 재생하지 않고 바로 보상만 받습니다') +
-      seg('minOdds', '최소 확률부터 컷신 표시', '이보다 흔한 컷신은 처음 보는 것이라도 재생 없이 보상만 받습니다', ODDS_STEPS.map(v => [v, ODDS_LABEL(v)])) +
+      `<div class="card bevel setcard"><div class="meta"><b>최소 확률부터 컷신 표시</b><span>이 확률보다 흔한 광물은 처음 보는 것이라도 재생 없이 보상만 받습니다 · 직접 입력 (예: 1억, 100000000, 1e8, 10m)</span>
+        <div class="oddsin"><span>1 in</span><input type="text" inputmode="text" class="cxsearch" data-minodds value="${st.minOdds ? G.fmtKr(st.minOdds) : ''}" placeholder="0 = 전부 표시"><em>${st.minOdds ? '= ' + G.fmtInt(st.minOdds) : '전부 표시 중'}</em></div>
+        <div class="segset">${ODDS_STEPS.map(v => `<button class="seg bevel ${st.minOdds === v ? 'on' : ''}" data-set="minOdds" data-val="${v}">${v ? G.fmtKr(v) + '+' : '전체'}</button>`).join('')}</div></div></div>` +
       toggle('captions', '컷신 자막', '컷신 중에 나오는 문구를 표시합니다') +
       seg('bannerStyle', '보상 알림 스타일', '컷신을 건너뛸 때, 상자를 열 때 뜨는 알림의 모양 (끄기: 소리만 납니다)', BANNERS) +
       seg('bannerTime', '알림 표시 시간', '알림이 화면에 머무는 시간', [[0.6, '짧게'], [1, '보통'], [1.6, '길게'], [2.5, '아주 길게']]) +
@@ -374,7 +413,7 @@
   function render() {
     if (!open) return;
     // don't rebuild the codex under the player's fingers while they're typing a search
-    if (open === 'codex' && document.activeElement && document.activeElement.matches && document.activeElement.matches('[data-cxq]')) return;
+    const ae = document.activeElement; if (ae && ae.tagName === 'INPUT' && panel.contains(ae)) return;   // never rebuild under a field the player is typing in
     const top = panel.scrollTop;
     panel.innerHTML = views[open]();
     panel.scrollTop = top;
@@ -399,6 +438,7 @@
   tabs.forEach(b => b.addEventListener('click', () => {
     G.audio.init();
     if (b.dataset.tab === 'codex' && G.state.level1.crystalGone && !G.state.level1.restored && G.jumpscare) { G.jumpscare(); return; }
+    if (b.dataset.tab === 'crystal' && !G.stats.crystalsOpen()) { G.audio.deny(); toast('1억대 이상 광물을 1개 이상 발견하면 크리스탈 탭이 열립니다'); return; }
     G.audio.tab(); setOpen(b.dataset.tab);
   }));
   btnSound.addEventListener('click', () => {
@@ -452,8 +492,18 @@
       if (!opened) { G.audio.deny(); toast('크리스탈이 부족합니다'); }
       else { G.audio.buy(); if (n > 1) showBoxBatch(box, got, opened, n); }
     } else if (el.dataset.puse) {
-      const pu = G.stats.potion(el.dataset.puse);
-      if (G.act.armPotion(el.dataset.puse)) { G.audio.potion(); toast(pu && pu.grantCut ? '장전됨 - 다음 클릭에 한정 광물이 확정으로 나옵니다' : '장전됨 - 다음 클릭에 럭이 중첩됩니다'); } else { G.audio.deny(); toast('보유한 크리스탈이 없습니다'); }
+      const pu = G.stats.potion(el.dataset.puse), r = G.act.armPotion(el.dataset.puse, G.opt('drinkN') || 1);
+      if (r === 'zone') { G.audio.deny(); toast('이 크리스탈은 5번째 맵(공허의 균열)부터만 마실 수 있습니다'); }
+      else if (r) { G.audio.potion(); toast(pu && pu.grantCut ? '장전됨 - 다음 클릭에 한정 광물이 확정으로 나옵니다' : `${r > 1 ? r + '개 ' : ''}장전됨 - 다음 클릭에 럭이 중첩됩니다`); }
+      else { G.audio.deny(); toast('보유한 크리스탈이 없습니다'); }
+    } else if (el.dataset.craft) {
+      const want = el.dataset.craft === 'max' ? 1e12 : +el.dataset.craft, r = G.act.craftRed(want);
+      if (typeof r === 'number') { G.audio.buy(); G.audio.blast(5); toast(`레드 크리스탈 +${G.fmtInt(r * G.data.redRecipe.out)}`); }
+      else { G.audio.deny(); toast(`재료가 부족합니다 (옐로우 ${G.data.redRecipe.yellow} + 블루 ${G.fmtInt(G.data.redRecipe.blue)} = 레드 ${G.data.redRecipe.out})`); }
+    } else if (el.dataset.redbuy) {
+      const pt = G.stats.potion(el.dataset.redbuy), r = G.act.buyRedCrystal(el.dataset.redbuy);
+      if (r === 'ok') { G.audio.buy(); G.audio.blast(8); toast(`${pt.name}를 얻었습니다 (5번째 맵 전용)`); }
+      else { G.audio.deny(); toast(`레드 크리스탈이 부족합니다 (${pt.red}개 필요)`); }
     } else if (el.dataset.punarm) {
       if (G.act.unarmPotion(el.dataset.punarm)) { G.audio.tab(); toast('크리스탈을 되돌렸습니다'); } else { G.audio.deny(); }
     } else if (el.dataset.replay) {
@@ -510,6 +560,17 @@
     if (!ev.target.matches('[data-cxq]')) return;
     codexQuery = ev.target.value; applySearch();
   });
+  // typed values (drink count, minimum cutscene odds) are committed when the field is left / Enter
+  panel.addEventListener('change', ev => {
+    const t = ev.target;
+    if (t.matches('[data-drinkn]')) { const n = Math.max(1, Math.min(1e6, Math.floor(+t.value) || 1)); G.act.setSetting('drinkN', n); G.audio.tab(); toast(`마시기 한 번에 ${G.fmtInt(n)}개`); }
+    else if (t.matches('[data-minodds]')) {
+      const v = G.parseAmount(t.value);
+      if (v == null) { G.audio.deny(); toast('숫자로 입력해 주세요 (예: 100000000, 1억, 1e8, 10m)'); render(); return; }
+      G.act.setSetting('minOdds', v); G.audio.tab(); toast(v ? `1 in ${G.fmtOdds(v)} 미만 광물은 컷신 없이 보상만 받습니다` : '모든 컷신을 표시합니다');
+    }
+  });
+  panel.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.matches('input[type=number], [data-minodds]')) ev.target.blur(); });
 
   /* reward banner for cutscenes that were switched off / filtered by settings, and potion box results.
      style comes from settings ('banner' | 'toast' | 'flash') - see 설정 tab. */
@@ -534,7 +595,7 @@
     clearTimeout(winT); winT = setTimeout(() => winEl.classList.remove('show'), ms);
   };
   G.on('win', ({ def, reward, tier, mut }) => {
-    fireWin(`${mut ? `<i class="mut" style="--mc:${mut.color}">MUTATION · ${mut.en}</i>` : ''}<small>${tier.en}</small><b>${mut ? def.name + ': ' + mut.name : def.name}</b><span>${def.special ? 'SPECIAL' : '1 in ' + G.fmtInt(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
+    fireWin(`${mut ? `<i class="mut" style="--mc:${mut.color}">MUTATION · ${mut.en}</i>` : ''}<small>${tier.en}</small><b>${mut ? def.name + ': ' + mut.name : def.name}</b><span>${def.special ? 'SPECIAL' : '1 in ' + G.fmtOdds(def.odds)}</span><em>+ ${G.fmt(reward)}</em>`, tier.color, 2600);
   });
   /* crystal box opened: spin a roulette strip past a run of crystals before landing on the real
      result, then show the usual reward banner. The outcome is already decided (G.act.openBox already
@@ -546,7 +607,7 @@
      than a single flat deceleration. */
   const spinEl = $('#boxSpin'), spinTrack = spinEl.querySelector('.spintrack'), spinStrip = spinEl.querySelector('.spinstrip');
   function playBoxSpin(potion, onDone) {
-    const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo' && !p.event);
+    const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo' && !p.event && !p.red);
     const winIndex = 32, n = 40;
     const items = [];
     for (let i = 0; i < n; i++) items.push(i === winIndex ? potion : pool[(Math.random() * pool.length) | 0]);
@@ -607,7 +668,7 @@
     fireWin(`<small>${box.en} x${opened}${opened < asked ? ` (크리스탈 부족 · ${asked}개 중)` : ''}</small><b>${box.name} ${opened}개 개봉</b><span style="font-size:12px;line-height:1.5">${rows}</span><em style="color:${col}">최고 ${best.name}</em>`, col, 3400);
     G.audio.potion(); G.audio.blast(Math.min(8, G.data.potions.indexOf(best)));
   }
-  G.on('tutorialDone', () => toast('견습생의 크리스탈을 받았습니다 - 크리스탈 탭에서 마셔보세요'));
+  G.on('tutorialDone', () => toast('견습생의 크리스탈이 장전되었습니다 - 화면을 탭해보세요'));
   G.on('tutorialReplayDone', () => toast('튜토리얼을 다시 봤습니다 (크리스탈은 처음 한 번만 지급돼요)'));
   G.on('coinArrive', () => {
     if (bumpT) return;
@@ -637,7 +698,33 @@
     const c = G.state.crystals;
     if (crysShown === null) crysShown = c;
     const d = c - crysShown; crysShown += Math.abs(d) < 1 ? d : d * (1 - Math.exp(-dt * 8));
-    const str = G.fmt(crysShown); if (crysVal.textContent !== str) crysVal.textContent = str;
+    const str = G.stats.crystalsOpen() ? G.fmt(crysShown) : '';
+    if (crysVal.textContent !== str) crysVal.textContent = str;
+  }
+  // blue / yellow / red counters under the coins - a padlock until each one opens
+  const yelVal = $('#yelVal'), redVal = $('#redVal'), crysIco = $('#crysIco');
+  let curKey = '';
+  function paintCurrencies() {
+    const s = G.state, bo = G.stats.crystalsOpen(), yo = G.stats.yellowOpen(), ro = G.stats.redOpen();
+    const key = `${bo}|${yo}|${ro}|${Math.floor(s.yellow)}|${Math.floor(s.red)}`;
+    if (key === curKey) return; curKey = key;
+    crysIco.innerHTML = G.icon(bo ? 'crystal' : 'lock', 15); crysIco.parentElement.classList.toggle('blocked', !bo);
+    crysIco.title = bo ? '블루 크리스탈' : '블루 크리스탈 · 1억대 이상 광물을 발견하면 열립니다';
+    yelVal.innerHTML = `${G.icon(yo ? 'crystal' : 'lock', 13)}${yo ? `<b>${G.fmt(s.yellow)}</b>` : ''}`; yelVal.classList.toggle('lk', !yo);
+    yelVal.title = yo ? '옐로우 크리스탈' : '옐로우 크리스탈 · 3번째 맵을 해금하면 열립니다';
+    redVal.innerHTML = `${G.icon(ro ? 'crystal' : 'lock', 13)}${ro ? `<b>${G.fmt(s.red)}</b>` : ''}`; redVal.classList.toggle('lk', !ro);
+    redVal.title = ro ? '레드 크리스탈' : '레드 크리스탈 · 4번째 맵을 해금하면 열립니다';
+  }
+  /* 컷신 잠깐 안 나오게 하기 - bottom right, deliberately quiet; shows the countdown while active */
+  const cutPause = $('#cutPause');
+  cutPause.addEventListener('click', ev => { ev.stopPropagation(); G.audio.init(); G.audio.tab(); G.pauseCuts(30); toast('30초 동안 컷신 없이 보상만 받습니다'); paintPause(); });
+  cutPause.addEventListener('pointerdown', ev => ev.stopPropagation());
+  function paintPause() {
+    const left = Math.max(0, (G.cutPauseUntil - performance.now()) / 1000);
+    cutPause.classList.toggle('on', left > 0);
+    const txt = left > 0 ? `컷신 멈춤 ${Math.ceil(left)}초` : '컷신 잠깐 안 나오게 하기';
+    if (cutPause.textContent !== txt) cutPause.textContent = txt;
+    cutPause.hidden = !!G.config.viewer;
   }
   function paintHud() {
     const s = G.state;
@@ -731,6 +818,9 @@
     const nz = G.data.zones[G.state.maxZone + 1];
     mapBadge.classList.toggle('show', !!(nz && nz.unlock && G.stats.meetsUnlock(nz.unlock)));
     paintCodexBadge();
+    crystalTab.classList.toggle('locked', !G.stats.crystalsOpen());
+    paintCurrencies(); paintPause();
+    if (open === 'crystal' && !G.stats.crystalsOpen()) G.ui.closePanel();
     paintHud();
     if (!open) return;
     panel.querySelectorAll('[data-cost]').forEach(b => b.classList.toggle('poor', G.state.coins < +b.dataset.cost));

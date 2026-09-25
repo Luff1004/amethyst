@@ -15,7 +15,7 @@
   const ZONE = 4;
   const R = (odds, id, name, hue, cine, extra = {}) => {
     const t = G.tierIndex(odds);
-    const dur = extra.duration || [0, 0, 0, 6800, 8200, 9600, 13000][t] + (id.length % 4) * 350;
+    const dur = extra.duration || ([0, 0, 0, 6800, 8200, 9600, 13000][t] || 14000 + (t - 7) * 500) + (id.length % 4) * 350;
     G.cutscenes.register(Object.assign({
       id, name, odds, zone: ZONE, template: 'cine', hue, colors: G.pal(hue, extra.hue2), cine, duration: dur,
     }, extra));
@@ -86,7 +86,10 @@
     ['silencecrystal', '침묵결정', 240], ['remnantite', '잔재수정', 330], ['gapcrystal', '틈결정', 200],
     ['anamorphstone', '왜상석', 170], ['overlapfrag', '겹침조각', 300], ['unfocusstone', '초점상실석', 250],
   ];
-  row(spread(100000, 999999, epicNames.length).map((o, i) => [o, ...epicNames[i]]), 1);
+  /* PATCH - the 5th map is the experts' ladder now: 58 minerals from 1억 up to 999해 (bands below).
+     The old 10만대 row is retired; 100만대 keeps only its first four, which now open the ladder at 1억. */
+  const BANDS = [[1e8, 9.9e8, 10], [1e9, 9.9e9, 8], [1e10, 9.9e11, 9], [1e12, 9.9e13, 8], [1e14, 9.9e15, 7], [1e16, 9.9e17, 6], [1e18, 9.9e19, 5], [1e20, 9.99e22, 5]];
+  const LADDER = [].concat(...BANDS.map(([lo, hi, n]) => spread(lo, hi, n)));   // 58 odds, ascending
 
   /* ============ 100만대  LEGENDARY  (x22) ============ */
   const legendNames = [
@@ -99,7 +102,7 @@
     ['shakenaxis', '흔들린축', 200], ['vanisheddoor', '사라진문', 280], ['loopcrystal', '되돌이결정', 320],
     ['brokencompass', '깨진나침반', 190],
   ];
-  row(spread(1000000, 9999999, legendNames.length).map((o, i) => [o, ...legendNames[i]]), 2);
+  row(LADDER.slice(0, 4).map((o, i) => [o, ...legendNames[i]]), 2);
 
   /* ============ 1000만대  MYTHIC  (x22) ============ */
   const mythicNames = [
@@ -112,7 +115,7 @@
     ['namelesswall', '무명의벽', 200], ['recurwaking', '반복되는깨어남', 290], ['erodedbound', '잠식된경계', 230],
     ['endlesshall', '끝없는복도', 250],
   ];
-  row(spread(10000000, 99999999, mythicNames.length).map((o, i) => [o, ...mythicNames[i]]), 3);
+  row(LADDER.slice(4, 26).map((o, i) => [o, ...mythicNames[i]]), 3);
 
   /* ============ 1억대  DIVINE - longer, grander (English names)  (x24) ============ */
   const divineNames = [
@@ -125,62 +128,62 @@
     ['foldedthrone', 'The Folded Throne', 310], ['silenceincarnate', 'Silence Incarnate', 250], ['vanishsovereign', 'Vanishing Sovereign', 200],
     ['endlessreturn', 'The Endless Return', 320], ['realityoverwritten', 'Reality Overwritten', 350], ['corebeyondreach', 'Core Beyond Reach', 210],
   ];
-  row(spread(100000000, 999999999, divineNames.length).map((o, i) => [o, ...divineNames[i]]), 5, 1.15);
+  row(LADDER.slice(26, 50).map((o, i) => [o, ...divineNames[i]]), 5, 1.15);
 
   /* ============ 10억대  TRANSCENDENT - the deepest, final tier of the whole game (x8).
      Every line in a given scene is the SAME language (never mixed - English / Chinese / Arabic,
      one font each), a deliberate entrance style, and a few names deliberately echo LEVEL 1's own
      imagery (the labyrinth, the eye, waking up) since this map is the other side of that door. ============ */
-  R(1100000000, 'labyrinthmaker', "The Labyrinth's Maker", 322,
+  R(LADDER[50], 'labyrinthmaker', "The Labyrinth's Maker", 322,
     { env: 'void', envHue: 322, hero: { k: 'spire', h: 322, s: 70, l: 6, size: 1.4, shine: 85, trans: 0.5 }, entry: 'unveil', finale: 'implode', fx: ['arcs', 'stars'], cam: 'pull' },
     { duration: 17000, revealAt: 0.63, captions: [
       { a: 0.04, b: 0.24, en: 'SOMETHING BUILT THIS MAZE ON PURPOSE', pos: 'top', style: 'fly', from: 'top' },
       { a: 0.28, b: 0.5, en: 'AND LEFT ONE DOOR UNLOCKED', style: 'fly', from: 'left' },
       { a: 0.7, b: 1.4, en: 'YOU WERE ALWAYS MEANT TO FIND IT', style: 'fly', from: 'bottom' },
     ] });
-  R(2300000000, 'genesisecho', '创世的回声', 280,
+  R(LADDER[51], 'genesisecho', '创世的回声', 280,
     { env: 'arcane', envHue: 280, hero: { k: 'octa', h: 280, s: 78, trans: 0.55, size: 1.4, shine: 75 }, entry: 'drop', finale: 'pulse', fx: ['runes', 'dust'], cam: 'drift' },
     { duration: 17500, revealAt: 0.63, hue2: 250, captions: [
       { a: 0.04, b: 0.24, en: '第一道裂缝还在回响', size: 26, pos: 'top', style: 'engrave' },
       { a: 0.28, b: 0.5, en: '从创世那一刻就未曾停止', size: 26, style: 'engrave' },
       { a: 0.7, b: 1.4, en: '永劫回声', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
-  R(3600000000, 'riftsovereign2', 'Sovereign of the Rift', 260,
+  R(LADDER[52], 'riftsovereign2', 'Sovereign of the Rift', 260,
     { env: 'cyber', envHue: 260, hero: { k: 'cube', h: 260, s: 65, l: 10, size: 1.35, shine: 80, trans: 0.6 }, entry: 'lightning', finale: 'shatter', fx: ['arcs', 'sparks'], cam: 'push' },
     { duration: 18000, revealAt: 0.64, captions: [
       { a: 0.04, b: 0.25, en: 'IT DOES NOT RULE THE RIFT', pos: 'top', style: 'type', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
       { a: 0.29, b: 0.52, en: 'IT IS THE RIFT, WEARING A CROWN', style: 'type', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
       { a: 0.68, b: 1.4, en: 'EVERY FRACTURE ANSWERS TO IT', style: 'type', font: 'ui-monospace,"SF Mono",Consolas,monospace' },
     ] });
-  R(4900000000, 'existenceecho', 'صدى الوجود', 200,
+  R(LADDER[53], 'existenceecho', 'صدى الوجود', 200,
     { env: 'abyss', envHue: 200, hero: { k: 'twin', h: 200, s: 72, l: 4, size: 1.4, shine: 78, trans: 0.55 }, entry: 'tide', finale: 'nova', fx: ['stars', 'orbit'], cam: 'drift' },
     { duration: 18500, revealAt: 0.64, hue2: 220, captions: [
       { a: 0.04, b: 0.25, en: 'صوت يتردد منذ أن كُسر الوجود', pos: 'top', size: 24, style: 'fly', from: 'left' },
       { a: 0.29, b: 0.52, en: 'ولم يتوقف منذ ذلك الحين', size: 24, style: 'fly', from: 'right' },
       { a: 0.68, b: 1.4, en: 'وما زال يتردد فيك الآن', size: 24, style: 'fly', from: 'top' },
     ] });
-  R(6200000000, 'mazeend', '迷宫尽头', 340,
+  R(LADDER[54], 'mazeend', '迷宫尽头', 340,
     { env: 'sanctum', envHue: 340, hero: { k: 'prism', n: 20, h: 340, s: 75, size: 1.45, shine: 82, trans: 0.5 }, entry: 'unveil', finale: 'bloom', fx: ['dust', 'stars'], cam: 'pull' },
     { duration: 19000, revealAt: 0.65, captions: [
       { a: 0.04, b: 0.26, en: '每一条走廊终将汇聚于此', size: 26, pos: 'top', style: 'engrave' },
       { a: 0.3, b: 0.54, en: '这里就是迷宫的尽头', size: 26, style: 'engrave' },
       { a: 0.69, b: 1.4, en: '終焉', v: true, size: 40, x: 0.82, y: 0.36 },
     ] });
-  R(7500000000, 'eyethatwaits', 'The Eye That Waits', 0,
+  R(LADDER[55], 'eyethatwaits', 'The Eye That Waits', 0,
     { env: 'void', envHue: 8, hero: { k: 'octa', h: 0, s: 70, l: 8, size: 1.45, shine: 85, trans: 0.45 }, entry: 'drop', finale: 'implode', fx: ['arcs', 'stars'], cam: 'push' },
     { duration: 18500, revealAt: 0.64, hue2: 30, captions: [
       { a: 0.04, b: 0.25, en: 'IT NEVER CLOSED, NOT ONCE', pos: 'top', style: 'fly', from: 'top' },
       { a: 0.29, b: 0.52, en: 'NOT WHILE YOU MINED', style: 'fly', from: 'left' },
       { a: 0.68, b: 1.4, en: 'NOT WHILE YOU SLEPT', style: 'fly', from: 'right' },
     ] });
-  R(8800000000, 'finaltruth', 'الحقيقة الأخيرة', 190,
+  R(LADDER[56], 'finaltruth', 'الحقيقة الأخيرة', 190,
     { env: 'temple', envHue: 190, hero: { k: 'star', h: 190, s: 85, size: 1.5, shine: 88, trans: 0.4 }, entry: 'lightning', finale: 'nova', fx: ['stars', 'sparks', 'arcs'], cam: 'push' },
     { duration: 19000, revealAt: 0.65, hue2: 210, captions: [
       { a: 0.04, b: 0.26, en: 'كل ما رأيته كان صحيحا', pos: 'top', size: 24, style: 'engrave' },
       { a: 0.3, b: 0.54, en: 'وكل ما ظننته وهما كان حقيقيا أيضا', size: 24, style: 'engrave' },
       { a: 0.69, b: 1.4, en: 'الحقيقة الأخيرة', pos: 'center', size: 26, style: 'engrave' },
     ] });
-  R(9900000000, 'eternalreturn', '永恒回归', 300,
+  R(LADDER[57], 'eternalreturn', '永恒回归', 300,
     { env: 'arcane', envHue: 300, hero: { k: 'star', h: 300, s: 88, size: 1.55, shine: 92, trans: 0.35 }, entry: 'lightning', finale: 'nova', fx: ['stars', 'sparks', 'arcs', 'runes'], cam: 'push' },
     { duration: 20000, revealAt: 0.65, hue2: 340, captions: [
       { a: 0.04, b: 0.26, en: '结束之处，也是开始之处', size: 26, pos: 'top', style: 'fly', from: 'top' },

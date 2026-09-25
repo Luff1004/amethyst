@@ -78,12 +78,50 @@ G.tiers = [
   { key: 'mythic',    ko: '신화',   en: 'MYTHIC',       below: 1e8,      color: '#ff4f7b' }, // 1000만대
   { key: 'divine',    ko: '신성',   en: 'DIVINE',       below: 1e9,      color: '#7ff3ff' }, // 1억대
   { key: 'celestial', ko: '초월',   en: 'TRANSCENDENT', below: 1e10,     color: '#ffe08a' }, // 10억대
-  { key: 'secret',    ko: '시크릿', en: 'SECRET',       below: Infinity, color: '#ff2b4a' }, // 100억~
+  /* the one hidden mineral per map (and the weather / boss exclusives) - only ever given explicitly
+     with tier:'secret', never derived from odds */
+  { key: 'secret',    ko: '시크릿', en: 'SECRET',       below: Infinity, color: '#ff2b4a', manual: true },
   /* never rolled by odds: the monthly event minerals (js/data/events.js), only obtainable from that
      month's limited mineral crystal. Registered with tier:'special' + special:true */
-  { key: 'special',   ko: '스페셜', en: 'SPECIAL',      below: Infinity, color: '#ffd45a' },
+  { key: 'special',   ko: '스페셜', en: 'SPECIAL',      below: Infinity, color: '#ffd45a', manual: true },
+  /* the 5th map's ladder beyond 10억 - 100억 all the way to 999해 */
+  { key: 'astral',     ko: '천체', en: 'ASTRAL',     below: 1e12, color: '#9ab8ff' },  // 100억 ~ 9999억
+  { key: 'eternal',    ko: '영원', en: 'ETERNAL',    below: 1e14, color: '#7affc8' },  // 1조 ~ 99조
+  { key: 'cosmic',     ko: '우주', en: 'COSMIC',     below: 1e16, color: '#c08aff' },  // 100조 ~ 9999조
+  { key: 'primordial', ko: '태초', en: 'PRIMORDIAL', below: 1e18, color: '#ff8a5a' },  // 1경 ~ 99경
+  { key: 'infinite',   ko: '무한', en: 'INFINITE',   below: 1e20, color: '#5affff' },  // 100경 ~ 9999경
+  { key: 'absolute',   ko: '절대', en: 'ABSOLUTE',   below: Infinity, color: '#ffffff' }, // 1해 ~ 999해
 ];
-G.tierIndex = odds => G.tiers.findIndex(t => odds < t.below);
+G.tierIndex = odds => { for (let i = 0; i < G.tiers.length; i++) { const t = G.tiers[i]; if (!t.manual && odds < t.below) return i; } return G.tiers.length - 1; };
+G.isSecret = d => !!d && G.tiers[d.tierIdx] && G.tiers[d.tierIdx].key === 'secret';
+/* Korean big-number units for the odds of the deep ladder: 1억, 100억, 1조, 1경, 1해 */
+G.fmtKr = n => {
+  const U = [[1e20, '해'], [1e16, '경'], [1e12, '조'], [1e8, '억'], [1e4, '만']];
+  for (const [v, u] of U) if (n >= v) { const x = n / v; return (x >= 100 ? Math.round(x) : x >= 10 ? +x.toFixed(1) : +x.toFixed(2)) + u; }
+  return G.fmtInt(n);
+};
+/* a number the player typed: "100000000", "100,000,000", "1e8", "10m", "1.5b", "1억", "3천만", "2조".
+   Empty = 0. Returns null if it can't be read. */
+G.parseAmount = str => {
+  let s = String(str || '').trim().toLowerCase().replace(/[,\s]/g, '');
+  if (!s) return 0;
+  if (/^[0-9.]+(e[0-9]+)?$/.test(s)) { const v = +s; return isFinite(v) && v >= 0 ? v : null; }
+  const EN = { k: 1e3, m: 1e6, b: 1e9, t: 1e12 };
+  let m = s.match(/^([0-9.]+)([kmbt])$/); if (m) return +m[1] * EN[m[2]];
+  // Korean: sum of "<n><unit>" chunks, units 해 경 조 억 만 with 천/백/십 inside them
+  const BIG = { 해: 1e20, 경: 1e16, 조: 1e12, 억: 1e8, 만: 1e4 }, SMALL = { 천: 1e3, 백: 1e2, 십: 10 };
+  let total = 0, part = 0, num = '';
+  for (const ch of s) {
+    if (/[0-9.]/.test(ch)) { num += ch; continue; }
+    if (SMALL[ch]) { part += (num ? +num : 1) * SMALL[ch]; num = ''; continue; }
+    if (BIG[ch]) { part += num ? +num : 0; total += (part || 1) * BIG[ch]; part = 0; num = ''; continue; }
+    return null;
+  }
+  total += part + (num ? +num : 0);
+  return isFinite(total) ? total : null;
+};
+/* "1 in N" - full digits up to 1조, Korean units beyond so the deep ladder stays readable */
+G.fmtOdds = n => (n >= 1e13 ? G.fmtKr(n) : G.fmtInt(n));
 G.GRAND = 6; // tiers at or above this index get the cinematic treatment
 
 /* colour helpers */

@@ -9,8 +9,9 @@
   let prev = null, fadeT = 0;                 // for the crossfade between two weathers
 
   function roll(reg) {
-    const table = (!isDay() && reg.night) ? reg.night : reg.day;
-    const ids = Object.keys(table).filter(k => table[k] > 0), total = ids.reduce((a, k) => a + table[k], 0);
+    // a short, strong sky (RARE below) is never followed straight away by another one
+    const table = (!isDay() && reg.night) ? reg.night : reg.day, last = store()[reg.id];
+    const ids = Object.keys(table).filter(k => table[k] > 0 && !(last && RARE.includes(last.id) && RARE.includes(k))), total = ids.reduce((a, k) => a + table[k], 0);
     let r = Math.random() * total;
     for (const k of ids) { r -= table[k]; if (r < 0) return k; }
     return ids[0];
@@ -39,7 +40,7 @@
     if (!def || def.odds < D.MUT_MIN_ODDS || def.special || def.boss) return null;
     const w = current(); if (!w.mut) return null;
     const m = D.mutations[w.mut];
-    return Math.random() < m.chance ? m : null;
+    return Math.random() < m.chance * (1 + G.stats.val('mutate')) ? m : null;     // 강화 - 변이 촉매
   }
 
   /* ---------------- announcement for rare skies ---------------- */
@@ -180,6 +181,62 @@
       g.restore();
     },
   };
+  /* ---- the new everyday skies: softer, but each with its own look ---- */
+  // drifting points (snow, petals, motes): n particles falling/rising with a sway
+  function drift(g, W, H, t, n, speed, sway, draw) {
+    for (let i = 0; i < n; i++) {
+      const k = fr(t * speed * (0.6 + (i % 7) * 0.08) + i * 0.618), x = fr(i * 0.381) * W + Math.sin(t * 0.8 + i) * sway, y = -20 + k * (H + 40);
+      draw(x, y, i, k);
+    }
+  }
+  function mistBands(g, W, H, t, rgb, a, n = 5) {
+    for (let i = 0; i < n; i++) {
+      const y = H * (0.2 + i * 0.16) + Math.sin(t * 0.2 + i) * 20, x = fr(t * 0.015 * (1 + i * 0.3) + i * 0.27) * (W + 600) - 300;
+      const gr = g.createRadialGradient(x, y, 0, x, y, Math.max(W, H) * 0.45); gr.addColorStop(0, `rgba(${rgb},${a})`); gr.addColorStop(1, `rgba(${rgb},0)`);
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    }
+  }
+  Object.assign(BACK, {
+    breeze(g, W, H, t) { clouds(g, W, H, t * 0.6, '220,240,235', 7, H * 0.08, 0.12); },
+    fog(g, W, H, t) { g.fillStyle = 'rgba(190,200,215,.12)'; g.fillRect(0, 0, W, H); mistBands(g, W, H, t, '200,210,225', 0.1); },
+    drizzle(g, W, H) { g.fillStyle = 'rgba(30,50,80,.18)'; g.fillRect(0, 0, W, H); },
+    petals(g, W, H, t) { g.save(); g.globalCompositeOperation = 'lighter'; glow(g, W * 0.1, H * 0.1, Math.max(W, H) * 0.6, 'rgba(255,170,210,A)', 0.1); g.restore(); },
+    snow(g, W, H) { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(200,220,255,.14)'); gr.addColorStop(1, 'rgba(240,248,255,.2)'); g.fillStyle = gr; g.fillRect(0, 0, W, H); },
+    starry(g, W, H, t) {
+      g.fillStyle = 'rgba(4,6,24,.35)'; g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 140; i++) { g.fillStyle = `rgba(255,248,220,${(0.2 + 0.6 * fr(i * 0.77)) * (0.5 + 0.5 * Math.sin(t * 1.3 + i * 3))})`; g.fillRect(fr(i * 0.618) * W, fr(i * 0.3819) * H * 0.85, 1.4, 1.4); }
+      g.save(); g.globalCompositeOperation = 'lighter';     // a faint milky way band
+      g.translate(W / 2, H * 0.3); g.rotate(-0.4); const mg = g.createLinearGradient(0, -60, 0, 60); mg.addColorStop(0, 'rgba(180,170,255,0)'); mg.addColorStop(0.5, 'rgba(200,190,255,.07)'); mg.addColorStop(1, 'rgba(180,170,255,0)'); g.fillStyle = mg; g.fillRect(-W, -60, W * 2, 120);
+      g.restore();
+    },
+    fireflies(g, W, H) { g.fillStyle = 'rgba(6,14,10,.35)'; g.fillRect(0, 0, W, H); },
+    damp(g, W, H, t) { g.fillStyle = 'rgba(20,40,50,.2)'; g.fillRect(0, 0, W, H); mistBands(g, W, H, t, '120,170,190', 0.06, 3); },
+    geothermal(g, W, H, t) { g.save(); g.globalCompositeOperation = 'lighter'; glow(g, W / 2, H * 1.1, Math.max(W, H) * 0.75, 'rgba(255,120,40,A)', 0.16 + 0.04 * Math.sin(t)); g.restore(); },
+    resonance(g, W, H, t) {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < 4; k++) { const r = fr(t * 0.12 + k / 4) * Math.max(W, H) * 0.8; g.strokeStyle = `rgba(150,240,255,${0.12 * (1 - r / (Math.max(W, H) * 0.8))})`; g.lineWidth = 3; g.beginPath(); g.arc(W / 2, H * 0.45, r, 0, TAU); g.stroke(); }
+      g.restore();
+    },
+    rockfall(g, W, H) { g.fillStyle = 'rgba(40,30,20,.2)'; g.fillRect(0, 0, W, H); },
+    glowworms(g, W, H, t) {
+      g.fillStyle = 'rgba(0,10,12,.3)'; g.fillRect(0, 0, W, H);
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 60; i++) { const x = fr(i * 0.618) * W, y = fr(i * 0.381) * H * 0.35, l = 20 + fr(i * 0.77) * 80; g.strokeStyle = 'rgba(120,255,210,.12)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, y + l * 0.3); g.stroke(); g.fillStyle = `rgba(140,255,215,${0.5 + 0.4 * Math.sin(t * 2 + i)})`; g.beginPath(); g.arc(x, y + l * 0.3, 1.8, 0, TAU); g.fill(); }
+      g.restore();
+    },
+    echoes(g, W, H, t) {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < 5; k++) { const r = fr(t * 0.08 + k / 5) * Math.max(W, H); g.strokeStyle = `rgba(180,160,255,${0.1 * (1 - r / Math.max(W, H))})`; g.lineWidth = 2; g.strokeRect(W / 2 - r * 0.6, H / 2 - r * 0.6, r * 1.2, r * 1.2); }
+      g.restore();
+    },
+    gravity(g, W, H, t) {
+      g.save(); g.globalCompositeOperation = 'lighter'; g.translate(W / 2, H * 0.48);
+      for (let k = 0; k < 6; k++) { g.strokeStyle = `rgba(120,140,255,${0.06 + k * 0.01})`; g.lineWidth = 1.5; g.beginPath(); g.ellipse(0, 0, Math.min(W, H) * (0.25 + k * 0.1), Math.min(W, H) * (0.08 + k * 0.03), t * 0.2 * (k % 2 ? 1 : -1), 0, TAU); g.stroke(); }
+      g.restore();
+    },
+    stasis(g, W, H, t) { g.fillStyle = `rgba(20,60,60,${0.18 + 0.04 * Math.sin(t * 0.5)})`; g.fillRect(0, 0, W, H); },
+    starwind(g, W, H, t) { g.fillStyle = 'rgba(12,8,30,.3)'; g.fillRect(0, 0, W, H); clouds(g, W * 2, H, t * 3, '160,140,255', 7, H * 0.15, 0.08); },
+  });
   let boltAt = 0, boltSeed = 0;
   const FRONT = {
     rain(g, W, H, t) { streaks(g, W, H, t, 90, 'rgba(170,215,255,.35)', 22, 1.75, 1.3, 1.2); },
@@ -229,6 +286,38 @@
     voidstorm(g, W, H, t) {
       if (fr(t * 0.7) < 0.06) { g.fillStyle = 'rgba(200,90,255,.08)'; g.fillRect(0, fr(t * 13) * H, W, 20 + fr(t * 7) * 40); }
     },
+    breeze(g, W, H, t) { g.strokeStyle = 'rgba(220,255,240,.18)'; g.lineWidth = 1.2; g.beginPath(); for (let i = 0; i < 14; i++) { const x = fr(t * 0.15 + i * 0.37) * (W + 300) - 150, y = fr(i * 0.618) * H; g.moveTo(x, y); g.quadraticCurveTo(x + 40, y - 10, x + 90, y); } g.stroke(); },
+    fog(g, W, H, t) { mistBands(g, W, H, t * 1.3, '215,222,235', 0.08, 3); },
+    drizzle(g, W, H, t) { streaks(g, W, H, t, 60, 'rgba(180,220,255,.25)', 10, 1.68, 0.9, 1); },
+    petals(g, W, H, t) {
+      drift(g, W, H, t, 26, 0.05, 40, (x, y, i) => { g.save(); g.translate(x, y); g.rotate(t * (1 + (i % 3)) + i); g.fillStyle = `rgba(255,${160 + (i % 4) * 15},${200 + (i % 3) * 15},.8)`; g.beginPath(); g.ellipse(0, 0, 5, 2.6, 0, 0, TAU); g.fill(); g.restore(); });
+    },
+    snow(g, W, H, t) { g.fillStyle = 'rgba(255,255,255,.85)'; drift(g, W, H, t, 70, 0.04, 20, (x, y, i) => { g.globalAlpha = 0.4 + 0.6 * fr(i * 0.77); g.beginPath(); g.arc(x, y, 1 + (i % 3) * 0.8, 0, TAU); g.fill(); }); g.globalAlpha = 1; },
+    starry(g, W, H, t) {
+      const k = fr(t * 0.09); if (k > 0.12) return;
+      const q = k / 0.12, x = W * (0.8 - q * 0.6), y = H * (0.05 + q * 0.25);
+      g.strokeStyle = `rgba(255,250,220,${1 - q})`; g.lineWidth = 1.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 70, y - 28); g.stroke();
+    },
+    fireflies(g, W, H, t) {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 28; i++) { const x = fr(i * 0.618) * W + Math.sin(t * 0.5 + i * 3) * 40, y = H * 0.35 + fr(i * 0.381) * H * 0.6 + Math.cos(t * 0.6 + i) * 30, b = Math.max(0, Math.sin(t * 1.6 + i * 2.3)); glow(g, x, y, 12, 'rgba(200,255,140,A)', 0.6 * b); }
+      g.restore();
+    },
+    damp(g, W, H, t) { g.fillStyle = 'rgba(160,210,230,.6)'; for (let i = 0; i < 16; i++) { const k = fr(t * 0.3 + i * 0.37); g.globalAlpha = 1 - k; g.fillRect(fr(i * 0.618) * W, k * H, 1.5, 4); } g.globalAlpha = 1; },
+    geothermal(g, W, H, t) { drift(g, W, H, -t, 30, 0.05, 25, (x, y, i) => { g.fillStyle = `rgba(255,${140 + (i % 4) * 20},60,${0.5})`; g.fillRect(x, H - y, 2, 2); }); },
+    resonance(g, W, H, t) { for (let i = 0; i < 24; i++) { const tw = Math.pow(Math.max(0, Math.sin(t * 2.2 + i * 1.9)), 8); if (tw < 0.05) continue; const x = fr(i * 0.618) * W, y = fr(i * 0.381) * H; g.fillStyle = `rgba(180,250,255,${tw})`; g.fillRect(x - 3, y, 7, 1); g.fillRect(x, y - 3, 1, 7); } },
+    rockfall(g, W, H, t) {
+      for (let i = 0; i < 10; i++) { const k = fr(t * (0.25 + (i % 3) * 0.1) + i * 0.37), x = fr(i * 0.618) * W, y = k * k * (H + 40) - 20; g.fillStyle = 'rgba(120,100,80,.8)'; g.beginPath(); g.arc(x, y, 2 + (i % 3), 0, TAU); g.fill(); }
+      g.fillStyle = 'rgba(160,140,120,.35)'; drift(g, W, H, t, 30, 0.08, 10, (x, y) => g.fillRect(x, y, 1.5, 1.5));
+    },
+    glowworms(g, W, H, t) { g.fillStyle = 'rgba(140,255,215,.5)'; drift(g, W, H, -t, 14, 0.02, 30, (x, y) => g.fillRect(x, H - y, 1.6, 1.6)); },
+    echoes(g, W, H, t) { if (fr(t * 0.25) < 0.05) { g.fillStyle = 'rgba(180,160,255,.06)'; g.fillRect(0, 0, W, H); } },
+    gravity(g, W, H, t) {
+      g.fillStyle = 'rgba(160,170,255,.6)';
+      for (let i = 0; i < 40; i++) { const a = i * 2.39 + t * (0.2 + (i % 5) * 0.05), r = fr(i * 0.618 - t * 0.03) * Math.max(W, H) * 0.7; g.fillRect(W / 2 + Math.cos(a) * r, H * 0.48 + Math.sin(a) * r * 0.5, 1.6, 1.6); }
+    },
+    stasis(g, W, H, t) { g.fillStyle = 'rgba(170,255,240,.55)'; for (let i = 0; i < 40; i++) { const x = fr(i * 0.618) * W + Math.sin(t * 0.05 + i) * 4, y = fr(i * 0.381) * H + Math.cos(t * 0.05 + i) * 4; g.fillRect(x, y, 1.5, 1.5); } },
+    starwind(g, W, H, t) { streaks(g, W, H, t, 40, 'rgba(210,200,255,.3)', 40, 0.4, 0.5, 1); },
   };
   function paint(which, g, W, H, t) {
     if (G.config.viewer || !G.state) return;
@@ -308,6 +397,36 @@
       case 'nebula': {
         g.globalCompositeOperation = 'lighter';
         for (let i = 0; i < 5; i++) { const x = cx + Math.cos(t * 0.3 + i * 1.3) * W * 0.3, y = cy + Math.sin(t * 0.25 + i * 2) * H * 0.2; glow(g, x, y, Math.min(W, H) * 0.4, `rgba(${[120, 200, 255, 180, 90][i]},${[140, 110, 150, 220, 200][i]},255,A)`, 0.12); }
+        break;
+      }
+      case 'mist': mistBands(g, W, H, t * 2, '220,228,240', 0.14, 4); break;
+      case 'frost': {
+        const vg = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.3, cx, cy, e.R); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(200,235,255,.35)');
+        g.fillStyle = vg; g.fillRect(0, 0, W, H);
+        g.strokeStyle = 'rgba(230,248,255,.5)'; g.lineWidth = u * 0.15;
+        for (let c = 0; c < 8; c++) { const x0 = c % 2 ? 0 : W, y0 = fr(c * 0.37) * H; let x = x0, y = y0, a = c % 2 ? 0 : Math.PI; g.beginPath(); g.moveTo(x, y); for (let s = 0; s < 8; s++) { a += (fr(c * 7 + s * 0.61) - 0.5) * 1.2; x += Math.cos(a) * u * 3 * k; y += Math.sin(a) * u * 3 * k; g.lineTo(x, y); } g.stroke(); }
+        FRONT.snow(g, W, H, t);
+        break;
+      }
+      case 'bloom': FRONT.petals(g, W, H, t * 1.5); break;
+      case 'ember': FRONT.geothermal(g, W, H, t * 2); { const vg = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.3, cx, cy, e.R); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(255,120,40,.2)'); g.fillStyle = vg; g.fillRect(0, 0, W, H); } break;
+      case 'glow': FRONT.fireflies(g, W, H, t * 1.4); break;
+      case 'starlit': {
+        g.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 30; i++) { const tw = Math.pow(Math.max(0, Math.sin(t * 2 + i * 1.7)), 5); const x = fr(i * 0.618) * W, y = fr(i * 0.381) * H, r = u * (1 + tw * 2); g.fillStyle = `rgba(255,245,200,${tw})`; g.fillRect(x - r, y - 0.5, r * 2, 1.2); g.fillRect(x - 0.5, y - r, 1.2, r * 2); }
+        break;
+      }
+      case 'crystal': BACK.resonance(g, W, H, t * 2); FRONT.resonance(g, W, H, t * 1.5); break;
+      case 'echo': {
+        g.globalCompositeOperation = 'lighter';
+        for (let i = 1; i <= 3; i++) { g.strokeStyle = `rgba(190,170,255,${0.3 / i})`; g.lineWidth = u * 0.3; const s = Math.min(W, H) * (0.28 + i * 0.07 + fr(t * 0.5) * 0.05); g.strokeRect(cx - s, cy - s, s * 2, s * 2); }
+        break;
+      }
+      case 'gravity': BACK.gravity(g, W, H, t * 2); FRONT.gravity(g, W, H, t * 2); break;
+      case 'stasis': {
+        const vg = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.3, cx, cy, e.R); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(120,255,230,.22)');
+        g.fillStyle = vg; g.fillRect(0, 0, W, H);
+        g.strokeStyle = 'rgba(170,255,240,.4)'; g.lineWidth = u * 0.25; g.beginPath(); g.arc(cx, cy, Math.min(W, H) * 0.42, -Math.PI / 2, -Math.PI / 2 + TAU * fr(t * 0.2)); g.stroke();
         break;
       }
     }

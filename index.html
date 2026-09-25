@@ -19,7 +19,7 @@
 <header id="hud">
   <div class="wrap">
     <div id="topline">
-      <div id="coinBox"><i id="coinIco"></i><div><small>COINS</small><b id="coinVal">0</b><em id="crysRow"><i id="crysIco"></i><span id="crysVal">0</span><span id="cps"></span></em></div></div>
+      <div id="coinBox"><i id="coinIco"></i><div><small>COINS</small><b id="coinVal">0</b><em id="crysRow"><i id="crysIco"></i><span id="crysVal">0</span><span id="yelVal" class="cur yel"></span><span id="redVal" class="cur red"></span><span id="cps"></span></em></div></div>
       <button id="btnEvent" class="bevel" hidden></button>
       <div id="rightBox">
         <div id="luckChip" class="bevel"><span>LUCK</span><b id="luckVal">x1.00</b></div>
@@ -54,6 +54,7 @@
 <div id="offlineModal" hidden></div>
 <div id="wxAnnounce"></div>
 <div id="bossPrompt" hidden></div>
+<button id="cutPause" type="button" title="30초 동안 컷신 없이 보상만 받습니다">컷신 잠깐 안 나오게 하기</button>
 
 <script src="js/core/util.js"></script>
 <script src="js/core/crystalfx.js"></script>

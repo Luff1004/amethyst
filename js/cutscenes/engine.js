@@ -175,7 +175,7 @@
   /* ---------- registry ---------- */
   C.template = (name, fn) => { C.templates[name] = fn; };
 
-  const DUR = [3000, 3600, 4400, 5200, 6200, 7400, 11000, 16000, 13000];
+  const DUR = [3000, 3600, 4400, 5200, 6200, 7400, 11000, 16000, 13000, 13000, 16500, 17000, 17500, 18000, 18500, 19000];
 
   C.register = def => {
     if (!def || !def.id || !def.odds) throw new Error('cutscene needs id and odds');
@@ -207,23 +207,31 @@
 
   C.inZone = i => C.list.filter(c => c.zones.includes(i));
 
-  /* roll once per mining action. Rarest first, at most one cutscene. Only this zone's minerals. */
+  /* roll once per mining action, at most one cutscene, only this zone's minerals.
+     Every mineral gets its own independent chance (luck / odds, capped). If several come up at once -
+     which only happens with a lot of luck - one of them is picked, leaning toward the rarer ones
+     (weight odds^0.35) but not always the rarest: stacking crystals widens what you can find
+     instead of handing you the same top mineral every single time. */
   C.roll = (zone, luck, cap = 0.5) => {
     const wxId = G.weather ? G.weather.current().id : null;
     // a special sky (one with its own exclusive mineral) holds back the regular secrets - only its own 100억 can drop
     const specialSky = wxId && C.list.some(c => c.weather === wxId);
+    let pick = null, wsum = 0;
     for (let i = C.list.length - 1; i >= 0; i--) {
       const c = C.list[i];
       if (!c.zones.includes(zone) || c.boss) continue;
       // weather-exclusive minerals only exist while their weather is overhead
       if (c.weather && wxId !== c.weather) continue;
-      if (specialSky && !c.weather && c.tierIdx >= 8) continue;
-      if (Math.random() < Math.min(cap, luck / c.odds)) return c;
+      if (specialSky && !c.weather && G.isSecret(c)) continue;
+      if (Math.random() < Math.min(cap, luck / c.odds)) {
+        const w = Math.pow(c.odds, 0.35); wsum += w;
+        if (Math.random() * wsum < w) pick = c;          // weighted reservoir pick among the hits
+      }
     }
-    return null;
+    return pick;
   };
 
-  C.reward = def => Math.floor(def.odds * def.rewardMul * G.stats.coinMul());
+  C.reward = def => Math.floor(def.odds * def.rewardMul * G.stats.coinMul() * (1 + G.stats.val('reward')));   // 강화 - 광물 감정
 
   /* ---------- playback ---------- */
   C.start = (def, opt = {}) => {
@@ -502,7 +510,7 @@
       k = E.outCubic(seg(rt, 300, 900)); g.globalAlpha = k;
       g.fillStyle = tier.color; g.font = `700 ${18 * s}px ${MONO}`; spc('0px');
       const wxName = d.weather && G.data.weathers[d.weather] ? G.data.weathers[d.weather].name : '';
-      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : d.boss ? `BOSS  ·  ${d.bossName} 처치 보상` : d.weather ? `1 in ${G.fmtInt(d.odds)}  ·  ${wxName} 전용` : `1 in ${G.fmtInt(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
+      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : d.boss ? `BOSS  ·  ${d.bossName} 처치 보상` : d.weather ? `1 in ${G.fmtOdds(d.odds)}  ·  ${wxName} 전용` : `1 in ${G.fmtOdds(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
       // reward
       if (!a.replay) {
         k = E.outCubic(seg(rt, 500, 900)); g.globalAlpha = k;

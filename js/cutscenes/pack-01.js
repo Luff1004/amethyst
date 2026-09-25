@@ -71,6 +71,6 @@
   R({ id: 'birth',   name: '아메시스트의 탄생', odds: 999999, zone: 3, template: 'pillar',
       colors: ['#e7c6ff', '#9b4dff', '#06020d'] });
 
-  R({ id: 'eclipse', name: '개기 일식',     odds: 3000000, zone: 4, template: 'eclipse',
+  R({ id: 'eclipse', name: '개기 일식',     odds: 3000000, zone: 3, template: 'eclipse',
       colors: ['#ffe27a', '#ff7a2f', '#020204'] });
 })();

@@ -18,7 +18,8 @@
     const sec = Math.min(OFF.capH * 3600, (Date.now() - awayFrom) / 1000), rate = G.stats.autoRate();
     if (sec < OFF.minSec || rate <= 0) return;
     const perHit = G.stats.clickValue() * (1 + G.stats.critChance() * (G.stats.critMul() - 1));
-    const coins = Math.floor(rate * perHit * sec * OFF.eff), hits = Math.floor(rate * sec * OFF.eff);
+    const eff = OFF.eff + G.stats.val('offline');           // 강화 - 야간 작업
+    const coins = Math.floor(rate * perHit * sec * eff), hits = Math.floor(rate * sec * eff);
     if (coins <= 0) return;
     const h = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60), capped = sec >= OFF.capH * 3600 - 1;
     if (G.opt('offlineAuto')) {                 // 설정 - 오프라인 보상 자동으로 받기: no card, just the coins
@@ -33,7 +34,7 @@
       <p>자동 채굴기가 <b>${h ? h + '시간 ' : ''}${mm}분</b> 동안 쉬지 않고 일했습니다${capped ? ` <i>(최대 ${OFF.capH}시간)</i>` : ''}</p>
       <div class="ofrow"><span>채굴</span><b>${G.fmtInt(hits)}회</b></div>
       <div class="ofcoins">${G.icon('coin', 26)}<b data-ofc>0</b></div>
-      <em>효율 ${Math.round(OFF.eff * 100)}% · 자동 채굴기 Lv.${G.stats.level('auto')}</em>
+      <em>효율 ${Math.round(eff * 100)}% · 자동 채굴기 Lv.${G.stats.level('auto')}</em>
       <button class="buy bevel" data-ofok><span>받기</span></button></div>`;
     m.hidden = false; void m.offsetWidth; m.classList.add('show');
     const el = m.querySelector('[data-ofc]'), t0 = performance.now();

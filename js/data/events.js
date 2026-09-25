@@ -5,7 +5,7 @@
 
   Every event sells the same four packages (에픽 / 델타 / 메가 / 하이퍼) for crystals, built from the
   month's own limited items:
-    potion   : '<name> 한정 포션'        one-click luck crystal (LUCK +66M). Only shown/usable in the
+    potion   : '<name> 한정 포션'        one-click luck crystal (LUCK +4M). Only shown/usable in the
                                           crystal shop while its month's event is running.
     mineral  : '<name> 기념 한정 광물 포션' guarantees that month's SPECIAL mineral on the next click
                                           (the cutscene lives in js/cutscenes/special/*.js). Same
@@ -62,7 +62,7 @@
   ];
 
   G.data.events = EV.map(e => {
-    const potion = { id: 'evp_' + e.id, name: `${e.name} 한정 포션`, en: `${e.en} POTION`, hue: e.hue, star: 6, luck: 6.6e7, event: e.id };
+    const potion = { id: 'evp_' + e.id, name: `${e.name} 한정 포션`, en: `${e.en} POTION`, hue: e.hue, star: 6, luck: 4e6, event: e.id };
     const mineral = { id: 'evm_' + e.id, name: `${e.name} 기념 특별 한정 광물 포션`, en: `${e.en} MINERAL`, hue: e.hue, star: 7, event: e.id, grantCut: 'sp_' + e.id };
     const food = { id: 'evf_' + e.id, name: e.food[0], en: e.food[1], icon: e.food[2], bonus: 1000, duration: 300, inv: true, event: e.id };
     const perm = { id: 'evq_' + e.id, name: e.perm[0], en: e.perm[1], icon: e.perm[2], bonus: 1300, coinMul: 1.2, perm: true, inv: true, event: e.id };
