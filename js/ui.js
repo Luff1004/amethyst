@@ -402,6 +402,8 @@
       action('튜토리얼 다시 보기', '처음 시작할 때 나오는 안내를 다시 재생합니다', '<button class="buy bevel small" data-retutorial="1"><span>시작</span></button>') +
       action('진행 데이터 백업', '브라우저 저장소가 지워져도(캐시/쿠키 삭제, 기기 변경 등) 복구할 수 있는 코드를 만들거나 불러옵니다',
         '<button class="buy bevel small" data-savecode="export"><span>코드 만들기</span></button><button class="buy bevel small" data-savecode="import"><span>코드 불러오기</span></button>') +
+      (() => { const b = G.backupInfo && G.backupInfo(); return action('자동 백업에서 되돌리기', b ? `이 기기에서 가장 많이 진행된 저장 · ${new Date(b.at).toLocaleString()} · 누적 코인 ${G.fmt(b.total)} · 도감 ${b.codex}종` : '아직 백업이 없습니다 (게임을 켤 때마다 자동으로 만들어집니다)',
+        `<button class="buy bevel small ${b ? '' : 'poor'}" data-restorebak="1"><span>되돌리기</span></button>`); })() +
       action('설정 초기화', '모든 설정을 처음 값으로 되돌립니다 (게임 진행은 그대로)', '<button class="buy bevel small" data-resetset="1"><span>초기화</span></button>');
     return `<div class="ph"><h2>SETTINGS <small>설정</small></h2><span>바꾸면 바로 적용되고 저장됩니다</span></div>
       <div class="chips setchips">${SECS.map(([id, label]) => `<button class="chip bevel ${setSec === id ? 'on' : ''}" data-setsec="${id}"><b>${label}</b></button>`).join('')}</div>
@@ -528,6 +530,12 @@
       }
     } else if (el.dataset.setsec) {
       setSec = el.dataset.setsec; G.audio.tab(); render(); panel.scrollTop = 0;
+    } else if (el.dataset.restorebak) {
+      const b = G.backupInfo();
+      if (!b) { G.audio.deny(); toast('백업이 없습니다'); }
+      else if (confirm(`자동 백업(${new Date(b.at).toLocaleString()}, 도감 ${b.codex}종)으로 되돌릴까요? 현재 진행은 덮어씁니다.`)) {
+        if (G.restoreBackup()) { G.audio.buy(); toast('백업을 불러왔습니다'); shown = 0; render(); } else { G.audio.deny(); toast('백업을 불러오지 못했습니다'); }
+      }
     } else if (el.dataset.resetset) {
       if (confirm('모든 설정을 처음 값으로 되돌릴까요? (게임 진행은 그대로입니다)')) { G.act.resetSettings(); toast('설정을 초기화했습니다'); }
     } else if (el.dataset.set) {

@@ -47,17 +47,39 @@ G.opt = key => {
 
   G.state = fresh();
 
+  /* SAVE SAFETY
+     - nothing is ever written until the save has actually been read (`loaded`): if any script dies
+       before G.load() runs, the blank starting state must never overwrite a real save.
+     - a save that can't be parsed is left untouched (and not overwritten) instead of being replaced.
+     - BAK_KEY keeps a copy of the most-progressed save ever seen on this device (by lifetime coins),
+       restorable from 설정 - 데이터. */
+  const BAK_KEY = 'amethyst_save_v1_backup';
+  let loaded = false;
+  const progressOf = st => (st && typeof st.total === 'number' ? st.total : 0) + (st && st.codex ? Object.keys(st.codex).length : 0);
+  function keepBackup(raw) {
+    try {
+      const cur = JSON.parse(raw), bakRaw = localStorage.getItem(BAK_KEY), bak = bakRaw ? JSON.parse(bakRaw) : null;
+      if (!bak || progressOf(cur) >= progressOf(bak)) localStorage.setItem(BAK_KEY, raw);
+    } catch (e) {}
+  }
   G.load = () => {
     if (G.config.viewer) { Object.assign(G.state, { tutorialDone: true, autoOn: false }); G.audio.setMuted(false); return; }
+    let raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { return; }          // storage blocked - play without saving
     try {
-      const raw = localStorage.getItem(KEY);
       if (raw) { G.state = Object.assign(fresh(), JSON.parse(raw)); G.state.settings = Object.assign(G.defaultSettings(), G.state.settings); }
+    } catch (e) { G.state = fresh(); return; }                             // unreadable save: keep it on disk, don't overwrite it
+    try {
       if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};   // older saves had a single id string
       // saves from before the NEW badge: everything already found counts as seen
-      if (!G.state.codexSeen) { G.state.codexSeen = {}; for (const id in G.state.codex) if (G.state.codex[id].n > 0) G.state.codexSeen[id] = 1; }
-    } catch (e) { /* storage blocked - play without saving */ }
+      if (!G.state.codexSeen) { G.state.codexSeen = {}; for (const id in G.state.codex) if (G.state.codex[id] && G.state.codex[id].n > 0) G.state.codexSeen[id] = 1; }
+    } catch (e) {}
+    if (raw) keepBackup(raw);
+    loaded = true;
     G.audio.setMuted(G.state.muted);
   };
+  G.backupInfo = () => { try { const b = JSON.parse(localStorage.getItem(BAK_KEY)); return b ? { at: b.lastSeen, total: b.total, codex: Object.keys(b.codex || {}).length } : null; } catch (e) { return null; } };
+  G.restoreBackup = () => { try { const raw = localStorage.getItem(BAK_KEY); return raw ? G.act.importSave(btoa(unescape(encodeURIComponent(raw)))) : false; } catch (e) { return false; } };
   /* local dev (js/config.js dev, localhost only): coins and crystals are effectively unlimited -
      anything spent is topped straight back up, so every shop/package/box can be tested freely */
   const devTopUp = () => {
@@ -70,8 +92,13 @@ G.opt = key => {
   G.on('change', devTopUp);
   const load0 = G.load;
   G.load = () => { load0(); devTopUp(); };
-  G.save = () => { if (G.config.viewer) return; G.state.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(G.state)); } catch (e) {} };
-  G.reset = () => { G.state = fresh(); G.save(); G.emit('change'); };
+  G.save = () => {
+    if (G.config.viewer || !loaded) return;
+    G.state.lastSeen = Date.now();
+    try { const raw = JSON.stringify(G.state); localStorage.setItem(KEY, raw); if (++saveN % 60 === 1) keepBackup(raw); } catch (e) {}
+  };
+  let saveN = 0;
+  G.reset = () => { G.state = fresh(); loaded = true; G.save(); G.emit('change'); };
 
   const now = () => Date.now();
   const upg = id => G.data.upgrades.find(u => u.id === id);
@@ -352,7 +379,7 @@ G.opt = key => {
         G.state.settings = Object.assign(G.defaultSettings(), G.state.settings);
         if (!G.state.codexSeen) { G.state.codexSeen = {}; for (const id in G.state.codex) if (G.state.codex[id].n > 0) G.state.codexSeen[id] = 1; }
         if (!G.state.armed || typeof G.state.armed !== 'object') G.state.armed = {};
-        G.save(); G.audio.setMuted(G.state.muted); G.emit('change'); return true;
+        loaded = true; G.save(); G.audio.setMuted(G.state.muted); G.emit('change'); return true;
       } catch (e) { return false; }
     },
     travel(i) {
