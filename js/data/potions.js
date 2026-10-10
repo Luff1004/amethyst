@@ -50,3 +50,15 @@ G.data.boxes = [
    from the 3rd map on) + blue crystals, 10 red at a time. The workshop opens with the 4th map. */
 G.data.redRecipe = { yellow: 30, blue: 70000, out: 10 };
 G.data.yellowDrop = { chance: 0.01, n: 5 };
+
+/* YELLOW SHOP (크리스탈 탭, 3rd map on) - what yellow crystals buy besides red crafting.
+   buffs last `min` minutes (buying again while active adds time); the 변이 확정권 waits until the
+   next mineral of 1천만+ and then guarantees it a mutation. */
+G.data.yshop = [
+  { id: 'luck', name: '황금 기도', en: 'GOLDEN PRAYER', icon: 'luck', desc: '30분 동안 행운 x1.5', price: 25, min: 30 },
+  { id: 'coin', name: '풍요의 기도', en: 'PRAYER OF PLENTY', icon: 'coin', desc: '30분 동안 코인 x2', price: 20, min: 30 },
+  { id: 'mut',  name: '변이 확정권', en: 'MUTATION SEAL', icon: 'crystal', desc: '다음 1천만 이상 광물에 변이가 반드시 붙습니다', price: 40 },
+];
+/* 날씨 소환: price by weather (anything not listed is a common sky, YSUMMON_BASE) */
+G.data.ysummon = { base: 5, price: { meteor: 20, lightning: 20, acid: 20, radio: 20, eruption: 20, starflux: 20, rift: 20,
+  sandstorm: 50, voidstorm: 50, rainbow: 60, solar: 120, moonlight: 120 } };

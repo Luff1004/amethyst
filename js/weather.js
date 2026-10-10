@@ -38,7 +38,14 @@
   const mul = kind => { if (G.config.viewer || !G.state) return 1; const w = current(); return w[kind] || 1; };
   function rollMutation(def) {
     if (!def || def.odds < D.MUT_MIN_ODDS || def.special || def.boss) return null;
-    const w = current(); if (!w.mut) return null;
+    const w = current();
+    // 옐로우 상점 - 변이 확정권: this sky's mutation for sure (or any one, under a sky that has none)
+    if (G.state.mutTickets > 0) {
+      G.state.mutTickets--; G.save();
+      if (w.mut) return D.mutations[w.mut];
+      const all = Object.values(D.mutations); return all[Math.floor(Math.random() * all.length)];
+    }
+    if (!w.mut) return null;
     const m = D.mutations[w.mut];
     return Math.random() < m.chance * (1 + G.stats.val('mutate')) ? m : null;     // 강화 - 변이 촉매
   }

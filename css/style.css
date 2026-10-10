@@ -950,3 +950,31 @@ body.bossing #cutPause { display: none; }
   #luckChip span { display: none; }
   #btnAuto em { display: none; }
 }
+
+/* ---------------- 옐로우 상점 ---------------- */
+.lockcard.yel .ico, .ycard .yico { color: #ffd84a; }
+.ycard { --line: rgba(255, 216, 74, .4); }
+.ycard.on { --line: rgba(255, 216, 74, .8); box-shadow: inset 0 0 18px rgba(255, 216, 74, .12); }
+.ycard .ytime { font: 700 11px/1.3 var(--mono); color: #ffd84a; }
+.ybuy { color: #ffd84a !important; }
+.ybuy svg, .ybuy .i { color: #ffd84a; }
+.sumcard { grid-template-columns: 1fr; }
+.wxsums { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.wxsum { --c: 5px; display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; color: var(--wc); font-size: 11.5px; cursor: pointer; }
+.wxsum b { color: #fff; font-weight: 700; }
+.wxsum em { display: inline-flex; align-items: center; gap: 2px; font: 700 10.5px/1 var(--mono); font-style: normal; color: #ffd84a; }
+.wxsum.on { opacity: .55; cursor: default; }
+.wxsum.poor em { color: var(--bad); }
+
+/* ---------------- 설정 - 통계 ---------------- */
+.stcard { grid-template-columns: 1fr; }
+.stcard .meta { gap: 6px; }
+.strow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #cfc6ea; border-bottom: 1px dashed rgba(255, 255, 255, .06); padding-bottom: 4px; }
+.strow span { flex: 0 0 auto; white-space: nowrap; }
+.strow.tier span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.strow span small, .strow b small { color: var(--dim); font-size: 10px; font-weight: 600; }
+.strow b { flex: 1 1 auto; min-width: 0; font: 700 12px/1.3 var(--mono); color: #fff; text-align: right; }
+.strow.tier b { flex: none; }
+.strow.tier span { color: var(--tc); }
+.stbar { flex: 0 0 34%; height: 5px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.stbar u { display: block; height: 100%; background: var(--tc); text-decoration: none; }

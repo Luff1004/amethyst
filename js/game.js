@@ -343,6 +343,7 @@
   /* ---------------- update ---------------- */
   let last = performance.now();
   function update(dt, now) {
+    if (G.state.stats) G.state.stats.playMs += dt * 1000;      // 설정 - 통계: time actually spent on the screen
     pulse = Math.max(0, pulse - dt * 5);
     shake = Math.max(0, shake - dt * 3.2);
     flashA = Math.max(0, flashA - dt * 1.4);

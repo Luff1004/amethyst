@@ -28,6 +28,9 @@ G.opt = key => {
     upg: {}, buffs: {}, codex: {}, muted: false,
     crystals: 0, potions: {}, armed: {}, autoOn: true,
     yellow: 0, red: 0,               // YELLOW crystals (drop from hand-mining, 3rd map on) and RED (crafted, 4th map on)
+    ybuff: { luck: 0, coin: 0 },     // 옐로우 상점 buffs: timestamps they last until
+    mutTickets: 0,                   // 옐로우 상점 - 변이 확정권 waiting to be used
+    stats: { playMs: 0, boxes: 0, drunk: 0, since: Date.now() },   // 설정 - 통계 (counted from the update that added them)
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
     /* monthly event packages (js/data/events.js): free box openings, limited foods waiting to be
        eaten, permanent foods already eaten, and how many of each package were bought */
@@ -111,7 +114,8 @@ G.opt = key => {
     zone: () => G.data.zones[G.state.zone],
     level: lv,
     val: id => upg(id).value(lv(id)),
-    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul() * (G.weather ? G.weather.mul('coin') : 1); },
+    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul() * (G.weather ? G.weather.mul('coin') : 1) * (this.ybuffLeft('coin') > 0 ? 2 : 1); },
+    ybuffLeft(k) { const b = G.state.ybuff; return b ? Math.max(0, ((b[k] || 0) - now()) / 1000) : 0; },
     permCoinMul() { let m = 1; for (const f of G.data.foods) if (f.perm && G.state.perm[f.id]) m *= f.coinMul || 1; return m; },
     clickValue() { return this.val('power') * this.coinMul(); },
     critChance() { return this.val('crit'); },
@@ -122,7 +126,7 @@ G.opt = key => {
       for (const f of G.data.foods) if (f.perm ? G.state.perm[f.id] : (G.state.buffs[f.id] || 0) > now()) s += f.bonus;
       return s;
     },
-    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1); },
+    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1) * (this.ybuffLeft('luck') > 0 ? 1.5 : 1); },
     potion: id => G.data.potions.find(p => p.id === id),
     /* several crystals can be armed at once now - their luck stacks (adds up) for the next click */
     armedList() {
@@ -249,6 +253,7 @@ G.opt = key => {
       for (let i = 0; i < b.w.length; i++) { r -= b.w[i]; if (r < 0) { idx = i; break; } }
       const pt = G.data.potions[idx];
       G.state.potions[pt.id] = (G.state.potions[pt.id] || 0) + 1;
+      if (G.state.stats) G.state.stats.boxes++;
       G.save(); G.emit("change"); G.emit("box", { box: b, potion: pt, idx });
       return pt;
     },
@@ -262,6 +267,7 @@ G.opt = key => {
       if (pt && (pt.grantCut || pt.guarantee)) n = 1;                    // one guarantee per click is all that can matter
       n = Math.max(1, Math.min(Math.floor(n) || 1, s.potions[id]));
       s.potions[id] -= n; s.armed[id] = (s.armed[id] || 0) + n;
+      if (s.stats) s.stats.drunk += n;
       G.save(); G.emit('change'); return n;
     },
     /* 30 yellow + 70,000 blue -> 10 red, `times` batches at once */
@@ -273,6 +279,25 @@ G.opt = key => {
       if (times < 1) return 'poor';
       s.yellow -= r.yellow * times; s.crystals -= r.blue * times; s.red += r.out * times;
       G.save(); G.emit('change'); return times;
+    },
+    /* 옐로우 상점: a buff (adds time if already running) or a 변이 확정권 */
+    buyYellow(id) {
+      const s = G.state, it = G.data.yshop.find(x => x.id === id);
+      if (!it || !G.stats.yellowOpen()) return 'locked';
+      if (s.yellow < it.price) return 'poor';
+      s.yellow -= it.price;
+      if (it.min) { s.ybuff = s.ybuff || {}; s.ybuff[id] = Math.max(now(), s.ybuff[id] || 0) + it.min * 60000; }
+      else s.mutTickets = (s.mutTickets || 0) + 1;
+      G.save(); G.emit('change'); return 'ok';
+    },
+    /* 옐로우 상점 - 날씨 소환: any sky of the region you're standing in */
+    summonWeather(id) {
+      const s = G.state, reg = G.weather.region(), w = G.data.weathers[id];
+      if (!w || !G.stats.yellowOpen() || !((reg.day && id in reg.day) || (reg.night && id in reg.night))) return 'locked';
+      const price = G.data.ysummon.price[id] || G.data.ysummon.base;
+      if (s.yellow < price) return 'poor';
+      s.yellow -= price; G.weather.set(id);
+      G.save(); G.emit('change'); return 'ok';
     },
     buyRedCrystal(id) {
       const s = G.state, pt = G.stats.potion(id);

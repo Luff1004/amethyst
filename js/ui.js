@@ -57,6 +57,31 @@
         <button class="buy bevel small ${max < 1 ? 'poor' : ''}" data-exch="max" data-exmin="1"><span>최대</span></button></div></div>`;
   }
 
+  /* YELLOW SHOP: prayers (timed buffs), the 변이 확정권, and summoning a sky of the region you're in */
+  function yellowSection() {
+    const s = G.state;
+    if (!G.stats.yellowOpen()) return `<div class="ph mini"><h2>YELLOW SHOP <small>옐로우 상점</small></h2></div>${lockCard('옐로우 상점', 'YELLOW SHOP', '3번째 맵(수정 동굴)을 해금하면 열립니다', 'yel')}`;
+    const ybtn = (price, attr) => `<button class="buy bevel ybuy ${s.yellow < price ? 'poor' : ''}" ${attr}>${G.icon('crystal', 15)}<span>${price}</span></button>`;
+    const items = G.data.yshop.map(it => {
+      const left = it.min ? G.stats.ybuffLeft(it.id) : 0, have = it.id === 'mut' ? (s.mutTickets || 0) : 0;
+      return `<div class="card bevel ycard ${left > 0 || have ? 'on' : ''}">
+        <div class="ico yico">${G.icon(it.icon, 24)}</div>
+        <div class="meta"><b>${it.name}</b><small>${it.en}</small><span>${it.desc}</span>
+          ${left > 0 ? `<span class="ytime" data-ybuff="${it.id}">남은 시간 ${G.fmtTime(left)}</span>` : ''}${have ? `<span class="ytime">대기 중 ${have}장</span>` : ''}</div>
+        <div class="side">${ybtn(it.price, `data-ybuy="${it.id}"`)}</div></div>`;
+    }).join('');
+    const reg = G.weather.region(), cur = G.weather.current().id;
+    const ids = [...new Set([...Object.keys(reg.day || {}), ...Object.keys(reg.night || {})])].filter(id => G.data.weathers[id]);
+    const price = id => G.data.ysummon.price[id] || G.data.ysummon.base;
+    ids.sort((a, b) => price(a) - price(b));
+    const sky = ids.map(id => { const w = G.data.weathers[id], on = id === cur; return `<button class="wxsum bevel ${on ? 'on' : ''} ${s.yellow < price(id) ? 'poor' : ''}" data-wxsum="${id}" style="--wc:${w.color}" ${on ? 'disabled' : ''}>
+        ${G.icon(w.icon, 14)}<b>${w.name}</b><em>${on ? '지금 날씨' : G.icon('crystal', 11) + price(id)}</em></button>`; }).join('');
+    return `<div class="ph mini"><h2>YELLOW SHOP <small>옐로우 상점</small></h2><span>옐로우 <b class="yel">${G.fmtInt(s.yellow)}</b></span></div>
+      <div class="list">${items}</div>
+      <div class="card bevel ycard sumcard"><div class="meta"><b>날씨 소환 <small style="display:inline">SUMMON WEATHER</small></b>
+        <span>지금 있는 지역의 날씨를 바로 불러옵니다 (그 날씨의 원래 시간만큼 유지)</span><div class="wxsums">${sky}</div></div></div>`;
+  }
+
   /* the RED workshop (30 yellow + 70,000 blue -> 10 red) and the red shop for the top three crystals */
   function redSection() {
     const s = G.state, r = G.data.redRecipe;
@@ -119,6 +144,7 @@
     return `<div class="ph"><h2>CRYSTAL <small>크리스탈 상점</small></h2><span>크리스탈은 <b>다음 클릭 한 번</b>에만 적용 · 여러 개 중첩 가능 (겹칠수록 효과 감소)</span></div>
       <div class="sub">블루 <b class="cy">${G.fmtInt(s.crystals)}</b>${G.stats.yellowOpen() ? ` &nbsp;/&nbsp; 옐로우 <b class="yel">${G.fmtInt(s.yellow)}</b>` : ''}${G.stats.redOpen() ? ` &nbsp;/&nbsp; 레드 <b class="red">${G.fmtInt(s.red)}</b>` : ''}${armedLuck ? ` &nbsp;/&nbsp; 장전된 럭 <b class="cy">+${G.fmt(armedLuck)}</b>` : ''}</div>
       ${exchangeCard()}
+      ${yellowSection()}
       ${redSection()}
       <div class="ph mini"><h2>CRYSTAL BOX <small>크리스탈 상자</small></h2></div>
       <div class="list">${boxes}</div>
@@ -349,6 +375,35 @@
     ['rain', '글자 비'], ['typer', '타자기'], ['flash', '플래시만'], ['off', '끄기']];
   const PER_CHAR = ['rain', 'typer', 'pixel'];
 
+  /* 설정 - 통계: everything worth knowing about this save, computed from what it already records
+     (play time / boxes / crystals drunk are counted from the update that added them - `since`) */
+  function statsView() {
+    const s = G.state, st = s.stats || {}, list = G.cutscenes.list, found = c => (s.codex[c.id] || {}).n > 0;
+    const dur = ms => { const m = Math.floor(ms / 60000), h = Math.floor(m / 60); return h ? `${h}시간 ${m % 60}분` : `${m}분`; };
+    let finds = 0, muts = 0; const mutKinds = new Set();
+    for (const id in s.codex) { const r = s.codex[id]; if (!r) continue; finds += r.n || 0; if (r.mut) for (const k in r.mut) { muts += r.mut[k]; mutKinds.add(k); } }
+    const ladder = list.filter(c => found(c) && !c.special).sort((a, b) => b.odds - a.odds)[0];
+    const kills = s.bossKills || {}, killN = Object.values(kills).reduce((a, v) => a + v, 0);
+    const row = (k, v) => `<div class="strow"><span>${k}</span><b>${v}</b></div>`;
+    const block = (title, rows) => `<div class="card bevel stcard"><div class="meta"><b>${title}</b>${rows}</div></div>`;
+    // codex by tier (only tiers the game actually has minerals in)
+    const tierRows = G.tiers.map((t, i) => { const all = list.filter(c => c.tierIdx === i); if (!all.length) return ''; const f = all.filter(found).length;
+      return `<div class="strow tier" style="--tc:${t.color}"><span>${t.ko} <small>${t.en}</small></span><i class="stbar"><u style="width:${f / all.length * 100}%"></u></i><b>${f} / ${all.length}</b></div>`; }).join('');
+    const mapRows = G.data.zones.map((z, i) => { const all = G.cutscenes.inZone(i), f = all.filter(found).length, open = i <= s.maxZone;
+      return `<div class="strow tier" style="--tc:hsl(${z.hue},80%,65%)"><span>${String(i + 1).padStart(2, '0')} ${open ? z.name : '???'}</span><i class="stbar"><u style="width:${all.length ? f / all.length * 100 : 0}%"></u></i><b>${f} / ${all.length}</b></div>`; }).join('');
+    return `<div class="sub">통계 · 플레이 시간 · 상자 · 마신 크리스탈은 ${new Date(st.since || Date.now()).toLocaleDateString()}부터 기록됩니다</div>` +
+      block('플레이', row('플레이 시간', dur(st.playMs || 0)) + row('총 채굴', G.fmtInt(s.clicks)) + row('크리스탈 파쇄', G.fmtInt(s.shatters || 0)) + row('현재 위치', G.stats.zone().name)) +
+      block('코인', row('보유 코인', G.fmt(s.coins)) + row('지금까지 번 코인', G.fmt(s.total)) + row('클릭당 코인', G.fmt(G.stats.clickValue())) + row('현재 행운', G.fmtLuck(G.stats.luck()))) +
+      block('광물', row('광물 발견 횟수', G.fmtInt(finds)) + row('도감', `${list.filter(found).length} / ${list.length}종`) +
+        row('가장 희귀한 발견', ladder ? `${ladder.name} <small>(1 in ${G.fmtOdds(ladder.odds)})</small>` : '없음') +
+        row('변이 광물', `${G.fmtInt(muts)}회 · ${mutKinds.size} / ${Object.keys(G.data.mutations).length}종`)) +
+      block('등급별 도감', tierRows) +
+      block('맵별 도감', mapRows) +
+      block('보스 · 크리스탈', row('보스 처치', `${killN}회` + (killN ? ` <small>(${Object.keys(kills).map(k => (G.boss && G.boss.list[k] ? G.boss.list[k].name : k) + ' ' + kills[k]).join(' · ')})</small>` : '')) +
+        row('연 상자', G.fmtInt(st.boxes || 0)) + row('마신 크리스탈', G.fmtInt(st.drunk || 0)) +
+        row('보유 크리스탈', `블루 ${G.fmt(s.crystals)} · 옐로우 ${G.fmtInt(s.yellow || 0)} · 레드 ${G.fmtInt(s.red || 0)}`));
+  }
+
   /* 설정: five sections of settings (defaults + meaning in js/core/state.js G.defaultSettings).
      Every row is either an on/off toggle or a row of choices; both write through data-set/data-val. */
   let setSec = 'sound';
@@ -362,7 +417,7 @@
           <div class="segset">${opts.map(([v, label]) => `<button class="seg bevel ${st[key] === v ? 'on' : ''}" data-set="${key}" data-val="${v}">${label}</button>`).join('')}</div></div></div>`;
     const action = (title, desc, btns) => `<div class="card bevel setcard"><div class="meta"><b>${title}</b><span>${desc}</span></div><div class="side">${btns}</div></div>`;
     const VOL = [[0, '끔'], [25, '25%'], [50, '50%'], [75, '75%'], [100, '100%']];
-    const SECS = [['sound', '소리'], ['screen', '화면'], ['theme', '테마'], ['cut', '컷신'], ['easy', '편의'], ['data', '데이터']];
+    const SECS = [['sound', '소리'], ['screen', '화면'], ['theme', '테마'], ['cut', '컷신'], ['easy', '편의'], ['data', '데이터'], ['stats', '통계']];
     let body = '';
     if (setSec === 'sound') body =
       seg('volume', '전체 볼륨', '게임의 모든 소리 크기 (위쪽 스피커 버튼은 완전 음소거)', VOL) +
@@ -410,6 +465,7 @@
       toggle('vibrate', '진동', '치명타 · 파쇄 · 높은 등급 광물이 나올 때 폰을 진동시킵니다', G.canVibrate() ? '' : '이 기기에서는 지원되지 않습니다 (주로 안드로이드 폰에서 동작)') +
       `<div class="card bevel setcard"><div class="meta"><b>키보드 단축키 (PC)</b><span>
         <span class="kbds"><kbd>Space</kbd> 채굴 · 컷신 넘기기 <kbd>1</kbd>~<kbd>5</kbd> 탭 열기 <kbd>S</kbd> 설정 <kbd>E</kbd> 이벤트 <kbd>M</kbd> 소리 <kbd>A</kbd> 자동 채굴 <kbd>Esc</kbd> 닫기</span></span></div></div>`;
+    else if (setSec === 'stats') body = statsView();
     else body =
       action('튜토리얼 다시 보기', '처음 시작할 때 나오는 안내를 다시 재생합니다', '<button class="buy bevel small" data-retutorial="1"><span>시작</span></button>') +
       action('진행 데이터 백업', '브라우저 저장소가 지워져도(캐시/쿠키 삭제, 기기 변경 등) 복구할 수 있는 코드를 만들거나 불러옵니다',
@@ -538,6 +594,14 @@
       const want = el.dataset.craft === 'max' ? 1e12 : +el.dataset.craft, r = G.act.craftRed(want);
       if (typeof r === 'number') { G.audio.buy(); G.audio.blast(5); toast(`레드 크리스탈 +${G.fmtInt(r * G.data.redRecipe.out)}`); }
       else { G.audio.deny(); toast(`재료가 부족합니다 (옐로우 ${G.data.redRecipe.yellow} + 블루 ${G.fmtInt(G.data.redRecipe.blue)} = 레드 ${G.data.redRecipe.out})`); }
+    } else if (el.dataset.ybuy) {
+      const it = G.data.yshop.find(x => x.id === el.dataset.ybuy), r = G.act.buyYellow(it.id);
+      if (r === 'ok') { G.audio.buy(); G.audio.potion(); toast(it.min ? `${it.name} - ${it.desc.replace('30분 동안 ', '')} (${it.min}분)` : '변이 확정권 - 다음 1천만 이상 광물에 변이가 붙습니다'); }
+      else { G.audio.deny(); toast(`옐로우 크리스탈이 부족합니다 (${it.price}개 필요)`); }
+    } else if (el.dataset.wxsum) {
+      const w = G.data.weathers[el.dataset.wxsum], r = G.act.summonWeather(el.dataset.wxsum);
+      if (r === 'ok') { G.audio.buy(); G.audio.blast(4); G.ui.closePanel(); }
+      else { G.audio.deny(); toast(r === 'poor' ? `옐로우 크리스탈이 부족합니다 (${G.data.ysummon.price[w.id] || G.data.ysummon.base}개 필요)` : '이 지역에서는 부를 수 없는 날씨입니다'); }
     } else if (el.dataset.redbuy) {
       const pt = G.stats.potion(el.dataset.redbuy), r = G.act.buyRedCrystal(el.dataset.redbuy);
       if (r === 'ok') { G.audio.buy(); G.audio.blast(8); toast(`${pt.name}를 얻었습니다 (5번째 맵 전용)`); }
@@ -803,6 +867,7 @@
     const total = G.stats.luck(), wxm = G.weather ? G.weather.mul('luck') : 1, wx = G.weather && G.weather.current();
     luckPop.innerHTML = `<b>LUCK 구성</b>${rows.map(([n, v]) => `<div><span>${n}</span><em>${n === '기본' ? 'x1' : '+' + fmtB(v)}</em></div>`).join('')}
       ${wxm !== 1 ? `<div><span>날씨 · ${wx.name}</span><em>x${fmtB(wxm)}</em></div>` : ''}
+      ${G.stats.ybuffLeft('luck') > 0 ? `<div><span>황금 기도 · ${G.fmtTime(G.stats.ybuffLeft('luck'))}</span><em>x1.5</em></div>` : ''}
       <div class="tot"><span>합계</span><em>${G.fmtLuck(total)}</em></div>
       ${armed ? `<div class="arm"><span>다음 클릭 (장전 크리스탈)</span><em>+${G.fmt(armed)}</em></div>` : ''}
       <small>파쇄 직후 클릭은 행운 x5</small>`;
