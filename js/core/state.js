@@ -82,6 +82,8 @@ G.opt = key => {
       if (!G.state.codexSeen) { G.state.codexSeen = {}; for (const id in G.state.codex) if (G.state.codex[id] && G.state.codex[id].n > 0) G.state.codexSeen[id] = 1; }
     } catch (e) {}
     if (raw) keepBackup(raw);
+    // saves that finished LEVEL 1 before the map unlocked itself on restore: open it now (only ever raises maxZone)
+    try { const gate = G.data.zones.findIndex(z => z.unlock && z.unlock.type === 'level1'); if (G.state.level1 && G.state.level1.restored && gate >= 0 && G.state.maxZone < gate) G.state.maxZone = gate; } catch (e) {}
     loaded = true;
     G.audio.setMuted(G.state.muted);
   };
@@ -383,6 +385,8 @@ G.opt = key => {
     level1Restore() {
       const l1 = G.state.level1;
       l1.crystalGone = false; l1.restored = true;
+      const gate = G.data.zones.findIndex(z => z.unlock && z.unlock.type === 'level1');   // the void rift opens right here, for good
+      if (gate >= 0) G.state.maxZone = Math.max(G.state.maxZone, gate);
       G.save(); G.emit('change');
     },
     toggleAuto() { G.state.autoOn = !G.state.autoOn; G.save(); G.emit('change'); return G.state.autoOn; },

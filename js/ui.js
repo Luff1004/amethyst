@@ -240,6 +240,17 @@
         let btn, req, name = owned || next ? z.name : '???', card = '';
         if (cur) btn = '<button class="buy bevel cur" disabled><span>현재 위치</span></button>';
         else if (owned) btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
+        else if (locked && isLevel1Zone && s.level1.restored) {
+          // LEVEL 1 is done and the crystal is back: the real void rift is simply open
+          btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
+          req = `<span class="unlockreq met">${G.icon('luck', 12)} LEVEL 1 완료</span>`;
+        }
+        else if (locked && isLevel1Zone && s.level1.crystalGone) {
+          // the ending took the crystal - the way on is through the codex (the jumpscare -> restore)
+          name = 'LEVEL 1'; card = ' level1card';
+          req = `<span class="unlockreq">${G.icon('lock', 12)} 무언가가 사라졌다... 도감을 열어보라</span>`;
+          btn = `<button class="buy bevel locked" disabled>${G.icon('lock', 15)}</button>`;
+        }
         else if (locked && isLevel1Zone) {
           // production (not review mode - that case returned early above): a "???" card listing the
           // toll; once it's all there the button asks the question (js/ui.js askWho), then LEVEL 1
