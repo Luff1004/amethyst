@@ -220,7 +220,7 @@
       G.audio.potion(); G.emit('change');
     }
     if (armed) potionBurst(armed, x, y);
-    if (!gated) roll(armed, shatterLuck ? 5 : 1);
+    if (!gated && !(auto && zone().noAutoRoll)) roll(armed, shatterLuck ? 5 : 1);   // 6th map: only hand-swung hits can find minerals
   }
 
   /* one-click luck bomb: everything flashes, the roll uses luck + all armed crystals' luck stacked, with a higher cap */

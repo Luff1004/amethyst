@@ -17,7 +17,10 @@ G.data.zones = [
   { id: 'cavern', name: '수정 동굴',   en: 'CRYSTAL CAVERN', cost: 1.5e5, coinMul: 10,  hue: 172, hp: 28, snd: 'glass',
     unlock: { type: 'divine', n: 3, label: '1억대 이상 컷신 3종 발견' } },   // coins alone won't open this one - see below
   { id: 'core',   name: '용융 핵',     en: 'MOLTEN CORE',    cost: 6e6,   coinMul: 40,  hue: 18,  hp: 32, snd: 'lava',
-    unlock: { type: 'secret', n: 1, label: '시크릿 등급 컷신 1종 발견' } },
+    unlock: { type: 'combo', divine: 20, coins: 5e12, crystals: 1e6, label: '억대 광물 20종 발견 + 5T 코인 + 100만 블루 크리스탈' } },
   { id: 'void',   name: '공허의 균열', en: 'VOID RIFT',      cost: 3e8,   coinMul: 200, hue: 322, hp: 36, snd: 'void',
     unlock: { type: 'level1', label: 'LEVEL 1 완료' } },   // see js/level1.js - not a normal zone unlock
+  /* 6th map: hand-mining only - the auto-miner still earns coins here, but never rolls a mineral (noAutoRoll) */
+  { id: 'cosmos', name: '우주의 끝',   en: 'EDGE OF THE COSMOS', cost: 1e20, coinMul: 1000, hue: 228, hp: 40, snd: 'void', noAutoRoll: true,
+    unlock: { type: 'combo', coins: 1e20, label: '100Qi 코인' } },
 ];

@@ -94,5 +94,7 @@
       day: { stillair: 30, damp: 15, geothermal: 13, resonance: 11, rockfall: 11, glowworms: 10, acid: 4, radio: 3.5, eruption: 2.5, sandstorm: 2.5 } },
     { id: 'void', zones: [4],
       day: { stillness: 30, echoes: 18, gravity: 14, stasis: 12, starwind: 14, starflux: 4, rift: 4, voidstorm: 2.5 } },
+    { id: 'cosmos', zones: [5],                // the 6th map: open space, no boss
+      day: { stillness: 28, starwind: 22, gravity: 16, stasis: 14, echoes: 12, starflux: 5, rift: 3 } },
   ];
 })();

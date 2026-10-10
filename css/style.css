@@ -642,6 +642,7 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 .unlockreq { display: flex; align-items: center; gap: 4px; font: 700 10.5px/1 var(--mono) !important; color: var(--bad) !important; margin-top: 2px; }
 .unlockreq .i { color: var(--bad); width: 12px; height: 12px; }
 .unlockreq.met { color: #6dffb0 !important; }
+.unlockreq.note { color: #b8b0d0 !important; }
 .unlockreq.met .i { color: #6dffb0; }
 
 /* ------------- LEVEL 1 map card ------------- */

@@ -224,6 +224,16 @@
             btn = `<button class="buy bevel level1btn" data-level1open="1"><span>???</span></button>`;
           }
         }
+        else if (locked && z.unlock.type === 'combo') {
+          // several requirements at once (finds + coins + blue crystals) - every line shows its own progress
+          const u = z.unlock, rows = [];
+          if (u.divine) { const h = G.stats.divineFound(); rows.push([h >= u.divine, `억대 이상 광물 ${u.divine}종 발견 (${Math.min(h, u.divine)}/${u.divine})`]); }
+          if (u.coins) rows.push([G.state.coins >= u.coins, `코인 ${G.fmt(u.coins)} 지불`]);
+          if (u.crystals) rows.push([G.state.crystals >= u.crystals, `블루 크리스탈 ${G.fmt(u.crystals)} 지불`]);
+          const met = rows.every(r => r[0]);
+          req = rows.map(([ok, txt]) => `<span class="unlockreq ${ok ? 'met' : ''}">${G.icon(ok ? 'luck' : 'lock', 12)} ${txt}</span>`).join('');
+          btn = `<button class="buy bevel ${met ? '' : 'poor'}" data-zone="${i}"><span>${met ? '해금' : '조건 미달'}</span></button>`;
+        }
         else if (locked) {
           const have = z.unlock.type === 'secret' ? G.stats.secretFound() : G.stats.divineFound(), met = have >= z.unlock.n;
           req = `<span class="unlockreq ${met ? 'met' : ''}">${G.icon('luck', 12)} ${z.unlock.label || '조건 필요'} (${Math.min(have, z.unlock.n)}/${z.unlock.n})</span>`;
@@ -234,7 +244,7 @@
         return `<div class="card bevel zone ${cur ? 'on' : ''} ${owned ? '' : 'dim'}${card}" style="--zh:${z.hue}">
           <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
           <div class="meta"><b>${name}</b><small>${card ? '' : z.en}</small>
-            <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span>${req || ''}</div>
+            <span>COIN x${z.coinMul} &nbsp;/&nbsp; 컷신 ${n}종</span>${z.noAutoRoll && (owned || next) ? '<span class="unlockreq note">자동 채굴로는 광물이 나오지 않습니다 · 직접 캐야 합니다</span>' : ''}${req || ''}</div>
           <div class="side">${btn}</div></div>`;
       }).join('')}</div>`;
   }

@@ -190,6 +190,7 @@ G.opt = key => {
       if (req.type === 'divine') return this.divineFound() >= req.n;
       if (req.type === 'secret') return this.secretFound() >= req.n;
       if (req.type === 'level1') return G.state.level1.restored;
+      if (req.type === 'combo') return (!req.divine || this.divineFound() >= req.divine) && G.state.coins >= (req.coins || 0) && G.state.crystals >= (req.crystals || 0);
       return true;
     },
   };
@@ -394,7 +395,10 @@ G.opt = key => {
       if (G.config.unlockCodex) { G.state.maxZone = Math.max(G.state.maxZone, i); G.state.zone = i; G.save(); G.emit('change'); G.emit('zone'); return true; }
       if (i > G.state.maxZone) {
         if (i !== G.state.maxZone + 1) return false;
-        if (z.unlock) { if (!G.stats.meetsUnlock(z.unlock)) return false; }
+        if (z.unlock) {
+          if (!G.stats.meetsUnlock(z.unlock)) return false;
+          if (z.unlock.type === 'combo') { G.state.coins -= z.unlock.coins || 0; G.state.crystals -= z.unlock.crystals || 0; }   // the toll is paid on unlock
+        }
         else { if (G.state.coins < z.cost) return false; G.state.coins -= z.cost; }
         G.state.maxZone = i;
       }
