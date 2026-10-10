@@ -123,7 +123,7 @@
     }).join('');
     // limited event crystals only show up (and only work) during their own month's event; red ones live in the red shop until owned
     const hidden = pt => ((pt.id === 'tutorial' || pt.id === 'hodumaroo') && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0))
-      || (pt.event && !G.event.isActive(pt.event)) || (pt.red && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0));
+      || (pt.event && !G.event.isActive(pt.event)) || ((pt.red || pt.errorPool) && !(s.potions[pt.id] > 0) && !(s.armed[pt.id] > 0));
     const drinkN = Math.max(1, G.opt('drinkN') || 1);
     const potions = G.data.potions.filter(pt => !hidden(pt)).map(pt => {
       const have = s.potions[pt.id] || 0, armedN = s.armed[pt.id] || 0, one = pt.grantCut || pt.guarantee;
@@ -348,7 +348,8 @@
               : `<span class="firstonly">첫 감상은 건너뛸 수 없음</span>`}` : ''}</div></div>`;
       });
     }
-    const total = G.cutscenes.list.length, found = G.cutscenes.list.filter(c => (s.codex[c.id] || {}).n > 0).length;
+    const cl = G.cutscenes.list.filter(c => !c.biome);               // rare-biome minerals stay out of the codex entirely
+    const total = cl.length, found = cl.filter(c => (s.codex[c.id] || {}).n > 0).length;
     if (G.config.viewer) {
       const vchips = Z.map((zz, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''}" data-cz="${i}" style="--zh:${zz.hue}">
         <b>${String(i + 1).padStart(2, '0')}</b><span>${zc(i).length}</span></button>`).join('') + spChip(zc(SP).length);
@@ -378,7 +379,7 @@
   /* 설정 - 통계: everything worth knowing about this save, computed from what it already records
      (play time / boxes / crystals drunk are counted from the update that added them - `since`) */
   function statsView() {
-    const s = G.state, st = s.stats || {}, list = G.cutscenes.list, found = c => (s.codex[c.id] || {}).n > 0;
+    const s = G.state, st = s.stats || {}, list = G.cutscenes.list.filter(c => !c.biome), found = c => (s.codex[c.id] || {}).n > 0;
     const dur = ms => { const m = Math.floor(ms / 60000), h = Math.floor(m / 60); return h ? `${h}시간 ${m % 60}분` : `${m}분`; };
     let finds = 0, muts = 0; const mutKinds = new Set();
     for (const id in s.codex) { const r = s.codex[id]; if (!r) continue; finds += r.n || 0; if (r.mut) for (const k in r.mut) { muts += r.mut[k]; mutKinds.add(k); } }
@@ -715,7 +716,7 @@
      than a single flat deceleration. */
   const spinEl = $('#boxSpin'), spinTrack = spinEl.querySelector('.spintrack'), spinStrip = spinEl.querySelector('.spinstrip');
   function playBoxSpin(potion, onDone) {
-    const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo' && !p.event && !p.red);
+    const pool = G.data.potions.filter(p => p.id !== 'tutorial' && p.id !== 'hodumaroo' && !p.event && !p.red && !p.errorPool);
     const winIndex = 32, n = 40;
     const items = [];
     for (let i = 0; i < n; i++) items.push(i === winIndex ? potion : pool[(Math.random() * pool.length) | 0]);

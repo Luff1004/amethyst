@@ -211,7 +211,7 @@
       G.audio.potion(); G.emit('change');
     }
     // YELLOW crystals (from the 3rd map on): a hand-swung hit sometimes knocks loose a handful
-    if (!auto && G.stats.yellowOpen() && Math.random() < G.data.yellowDrop.chance * (1 + G.stats.val('yellow'))) {
+    if (!auto && G.stats.yellowOpen() && Math.random() < G.data.yellowDrop.chance * (1 + G.stats.val('yellow')) * G.biome.mul('yellow')) {
       const n = G.data.yellowDrop.n;
       s.yellow = (s.yellow || 0) + n;
       text(x, y - 56, `+${n} 옐로우 크리스탈`, '#ffd84a', 16, 1.3);
@@ -250,7 +250,17 @@
       const pool = G.cutscenes.inZone(G.state.zone).filter(c => c.tierIdx >= guarantee);
       if (pool.length) { startCut(pool[Math.floor(Math.random() * pool.length)], false); return; }
     }
+    // CUBER STAGE: the limited aura gets its own 1-in-a-million shot every swing, whatever your luck
+    const aura = G.biome.auraRoll();
+    if (aura) { startCut(aura, false); return; }
     const potionLuck = armed ? G.stats.luckOf(armed) : 0;     // stacked with diminishing returns + 크리스탈 증폭
+    // 에러 크리스탈: this click rolls the error minerals instead of the map's own
+    if (armed && armed.some(p => p.errorPool)) {
+      const pool = G.cutscenes.list.filter(c => c.biome === 'glitch');
+      const err = G.cutscenes.rollFrom(pool, G.stats.luck() * luckMul + potionLuck, G.data.potionCap);
+      if (err) startCut(err, false);
+      return;
+    }
     // 번개: some rolls get struck - luck x100 for this one roll
     const wx = G.weather.current();
     if (wx.bolt && Math.random() < wx.bolt) {
@@ -273,6 +283,7 @@
       first = cx.n === 0; cx.n++; cx.best = Math.max(cx.best, reward);
       if (mut) { cx.mut = cx.mut || {}; cx.mut[mut.id] = (cx.mut[mut.id] || 0) + 1; }     // mutations found, per mineral
       G.save();
+      G.biome.onFind(def);                                    // two 1억+ in a row opens CUBER STAGE
     }
     // decide whether to actually play the film, or just hand over the reward
     const rec = s.codex[def.id], st = s.settings;
@@ -353,7 +364,7 @@
     const r = coinIco.getBoundingClientRect();
     target.x = r.left + r.width / 2; target.y = r.top + r.height / 2;
 
-    if (!G.cutscenes.active && G.state.autoOn && !(G.boss && G.boss.active)) {
+    if (!G.cutscenes.active && G.state.autoOn && !(G.boss && G.boss.active) && !G.biome.noAuto()) {   // GLITCH: hands only
       const rate = G.stats.autoRate();
       if (rate > 0) {
         autoAcc += dt * rate;
@@ -616,10 +627,12 @@
     if (sk > 0) g.translate((Math.random() - 0.5) * sk * 10, (Math.random() - 0.5) * sk * 10);
     drawBackground(t);
     G.weather.drawBack(g, W, H, t);
+    G.biome.drawBack(g, W, H, t);                                    // a rare biome paints over the sky
     if (G.boss && G.boss.active) G.boss.draw(g, W, H, now);          // a boss fight replaces the crystal
     else if (G.state.level1.crystalGone) drawVoidWhereCrystalWas(t); else drawCrystal(t, now);
     drawParticles();
     G.weather.drawFront(g, W, H, t);
+    G.biome.drawFront(g, W, H, t);
     if (flashA > 0) { g.fillStyle = `rgba(255,255,255,${flashA * G.flashMul()})`; g.fillRect(-20, -20, W + 40, H + 40); }
     g.restore();
     G.cutscenes.draw(g, W, H);

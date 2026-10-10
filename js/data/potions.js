@@ -29,6 +29,8 @@ G.data.potions = [
   { id: 'primordial', name: '태초의 크리스탈', en: 'PRIMORDIAL CRYSTAL', hue: 350, star: 12, luck: 1e14, red: 10,  minZone: 4 },
   { id: 'infinity',   name: '무한의 크리스탈', en: 'INFINITY CRYSTAL',   hue: 8,   star: 13, luck: 1e18, red: 40,  minZone: 4 },
   { id: 'absolute',   name: '절대의 크리스탈', en: 'ABSOLUTE CRYSTAL',   hue: 0,   star: 14, luck: 1e22, red: 150, minZone: 4 },
+  /* GLITCH's gift (js/biome.js): the click it charges rolls the 19 error minerals instead - even outside GLITCH */
+  { id: 'errorc', name: '에러 크리스탈', en: 'ERR0R CRYSTAL', hue: 335, star: 13, luck: 2e8, errorPool: true },
   /* tutorial-only: never drops from a box - granted once, on finishing the tutorial */
   { id: 'tutorial', name: '견습생의 크리스탈', en: "APPRENTICE'S CRYSTAL", hue: 160, star: 1, luck: 50 },
 ];

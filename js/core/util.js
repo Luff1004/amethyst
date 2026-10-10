@@ -184,3 +184,8 @@ const P = {
 };
 G.icon = (name, size = 22) =>
   `<svg class="i" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="miter" stroke-linecap="square" aria-hidden="true">${P[name] || ''}</svg>`;
+/* rare-biome tiers (js/biome.js): never derived from odds */
+G.tiers.push(
+  { key: 'aura',  ko: '아우라', en: 'AURA',  below: Infinity, color: '#3af0ff', manual: true },   // CUBER STAGE's limited aura
+  { key: 'glitch', ko: '에러',  en: 'ERR0R', below: Infinity, color: '#ff2a6a', manual: true },   // GLITCH's error minerals
+);

@@ -23,6 +23,7 @@
     G.save();
     G.emit('weather', { region: regId, id, silent });
     if (!silent) announce(w);
+    if (G.biome) G.biome.onWeather(silent);            // every change of sky is a 1-in-1000 shot at GLITCH
   }
   function current() {
     const reg = region(G.state.zone), s = store()[reg.id];
@@ -454,7 +455,10 @@
     const bossUp = w.boss && G.boss && G.boss.available && G.boss.available();
     chip.hidden = false; chip.style.setProperty('--wc', w.color);
     chip.classList.toggle('boss', !!bossUp);
-    chip.innerHTML = `${G.icon(w.icon, 14)}<b>${w.name}</b><em>${bossUp ? '보스 출현!' : G.fmtTime(left)}</em>`;
+    const bio = G.biome && G.biome.current();
+    chip.classList.toggle('biome', !!bio); if (bio) chip.style.setProperty('--wc', bio.color);
+    chip.innerHTML = bio ? `<b class="bioname">${bio.name}</b><em>${G.fmtTime(G.biome.left())}</em><i class="biowx">${G.icon(w.icon, 12)}${w.name}</i>`
+      : `${G.icon(w.icon, 14)}<b>${w.name}</b><em>${bossUp ? '보스 출현!' : G.fmtTime(left)}</em>`;
   }
   function openPop() {
     const w = current(), reg = region(G.state.zone), s = store()[reg.id], m = w.mut && D.mutations[w.mut];
@@ -462,12 +466,14 @@
     const table = (!isDay() && reg.night) ? reg.night : reg.day, tot = Object.values(table).reduce((a, b) => a + b, 0);
     const bossUp = w.boss && G.boss && G.boss.available && G.boss.available();
     pop.style.setProperty('--wc', w.color);
-    pop.innerHTML = `<div class="wxh">${G.icon(w.icon, 22)}<div><small>${reg.id === 'surface' ? (isDay() ? '낮' : '밤') + ' · 지상' : reg.id === 'deep' ? '지하 깊은 곳' : '공허'}</small><b>${w.name}</b></div><em>${G.fmtTime(left)}</em></div>
+    pop.innerHTML = `<div class="wxh">${G.icon(w.icon, 22)}<div><small>${reg.id === 'surface' ? (isDay() ? '낮' : '밤') + ' · 지상' : reg.id === 'deep' ? '지하 깊은 곳' : '공허'}</small><b>${w.name}</b></div><em>${G.fmtTime(left)}</em><button class="wxinfo" data-wxinfo="1" aria-label="희귀 바이옴 안내">i</button></div>
+      ${G.biome && G.biome.current() ? `<div class="bioactive" style="--bc:${G.biome.current().color}"><small>RARE BIOME</small><b>${G.biome.current().name}</b><em>${G.fmtTime(G.biome.left())}</em><span>${G.biome.current().fx}</span></div>` : ''}
+      ${G.biome ? G.biome.infoHTML().replace('<div class="bioinfo">', '<div class="bioinfo" hidden>') : ''}
       <p>${w.desc}</p>
       ${m ? `<div class="wxm" style="--mc:${m.color}"><span>변이</span><b>${m.name}</b><i>1천만대 이상 · ${Math.round(m.chance * 100)}% · 보상 x${m.mul}</i></div>` : '<div class="wxm off"><span>변이</span><b>없음</b></div>'}
       ${bossUp ? '<button class="buy bevel wxboss" data-wxboss="1"><span>보스에 맞서기</span></button>' : ''}
       <div class="wxtable">${Object.keys(table).filter(k => table[k] > 0).map(k => `<span style="--c:${D.weathers[k].color}" class="${k === w.id ? 'on' : ''}">${D.weathers[k].name}<i>${(table[k] / tot * 100).toFixed(table[k] / tot < 0.01 ? 1 : 0)}%</i></span>`).join('')}</div>
-      ${G.config.dev ? `<div class="wxdev"><small>DEV · 날씨 바꾸기</small>${Object.keys(table).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('')}${reg.night ? Object.keys(reg.night).filter(k => !table[k]).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('') : ''}</div>` : ''}`;
+      ${G.config.dev ? `<div class="wxdev"><small>DEV · 날씨 바꾸기</small><button data-bioset="cuber">▶ CUBER STAGE</button><button data-bioset="glitch">▶ GLITCH</button>${Object.keys(table).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('')}${reg.night ? Object.keys(reg.night).filter(k => !table[k]).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('') : ''}</div>` : ''}`;
     pop.hidden = false; void pop.offsetWidth; pop.classList.add('show');
   }
   function closePop() { pop.classList.remove('show'); setTimeout(() => { if (!pop.classList.contains('show')) pop.hidden = true; }, 200); }
@@ -488,6 +494,8 @@
     chip.addEventListener('click', () => { G.audio.init(); G.audio.tab(); if (pop.classList.contains('show')) closePop(); else openPop(); });
     pop.addEventListener('click', ev => {
       const b = ev.target.closest('button'); if (!b) return;
+      if (b.dataset.wxinfo) { const box = pop.querySelector('.bioinfo'); if (box) box.hidden = !box.hidden; G.audio.tab(); return; }
+      if (b.dataset.bioset) { G.biome.end(); G.biome.start(b.dataset.bioset); closePop(); paintChip(); return; }
       if (b.dataset.wxset) { G.weather.set(b.dataset.wxset); closePop(); paintChip(); }
       else if (b.dataset.wxboss) { closePop(); G.boss && G.boss.prompt(true); }
     });

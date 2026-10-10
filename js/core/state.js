@@ -30,6 +30,7 @@ G.opt = key => {
     yellow: 0, red: 0,               // YELLOW crystals (drop from hand-mining, 3rd map on) and RED (crafted, 4th map on)
     ybuff: { luck: 0, coin: 0 },     // 옐로우 상점 buffs: timestamps they last until
     mutTickets: 0,                   // 옐로우 상점 - 변이 확정권 waiting to be used
+    biome: null,                     // the rare biome in effect { id, until, t0 } (js/biome.js)
     stats: { playMs: 0, boxes: 0, drunk: 0, since: Date.now() },   // 설정 - 통계 (counted from the update that added them)
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
     /* monthly event packages (js/data/events.js): free box openings, limited foods waiting to be
@@ -114,7 +115,7 @@ G.opt = key => {
     zone: () => G.data.zones[G.state.zone],
     level: lv,
     val: id => upg(id).value(lv(id)),
-    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul() * (G.weather ? G.weather.mul('coin') : 1) * (this.ybuffLeft('coin') > 0 ? 2 : 1); },
+    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul() * (G.weather ? G.weather.mul('coin') : 1) * (this.ybuffLeft('coin') > 0 ? 2 : 1) * (G.biome ? G.biome.mul('coin') : 1); },
     ybuffLeft(k) { const b = G.state.ybuff; return b ? Math.max(0, ((b[k] || 0) - now()) / 1000) : 0; },
     permCoinMul() { let m = 1; for (const f of G.data.foods) if (f.perm && G.state.perm[f.id]) m *= f.coinMul || 1; return m; },
     clickValue() { return this.val('power') * this.coinMul(); },
@@ -126,7 +127,7 @@ G.opt = key => {
       for (const f of G.data.foods) if (f.perm ? G.state.perm[f.id] : (G.state.buffs[f.id] || 0) > now()) s += f.bonus;
       return s;
     },
-    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1) * (this.ybuffLeft('luck') > 0 ? 1.5 : 1); },
+    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1) * (this.ybuffLeft('luck') > 0 ? 1.5 : 1) * (G.biome ? G.biome.mul('luck') : 1); },
     potion: id => G.data.potions.find(p => p.id === id),
     /* several crystals can be armed at once now - their luck stacks (adds up) for the next click */
     armedList() {
@@ -169,13 +170,13 @@ G.opt = key => {
     /* how many DISTINCT 1억+ (DIVINE tier and up) cutscenes you've ever discovered, across every map */
     divineFound() {
       let n = 0;
-      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6 && !d.special && !d.weather && !d.boss) n++; }
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && d.tierIdx >= 6 && !d.special && !d.weather && !d.boss && !d.biome) n++; }
       return n;
     },
     /* how many DISTINCT SECRET-tier cutscenes (the one-per-map hidden mineral) you've ever found */
     secretFound() {
       let n = 0;
-      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && G.isSecret(d) && !d.special && !d.weather && !d.boss) n++; }
+      for (const id in G.state.codex) { const rec = G.state.codex[id], d = G.cutscenes.byId[id]; if (rec && rec.n > 0 && d && G.isSecret(d) && !d.special && !d.weather && !d.boss && !d.biome) n++; }
       return n;
     },
     /* every SECRET-tier cutscene in the whole game found at least once - the gate for LEVEL 1.
@@ -185,7 +186,7 @@ G.opt = key => {
       if (G.config.unlockCodex) return true;
       // only maps BEFORE the LEVEL 1 zone count - that zone's own secret is unreachable until LEVEL 1 is done
       const gate = G.data.zones.findIndex(z => z.unlock && z.unlock.type === 'level1');
-      const pre = G.cutscenes.list.filter(c => G.isSecret(c) && !c.special && !c.weather && !c.boss && (gate < 0 || c.zone < gate));
+      const pre = G.cutscenes.list.filter(c => G.isSecret(c) && !c.special && !c.weather && !c.boss && !c.biome && (gate < 0 || c.zone < gate));
       return pre.length > 0 && pre.every(c => G.state.codex[c.id] && G.state.codex[c.id].n > 0);
     },
     /* does the player currently satisfy a zone's `unlock` requirement? */

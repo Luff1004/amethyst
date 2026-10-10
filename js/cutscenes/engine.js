@@ -175,7 +175,7 @@
   /* ---------- registry ---------- */
   C.template = (name, fn) => { C.templates[name] = fn; };
 
-  const DUR = [3000, 3600, 4400, 5200, 6200, 7400, 11000, 16000, 13000, 13000, 16500, 17000, 17500, 18000, 18500, 19000];
+  const DUR = [3000, 3600, 4400, 5200, 6200, 7400, 11000, 16000, 13000, 13000, 16500, 17000, 17500, 18000, 18500, 19000, 22000, 14000];
 
   C.register = def => {
     if (!def || !def.id || !def.odds) throw new Error('cutscene needs id and odds');
@@ -219,7 +219,9 @@
     let pick = null, wsum = 0;
     for (let i = C.list.length - 1; i >= 0; i--) {
       const c = C.list[i];
-      if (!c.zones.includes(zone) || c.boss) continue;
+      // rare-biome minerals: the error minerals only while GLITCH is up (any map); the aura is rolled separately (js/biome.js)
+      if (c.biome) { if (c.aura || !G.biome || !G.biome.current() || G.biome.current().id !== c.biome) continue; }
+      else if (!c.zones.includes(zone) || c.boss) continue;
       // weather-exclusive minerals only exist while their weather is overhead
       if (c.weather && wxId !== c.weather) continue;
       if (specialSky && !c.weather && G.isSecret(c)) continue;
@@ -228,6 +230,12 @@
         if (Math.random() * wsum < w) pick = c;          // weighted reservoir pick among the hits
       }
     }
+    return pick;
+  };
+  /* the same weighted roll over an explicit list (the 에러 크리스탈 rolls only the error minerals) */
+  C.rollFrom = (list, luck, cap = 0.9) => {
+    let pick = null, wsum = 0;
+    for (const c of list) if (Math.random() < Math.min(cap, luck / c.odds)) { const w = Math.pow(c.odds, 0.35); wsum += w; if (Math.random() * wsum < w) pick = c; }
     return pick;
   };
 
@@ -510,7 +518,7 @@
       k = E.outCubic(seg(rt, 300, 900)); g.globalAlpha = k;
       g.fillStyle = tier.color; g.font = `700 ${18 * s}px ${MONO}`; spc('0px');
       const wxName = d.weather && G.data.weathers[d.weather] ? G.data.weathers[d.weather].name : '';
-      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : d.boss ? `BOSS  ·  ${d.bossName} 처치 보상` : d.weather ? `1 in ${G.fmtOdds(d.odds)}  ·  ${wxName} 전용` : `1 in ${G.fmtOdds(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
+      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : d.boss ? `BOSS  ·  ${d.bossName} 처치 보상` : d.aura ? `CUBER STAGE 한정  ·  1 in 1,000,000` : d.biome ? `1 in ${G.fmtOdds(d.odds)}  ·  GLITCH 한정` : d.weather ? `1 in ${G.fmtOdds(d.odds)}  ·  ${wxName} 전용` : `1 in ${G.fmtOdds(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
       // reward
       if (!a.replay) {
         k = E.outCubic(seg(rt, 500, 900)); g.globalAlpha = k;

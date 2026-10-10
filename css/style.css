@@ -978,3 +978,50 @@ body.bossing #cutPause { display: none; }
 .strow.tier span { color: var(--tc); }
 .stbar { flex: 0 0 34%; height: 5px; background: rgba(255, 255, 255, .07); overflow: hidden; }
 .stbar u { display: block; height: 100%; background: var(--tc); text-decoration: none; }
+
+/* ---------------- RARE BIOMES (js/biome.js) ---------------- */
+#biomeIntro { position: fixed; inset: 0; z-index: 64; display: grid; place-items: center; pointer-events: none; opacity: 0; transition: opacity .6s; }
+#biomeIntro[hidden] { display: none; }
+#biomeIntro.show { opacity: 1; }
+#biomeIntro .bibg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, rgba(0,0,0,.35), rgba(0,0,0,.85)); }
+#biomeIntro .bibox { position: relative; display: grid; gap: 8px; text-align: center; padding: 0 20px; max-width: 94vw; }
+#biomeIntro small { font: 800 11px/1 var(--mono); letter-spacing: .6em; color: var(--bc, #fff); }
+#biomeIntro b { position: relative; font: 900 clamp(38px, 11vw, 84px)/1 var(--mono); letter-spacing: .08em; color: #fff; }
+#biomeIntro em { font: 700 13px/1 var(--mono); font-style: normal; letter-spacing: .3em; color: #cfc6ea; }
+#biomeIntro span { font-size: 13px; color: #e8e0ff; line-height: 1.6; }
+#biomeIntro.bi-cuber { --bc: #3af0ff; }
+#biomeIntro.bi-cuber b { text-shadow: 0 0 18px #3af0ff, 0 0 40px #ff3ad8, 3px 3px 0 #ff3ad8; animation: biCuber 4.8s ease-out; }
+#biomeIntro.bi-cuber .bibg { background: radial-gradient(circle at 50% 45%, rgba(20,0,40,.4), rgba(0,0,10,.9)), repeating-linear-gradient(0deg, rgba(58,240,255,.08) 0 1px, transparent 1px 28px), repeating-linear-gradient(90deg, rgba(255,58,216,.08) 0 1px, transparent 1px 28px); }
+@keyframes biCuber { 0% { letter-spacing: .9em; opacity: 0; filter: blur(10px); } 20% { letter-spacing: .08em; opacity: 1; filter: none; } }
+#biomeIntro.bi-glitch { --bc: #ff2a6a; }
+#biomeIntro.bi-glitch b { animation: biGlitch .35s steps(2) infinite; text-shadow: 4px 0 #ff2a6a, -4px 0 #2affd0; }
+#biomeIntro.bi-glitch b::before, #biomeIntro.bi-glitch b::after { content: attr(data-t); position: absolute; inset: 0; overflow: hidden; }
+#biomeIntro.bi-glitch b::before { color: #2affd0; clip-path: inset(0 0 60% 0); transform: translate(-6px, -2px); }
+#biomeIntro.bi-glitch b::after { color: #ff2a6a; clip-path: inset(55% 0 0 0); transform: translate(6px, 2px); }
+@keyframes biGlitch { 50% { transform: translate(3px, -2px) skewX(-6deg); } }
+
+/* the whole HUD feels it */
+body.biome-glitch #hud .wrap > * { animation: hudGlitch 2.6s steps(1) infinite; }
+@keyframes hudGlitch { 0%, 92%, 100% { transform: none; filter: none; } 93% { transform: translate(3px, 0); filter: hue-rotate(90deg); } 96% { transform: translate(-2px, 1px); filter: hue-rotate(-60deg) saturate(2); } }
+body.biome-cuber #coinVal, body.biome-cuber #luckVal { text-shadow: 0 0 12px #3af0ff, 0 0 2px #ff3ad8; }
+
+/* weather chip while a biome is up, the (i) button, and the explainer */
+#wxChip.biome { animation: wxboss 1.4s ease-in-out infinite; }
+#wxChip .bioname { font-family: var(--mono); letter-spacing: .08em; text-shadow: 0 0 8px var(--wc); }
+#wxChip .biowx { display: inline-flex; align-items: center; gap: 3px; font-style: normal; font-size: 10px; color: var(--dim); }
+#wxPop .wxinfo { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .06); color: #fff; font: 800 12px/1 Georgia, serif; font-style: italic; cursor: pointer; }
+#wxPop .bioactive { display: grid; gap: 3px; padding: 8px 10px; border: 1px solid var(--bc); background: color-mix(in srgb, var(--bc) 12%, transparent); }
+#wxPop .bioactive small { font: 800 9px/1 var(--mono); letter-spacing: .3em; color: var(--bc); }
+#wxPop .bioactive b { font: 900 16px/1 var(--mono); color: #fff; text-shadow: 0 0 10px var(--bc); }
+#wxPop .bioactive em { font: 700 12px/1 var(--mono); font-style: normal; color: var(--bc); }
+#wxPop .bioactive span { font-size: 11.5px; color: #d8d0ee; }
+#wxPop .bioinfo { display: grid; gap: 7px; padding: 10px; border: 1px dashed rgba(255, 255, 255, .2); font-size: 11.5px; color: #cfc6ea; }
+#wxPop .bioinfo[hidden] { display: none; }
+#wxPop .bioinfo > b { font-size: 13px; color: #fff; }
+#wxPop .bioinfo p { margin: 0; font-size: 11px; line-height: 1.5; }
+#wxPop .biorow { display: grid; gap: 2px; padding: 7px 8px; border-left: 3px solid var(--bc); background: rgba(255, 255, 255, .03); }
+#wxPop .biorow div { display: flex; align-items: baseline; gap: 6px; }
+#wxPop .biorow b { font: 900 12.5px/1 var(--mono); color: var(--bc); }
+#wxPop .biorow small { font-size: 10px; color: var(--dim); }
+#wxPop .biorow span { font-size: 11px; line-height: 1.45; }
+#wxPop .biorow.on { background: color-mix(in srgb, var(--bc) 14%, transparent); }
