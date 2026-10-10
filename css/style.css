@@ -1025,3 +1025,20 @@ body.biome-cuber #coinVal, body.biome-cuber #luckVal { text-shadow: 0 0 12px #3a
 #wxPop .biorow small { font-size: 10px; color: var(--dim); }
 #wxPop .biorow span { font-size: 11px; line-height: 1.45; }
 #wxPop .biorow.on { background: color-mix(in srgb, var(--bc) 14%, transparent); }
+
+/* ---------------- LEVEL 1's question (js/ui.js askWho) ---------------- */
+#whoModal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(0, 0, 0, .92); opacity: 0; transition: opacity .5s; filter: grayscale(1); }
+#whoModal[hidden] { display: none; }
+#whoModal.show { opacity: 1; }
+#whoModal .whobox { display: grid; gap: 14px; justify-items: center; width: min(86vw, 360px); text-align: center; }
+#whoModal .whoq { font: 400 clamp(30px, 9vw, 48px)/1.1 Georgia, "Times New Roman", serif; letter-spacing: .04em; color: #e8e8e8; animation: whoflicker 4s steps(1) infinite; }
+@keyframes whoflicker { 0%, 88%, 100% { opacity: 1; } 89% { opacity: .2; } 91% { opacity: .9; } 93% { opacity: .35; } }
+#whoModal .whoin { width: 100%; height: 44px; padding: 0 12px; background: transparent; border: none; border-bottom: 1px solid #888; color: #fff; font: 400 22px/1 Georgia, serif; text-align: center; outline: none; }
+#whoModal .whoin:focus { border-bottom-color: #fff; }
+#whoModal .whobtns { display: flex; gap: 10px; }
+#whoModal .whobtns button { padding: 8px 18px; background: transparent; border: 1px solid #666; color: #ddd; font: 600 13px/1 system-ui, "Malgun Gothic", sans-serif; cursor: pointer; }
+#whoModal .whobtns button:hover { border-color: #fff; color: #fff; }
+#whoModal .whomsg { min-height: 16px; font: 400 14px/1 Georgia, serif; color: #aaa; }
+#whoModal.wrong .whobox { animation: whoshake .4s; }
+@keyframes whoshake { 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+#whoModal.right .whoq { color: #fff; text-shadow: 0 0 20px #fff; animation: none; }

@@ -224,7 +224,7 @@
         if (review && isLevel1Zone) {
           const level1Card = `<div class="card bevel zone level1card" style="--zh:${z.hue}">
             <div class="depth"><b>${String(i + 1).padStart(2, '0')}</b></div>
-            <div class="meta"><b>LEVEL 1</b><small>${G.stats.allSecretsFound() ? '모든 시크릿 발견됨' : '???'}</small></div>
+            <div class="meta"><b>LEVEL 1</b><small>${G.stats.level1Gate().met ? '조건 충족' : '???'} · 검토 모드에선 질문 없이 바로 열림</small></div>
             <div class="side"><button class="buy bevel level1btn" data-level1open="1"><span>???</span></button></div></div>`;
           const zoneBtn = cur ? '<button class="buy bevel cur" disabled><span>현재 위치</span></button>' : `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
           const realCard = `<div class="card bevel zone ${cur ? 'on' : ''}" style="--zh:${z.hue}">
@@ -241,14 +241,13 @@
         if (cur) btn = '<button class="buy bevel cur" disabled><span>현재 위치</span></button>';
         else if (owned) btn = `<button class="buy bevel" data-zone="${i}"><span>이동</span></button>`;
         else if (locked && isLevel1Zone) {
-          // production (not review mode - that case returned early above): the classic
-          // mystery-card flow - fully hidden until every secret is found, then a "???" prompt
-          if (!G.stats.allSecretsFound()) { btn = `<button class="buy bevel locked" disabled>${G.icon('lock', 15)}</button>`; }
-          else {
-            name = 'LEVEL 1'; card = ' level1card';
-            req = `<span class="unlockreq met">${G.icon('luck', 12)} 모든 시크릿 발견됨</span>`;
-            btn = `<button class="buy bevel level1btn" data-level1open="1"><span>???</span></button>`;
-          }
+          // production (not review mode - that case returned early above): a "???" card listing the
+          // toll; once it's all there the button asks the question (js/ui.js askWho), then LEVEL 1
+          const gt = G.stats.level1Gate();
+          name = 'LEVEL 1'; card = ' level1card';
+          req = gt.paid ? `<span class="unlockreq met">${G.icon('luck', 12)} 대가를 치렀다</span>`
+            : gt.rows.map(([ok, txt, prog]) => `<span class="unlockreq ${ok ? 'met' : ''}">${G.icon(ok ? 'luck' : 'lock', 12)} ${txt}${prog && !ok ? ` <small>(${prog})</small>` : ''}</span>`).join('');
+          btn = `<button class="buy bevel level1btn ${gt.met ? '' : 'poor'}" data-level1open="1"><span>???</span></button>`;
         }
         else if (locked && z.unlock.type === 'combo') {
           // several requirements at once (finds + coins + blue crystals) - every line shows its own progress
@@ -573,7 +572,10 @@
       const i = +el.dataset.zone, z = G.data.zones[i];
       if (G.act.travel(i)) { G.audio.buy(); } else { G.audio.deny(); toast(z && z.unlock ? '아직 해금 조건을 만족하지 않았습니다' : '코인이 부족합니다'); }
     } else if (el.dataset.level1open) {
-      G.ui.closePanel(); if (G.level1) G.level1.open();
+      const gt = G.stats.level1Gate();
+      if (G.config.unlockCodex || gt.paid) { G.ui.closePanel(); if (G.level1) G.level1.open(); }
+      else if (!gt.met) { G.audio.deny(); toast('아직 아니다.'); }
+      else askWho();
     } else if (el.dataset.exch) {
       const ok = el.dataset.exch === 'max' ? G.act.exchangeMax() : G.act.exchange(+el.dataset.exch);
       if (ok) { G.audio.buy(); toast('크리스탈로 교환했습니다'); } else { G.audio.deny(); toast('코인이 부족합니다 (' + G.fmt(G.data.exchange.rate) + ' = 1 크리스탈)'); }
@@ -663,6 +665,33 @@
       }
     }
   });
+
+  /* the question at the door of LEVEL 1. Right answer: 너 / you. */
+  function askWho() {
+    let el = document.getElementById('whoModal');
+    if (!el) { el = document.createElement('div'); el.id = 'whoModal'; document.body.appendChild(el); }
+    el.innerHTML = `<div class="whobox"><b class="whoq">Who are you?</b>
+      <input type="text" class="whoin" maxlength="24" autocomplete="off" spellcheck="false" aria-label="답">
+      <div class="whobtns"><button class="whook">확인</button><button class="whono">돌아가기</button></div><small class="whomsg"></small></div>`;
+    el.hidden = false; void el.offsetWidth; el.classList.add('show');
+    G.audio.blackout && G.audio.blackout(6);
+    const input = el.querySelector('.whoin'), msg = el.querySelector('.whomsg');
+    setTimeout(() => input.focus(), 300);
+    const close = () => { el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 400); };
+    const submit = () => {
+      const a = input.value.trim().toLowerCase().replace(/[.!?。]+$/, '');
+      if (a === '너' || a === 'you') {
+        if (!G.act.level1Pay()) { msg.textContent = '대가가 부족하다.'; return; }
+        msg.textContent = '...그래.'; el.classList.add('right'); G.audio.blast(8);
+        setTimeout(() => { close(); G.ui.closePanel(); if (G.level1) G.level1.open(); }, 1600);
+      } else {
+        msg.textContent = '아니다.'; el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong'); G.audio.deny(); input.select();
+      }
+    };
+    el.querySelector('.whook').onclick = submit;
+    el.querySelector('.whono').onclick = () => { G.audio.tab(); close(); };
+    input.onkeydown = ev => { if (ev.key === 'Enter') submit(); if (ev.key === 'Escape') close(); ev.stopPropagation(); };
+  }
 
   G.on('change', render);
   panel.addEventListener('input', ev => {

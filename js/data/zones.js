@@ -19,7 +19,9 @@ G.data.zones = [
   { id: 'core',   name: '용융 핵',     en: 'MOLTEN CORE',    cost: 6e6,   coinMul: 40,  hue: 18,  hp: 32, snd: 'lava',
     unlock: { type: 'combo', divine: 20, coins: 5e12, crystals: 1e6, label: '억대 광물 20종 발견 + 5T 코인 + 100만 블루 크리스탈' } },
   { id: 'void',   name: '공허의 균열', en: 'VOID RIFT',      cost: 3e8,   coinMul: 200, hue: 322, hp: 36, snd: 'void',
-    unlock: { type: 'level1', label: 'LEVEL 1 완료' } },   // see js/level1.js - not a normal zone unlock
+    unlock: { type: 'level1', label: 'LEVEL 1 완료',      // see js/level1.js - not a normal zone unlock
+      // the way IN to LEVEL 1: pay all of this once, find one 10억+ mineral, then answer the question
+      gate: { red: 1e4, coins: 4.5e13, blue: 1e5, yellow: 3e4, findOdds: 1e9 } } },
   /* 6th map: hand-mining only - the auto-miner still earns coins here, but never rolls a mineral (noAutoRoll) */
   { id: 'cosmos', name: '우주의 끝',   en: 'EDGE OF THE COSMOS', cost: 1e20, coinMul: 1000, hue: 228, hp: 40, snd: 'void', noAutoRoll: true,
     unlock: { type: 'combo', coins: 1e20, label: '100Qi 코인' } },

@@ -189,6 +189,22 @@ G.opt = key => {
       const pre = G.cutscenes.list.filter(c => G.isSecret(c) && !c.special && !c.weather && !c.boss && !c.biome && (gate < 0 || c.zone < gate));
       return pre.length > 0 && pre.every(c => G.state.codex[c.id] && G.state.codex[c.id].n > 0);
     },
+    /* the way into LEVEL 1 (replaces "every secret found"): crystals of all three colours + coins,
+       one 10억+ find, then the question (js/ui.js). Paid once - keyPaid remembers it. */
+    level1Gate() {
+      const z = G.data.zones.find(x => x.unlock && x.unlock.type === 'level1'), q = z.unlock.gate, s = G.state;
+      let found = false;
+      for (const id in s.codex) { const r = s.codex[id], d = G.cutscenes.byId[id]; if (r && r.n > 0 && d && d.odds >= q.findOdds && !d.special && !d.biome) { found = true; break; } }
+      const rows = [
+        [s.red >= q.red, `레드 크리스탈 ${G.fmtInt(q.red)}개`, `${G.fmtInt(Math.min(s.red || 0, q.red))}/${G.fmtInt(q.red)}`],
+        [s.coins >= q.coins, `코인 ${G.fmt(q.coins)}`, ''],
+        [s.crystals >= q.blue, `블루 크리스탈 ${G.fmtInt(q.blue)}개`, ''],
+        [s.yellow >= q.yellow, `옐로우 크리스탈 ${G.fmtInt(q.yellow)}개`, `${G.fmtInt(Math.min(s.yellow || 0, q.yellow))}/${G.fmtInt(q.yellow)}`],
+        [found, '10억 이상 광물 1개 발견', ''],
+      ];
+      const paid = !!s.level1.keyPaid;
+      return { rows, paid, met: paid || rows.every(r => r[0]), cost: q };
+    },
     /* does the player currently satisfy a zone's `unlock` requirement? */
     meetsUnlock(req) {
       if (!req) return true;
@@ -340,6 +356,15 @@ G.opt = key => {
       if (f.perm) s.perm[id] = true;
       else s.buffs[id] = Math.max(now(), s.buffs[id] || 0) + f.duration * 1000;
       G.save(); G.emit('change'); return f.perm ? 'perm' : 'ok';
+    },
+    /* LEVEL 1's toll: taken once, after the question is answered */
+    level1Pay() {
+      const s = G.state, gt = G.stats.level1Gate();
+      if (gt.paid) return true;
+      if (!gt.met) return false;
+      s.red -= gt.cost.red; s.coins -= gt.cost.coins; s.crystals -= gt.cost.blue; s.yellow -= gt.cost.yellow;
+      s.level1.keyPaid = true;
+      G.save(); G.emit('change'); return true;
     },
     /* LEVEL 1 (js/level1.js): one "?" and one gauge tick per click on its crystal */
     level1Click() {
