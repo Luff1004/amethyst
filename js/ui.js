@@ -307,21 +307,28 @@
 
   function codex() {
     const s = G.state, luck = G.stats.luck(), Z = G.data.zones;
-    if (codexZone < 0 || codexZone > Z.length) codexZone = s.zone;
+    if (codexZone < 0 || codexZone > Z.length + 1) codexZone = s.zone;
     // index Z.length = the SPECIAL shelf: the monthly event minerals, which belong to no map
     const SP = Z.length, specials = () => G.cutscenes.list.filter(c => c.special || c.boss).sort((a, b) => (a.boss ? 99 : a.month) - (b.boss ? 99 : b.month));
-    const zc = c => (c === SP ? specials() : G.cutscenes.inZone(c));
+    // index Z.length + 1 = the RARE BIOME shelf: a biome mineral only appears here once you've drawn it
+    // (the codex-only link and review mode show all of them)
+    const BIO = Z.length + 1, showAllBio = G.config.viewer || G.config.unlockCodex;
+    const biomes = () => G.cutscenes.list.filter(c => c.biome && (showAllBio || (s.codex[c.id] || {}).n > 0)).sort((a, b) => (a.aura ? -1 : 0) - (b.aura ? -1 : 0) || a.odds - b.odds);
+    const zc = c => (c === SP ? specials() : c === BIO ? biomes() : G.cutscenes.inZone(c));
     const foundOf = i => zc(i).filter(c => (s.codex[c.id] || {}).n > 0).length;
     const seenMap = s.codexSeen || {}, isFound = c => (s.codex[c.id] || {}).n > 0, isNew = () => false;   // NEW tags removed on request
     const dot = i => (zc(i).some(isNew) ? '<i class="cdot"></i>' : '');
+    const bioChip = n => `<button class="chip bevel spchip biochip ${codexZone === BIO ? 'on' : ''}" data-cz="${BIO}" style="--zh:185"><b>희귀</b><span>${n}</span></button>`;
     const spChip = n => `<button class="chip bevel spchip ${codexZone === SP ? 'on' : ''}" data-cz="${SP}" style="--zh:45"><b>SP</b><span>${n}</span>${dot(SP)}</button>`;
     const chips = Z.map((z, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''} ${mapOpen(i) ? '' : 'off'}" data-cz="${i}" style="--zh:${z.hue}">
-        <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span>${dot(i)}</button>`).join('') + spChip(foundOf(SP) + '/' + zc(SP).length);
-    const z = codexZone === SP ? { name: '스페셜', en: 'SPECIAL · 월별 이벤트 & 보스 처치 광물', hue: 45 } : Z[codexZone];
+        <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span>${dot(i)}</button>`).join('') + spChip(foundOf(SP) + '/' + zc(SP).length) + bioChip(showAllBio ? foundOf(BIO) + '/' + zc(BIO).length : foundOf(BIO));
+    const z = codexZone === SP ? { name: '스페셜', en: 'SPECIAL · 월별 이벤트 & 보스 처치 광물', hue: 45 }
+      : codexZone === BIO ? { name: '희귀 바이옴', en: showAllBio ? 'RARE BIOME · CUBER STAGE & GLITCH 한정 광물' : 'RARE BIOME · 뽑으면 여기에 기록됩니다', hue: 185 } : Z[codexZone];
     // 필터: 전체 / 발견 / 미발견 / NEW
     const keep = c => codexFilter === 'found' ? isFound(c) : codexFilter === 'unfound' ? !isFound(c) : codexFilter === 'new' ? isNew(c) : true;
-    const L = zc(codexZone).filter(c => G.config.viewer || keep(c)), open = codexZone === SP || mapOpen(codexZone);
+    const L = zc(codexZone).filter(c => G.config.viewer || keep(c)), open = codexZone === SP || codexZone === BIO || mapOpen(codexZone);
     const oddsTxt = c => c.special ? `SPECIAL · ${c.month}월 ${c.eventName} 한정` : c.boss ? `BOSS · ${c.bossName} 처치 보상`
+      : c.aura ? 'AURA · CUBER STAGE 한정 · 1 in 1,000,000 (럭 무시)' : c.biome ? `1 in ${G.fmtOdds(c.odds)} · GLITCH 한정`
       : c.weather ? `1 in ${G.fmtOdds(c.odds)} · ${G.data.weathers[c.weather].name} 전용` : `1 in ${G.fmtOdds(c.odds)}`;
     // mutations this mineral has been found with
     const mutChips = rec => rec && rec.mut ? `<span class="mutchips">${Object.keys(rec.mut).map(k => { const m = G.data.mutations[k]; return m ? `<i style="--mc:${m.color}">${m.name} ×${rec.mut[k]}</i>` : ''; }).join('')}</span>` : '';
@@ -351,18 +358,19 @@
           <div class="stripe"></div>
           <div class="meta"><b>${ok ? c.name : '???'}${fresh ? '<small class="newtag">NEW</small>' : ''}</b>${off ? '<small class="skip">SKIP</small>' : ''}
             <span class="odds">${oddsTxt(c)}</span>
-            ${luck > 1.001 && !c.special && !c.boss ? `<span class="eff">현재 1 in ${G.fmtInt(eff)}</span>` : ''}
+            ${luck > 1.001 && !c.special && !c.boss && !c.aura ? `<span class="eff">현재 1 in ${G.fmtInt(eff)}</span>` : ''}
             <span>${seen ? `발견 ${G.fmtInt(rec.n)}회 &nbsp;/&nbsp; 최고 +${G.fmt(rec.best)}` : '미발견'}</span>${mutChips(rec)}</div>
           <div class="side">${ok ? `<button class="buy bevel" data-replay="${c.id}">${G.icon('play', 14)}<span>보기</span></button>
             ${seen ? `<button class="buy bevel small ${off ? 'offbtn' : ''}" data-skip="${c.id}"><span>${off ? '컷신 켜기' : '그만 보기'}</span></button>`
               : `<span class="firstonly">첫 감상은 건너뛸 수 없음</span>`}` : ''}</div></div>`;
       });
     }
-    const cl = G.cutscenes.list.filter(c => !c.biome);               // rare-biome minerals stay out of the codex entirely
+    // rare-biome minerals count once you've drawn them (all of them on the codex-only link)
+    const cl = G.cutscenes.list.filter(c => !c.biome || showAllBio || (s.codex[c.id] || {}).n > 0);
     const total = cl.length, found = cl.filter(c => (s.codex[c.id] || {}).n > 0).length;
     if (G.config.viewer) {
       const vchips = Z.map((zz, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''}" data-cz="${i}" style="--zh:${zz.hue}">
-        <b>${String(i + 1).padStart(2, '0')}</b><span>${zc(i).length}</span></button>`).join('') + spChip(zc(SP).length);
+        <b>${String(i + 1).padStart(2, '0')}</b><span>${zc(i).length}</span></button>`).join('') + spChip(zc(SP).length) + bioChip(zc(BIO).length);
       return `<div class="ph"><h2>AMETHYST <small>도감</small></h2><span>컷신 전체 <b>${total}</b>종 · 눌러서 감상</span></div>
         <div class="chips">${vchips}</div>
         <div class="zhead" style="--zh:${z.hue}"><b>${z.name}</b><small>${z.en}</small></div>
@@ -389,7 +397,7 @@
   /* 설정 - 통계: everything worth knowing about this save, computed from what it already records
      (play time / boxes / crystals drunk are counted from the update that added them - `since`) */
   function statsView() {
-    const s = G.state, st = s.stats || {}, list = G.cutscenes.list.filter(c => !c.biome), found = c => (s.codex[c.id] || {}).n > 0;
+    const s = G.state, st = s.stats || {}, list = G.cutscenes.list.filter(c => !c.biome || (s.codex[c.id] || {}).n > 0), found = c => (s.codex[c.id] || {}).n > 0;   // biome minerals once drawn
     const dur = ms => { const m = Math.floor(ms / 60000), h = Math.floor(m / 60); return h ? `${h}시간 ${m % 60}분` : `${m}분`; };
     let finds = 0, muts = 0; const mutKinds = new Set();
     for (const id in s.codex) { const r = s.codex[id]; if (!r) continue; finds += r.n || 0; if (r.mut) for (const k in r.mut) { muts += r.mut[k]; mutKinds.add(k); } }

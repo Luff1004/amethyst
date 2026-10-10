@@ -63,6 +63,8 @@
     const s = G.state;
     if (s.biome && !current()) { end(); return; }
     const b = current(); if (!b) return;
+    // the gift clock starts fresh after a reload (or a long sleep) - never a burst of catch-up rolls
+    if (!giftAt || now() - giftAt > b.gift.every * 3000) giftAt = now();
     if (now() - giftAt >= b.gift.every * 1000) {
       giftAt += b.gift.every * 1000;
       if (Math.random() < b.gift.chance) {
