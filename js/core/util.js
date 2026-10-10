@@ -96,7 +96,7 @@ G.tierIndex = odds => { for (let i = 0; i < G.tiers.length; i++) { const t = G.t
 G.isSecret = d => !!d && G.tiers[d.tierIdx] && G.tiers[d.tierIdx].key === 'secret';
 /* Korean big-number units for the odds of the deep ladder: 1억, 100억, 1조, 1경, 1해 */
 G.fmtKr = n => {
-  const U = [[1e20, '해'], [1e16, '경'], [1e12, '조'], [1e8, '억'], [1e4, '만']];
+  const U = [[1e24, '자'], [1e20, '해'], [1e16, '경'], [1e12, '조'], [1e8, '억'], [1e4, '만']];
   for (const [v, u] of U) if (n >= v) { const x = n / v; return (x >= 100 ? Math.round(x) : x >= 10 ? +x.toFixed(1) : +x.toFixed(2)) + u; }
   return G.fmtInt(n);
 };

@@ -424,15 +424,39 @@
 
   const views = { shop, up: upgrades, map, codex, crystal: crystalShop, settings: settingsView };
 
-  function render() {
+  /* Rebuilding the panel while a finger is on it (or while it's still gliding from a flick) kills the
+     scroll on phones - so a rebuild asked for mid-scroll waits until the panel has been still for a
+     moment, and a rebuild that would produce the same markup is skipped altogether. */
+  let lastHTML = '', touching = false, lastScroll = 0, pending = false, flushT = 0;
+  const busy = () => touching || performance.now() - lastScroll < 450;
+  function scheduleFlush() { clearTimeout(flushT); flushT = setTimeout(() => { if (!pending) return; if (busy()) { scheduleFlush(); return; } pending = false; render(); }, 460); }
+  panel.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+  const untouch = () => { touching = false; if (pending) scheduleFlush(); };   // a plain tap isn't a scroll - buttons stay instant
+  panel.addEventListener('touchend', untouch, { passive: true });
+  panel.addEventListener('touchcancel', untouch, { passive: true });
+  panel.addEventListener('scroll', () => { lastScroll = performance.now(); if (pending) scheduleFlush(); }, { passive: true });
+  function render(force) {
     if (!open) return;
     // don't rebuild the codex under the player's fingers while they're typing a search
     const ae = document.activeElement; if (ae && ae.tagName === 'INPUT' && panel.contains(ae)) return;   // never rebuild under a field the player is typing in
+    if (force !== true && busy()) { pending = true; scheduleFlush(); return; }
+    const html = views[open]();
+    if (html === lastHTML && force !== true) return;
     const top = panel.scrollTop;
-    panel.innerHTML = views[open]();
+    panel.innerHTML = html; lastHTML = html;
     panel.scrollTop = top;
     if (open === 'codex') applySearch();
   }
+  /* the panel may only be as tall as what's actually visible below it - on phones `vh` counts the
+     area hidden behind the browser's address bar, which used to push the last cards off-screen */
+  function fitPanel() {
+    if (!open || G.config.viewer) return;
+    const top = panel.getBoundingClientRect().top, H = window.visualViewport ? window.visualViewport.height : innerHeight;
+    const room = H - top - (innerWidth <= 600 ? 62 : 14);   // phones keep clear of the cutscene-pause button
+    panel.style.maxHeight = Math.max(150, Math.min(innerWidth <= 600 ? room : Math.min(480, H * 0.58), room)) + 'px';
+  }
+  window.addEventListener('resize', fitPanel);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fitPanel);
 
   // every tab remembers where you'd scrolled to
   const scrollMem = {};
@@ -442,7 +466,7 @@
     open = open === name ? null : name;
     tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === open));
     panel.hidden = !open;
-    if (open) { panel.scrollTop = 0; render(); panel.scrollTop = scrollMem[open] || 0; }
+    if (open) { panel.scrollTop = 0; lastHTML = ''; render(true); fitPanel(); panel.scrollTop = scrollMem[open] || 0; }
     paintCodexBadge();
   }
   G.ui = { closePanel() { if (open && !G.config.viewer) setOpen(open); } };

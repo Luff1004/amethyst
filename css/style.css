@@ -550,7 +550,7 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 .spinfade.r { right: 0; background: linear-gradient(270deg, #0a0714, rgba(10,7,20,0)); }
 
 /* monthly package shop popup: same bevel/card language as the panels, tinted by the event's hue */
-#eventModal .tcard.pkgshop { --eh: 40; width: min(94vw, 560px); max-height: 88vh; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px 14px; gap: 12px; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }
+#eventModal .tcard.pkgshop { --eh: 40; width: min(94vw, 560px); max-height: 88vh; max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px 14px; gap: 12px; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }
 #eventModal .evhero { position: relative; margin: 0 -14px; padding: 20px 44px 16px 18px; background:
     radial-gradient(120% 140% at 88% -20%, hsla(var(--eh), 90%, 60%, .45), transparent 60%),
     radial-gradient(60% 90% at 0% 120%, hsla(calc(var(--eh) + 40), 80%, 50%, .25), transparent 70%),
@@ -609,7 +609,7 @@ body.cut #hint, body.cut #foot { opacity: 0; }
 #eventModal .pdconf { position: absolute; left: 50%; top: 45%; }
 #eventModal .pdconf i { position: absolute; width: 8px; height: 14px; margin: -7px 0 0 -4px; background: var(--c); border-radius: 2px; opacity: 0; animation: pdconf 1.6s cubic-bezier(.15,.7,.3,1) var(--dl) forwards; }
 @keyframes pdconf { 0% { transform: translate(0,0) rotate(0) scale(.4); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(var(--x), calc(var(--y) + 160px)) rotate(var(--r)) scale(1); opacity: 0; } }
-#eventModal .pdbox { --c: 14px; --line: var(--pc); --fill: linear-gradient(170deg, color-mix(in srgb, var(--pc) 22%, #130d22), #0b0816 60%); position: relative; width: min(92vw, 420px); max-height: 80vh; overflow-y: auto; padding: 22px 16px 16px; display: grid; gap: 8px; text-align: center; transform: scale(.6) translateY(20px); opacity: 0; transition: transform .45s cubic-bezier(.2,1.5,.4,1) .12s, opacity .25s .12s; box-shadow: 0 0 40px color-mix(in srgb, var(--pc) 40%, transparent); }
+#eventModal .pdbox { --c: 14px; --line: var(--pc); --fill: linear-gradient(170deg, color-mix(in srgb, var(--pc) 22%, #130d22), #0b0816 60%); position: relative; width: min(92vw, 420px); max-height: 80vh; max-height: 80dvh; overflow-y: auto; padding: 22px 16px 16px; display: grid; gap: 8px; text-align: center; transform: scale(.6) translateY(20px); opacity: 0; transition: transform .45s cubic-bezier(.2,1.5,.4,1) .12s, opacity .25s .12s; box-shadow: 0 0 40px color-mix(in srgb, var(--pc) 40%, transparent); }
 #eventModal .pkdone.show .pdbox { transform: none; opacity: 1; }
 #eventModal .pdbox small { font: 800 11px/1 var(--mono); letter-spacing: .35em; color: var(--pc); }
 #eventModal .pdbox > b { font-size: 22px; color: #fff; text-shadow: 0 0 18px var(--pc); }
@@ -736,6 +736,7 @@ button.nope { animation: nope .38s ease; }
 /* active food buffs, just under the tabs */
 #buffs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; margin-top: 6px; pointer-events: none; }
 #buffs:empty { display: none; }
+#buffs { display: none !important; }        /* food cooldown chips removed from the main screen on request (still shown in 상점) */
 .bchip { position: relative; overflow: hidden; display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; background: rgba(8, 6, 16, .82); border: 1px solid rgba(255, 207, 90, .45); color: var(--gold); font: 700 10px/1 var(--mono); }
 .bchip .i { width: 13px; height: 13px; }
 .bchip b { color: #fff; font-weight: 700; }
@@ -842,7 +843,7 @@ body.bossing #hint, body.bossing #foot, body.bossing #wxAnnounce { display: none
 #bossPrompt .scrim { position: fixed; inset: 0; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--bc) 25%, rgba(0, 0, 0, .7)), rgba(0, 0, 0, .88)); opacity: 0; transition: opacity .3s; }
 #bossPrompt.show .scrim { opacity: 1; }
 #bossPrompt .bpcard { --c: 14px; --line: color-mix(in srgb, var(--bc) 70%, transparent); --fill: linear-gradient(175deg, color-mix(in srgb, var(--bc) 22%, rgba(12, 6, 6, .96)), rgba(10, 6, 10, .98) 55%);
-  position: relative; width: min(92vw, 380px); max-height: 92vh; overflow-y: auto; padding: 0 16px 16px; display: grid; justify-items: center; gap: 7px; text-align: center; transform: scale(.9); opacity: 0; transition: transform .5s cubic-bezier(.2, 1.4, .4, 1), opacity .3s; }
+  position: relative; width: min(92vw, 380px); max-height: 92vh; max-height: 92dvh; overflow-y: auto; padding: 0 16px 16px; display: grid; justify-items: center; gap: 7px; text-align: center; transform: scale(.9); opacity: 0; transition: transform .5s cubic-bezier(.2, 1.4, .4, 1), opacity .3s; }
 #bossPrompt.show .bpcard { transform: none; opacity: 1; }
 #bossPrompt .bpwarn { width: calc(100% + 32px); height: 26px; display: flex; gap: 30px; align-items: center; justify-content: center; overflow: hidden; background: repeating-linear-gradient(-45deg, var(--bc) 0 14px, #1a0a00 14px 28px); background-size: 40px 40px; animation: bpstripe 1s linear infinite; }
 #bossPrompt .bpwarn span { padding: 2px 8px; background: #000; color: var(--bc); font: 900 11px/1 var(--mono); letter-spacing: .3em; animation: bpblink .6s steps(2) infinite; }
