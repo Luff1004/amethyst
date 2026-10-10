@@ -915,3 +915,36 @@ html.viewer #crysRow .cur { display: none; }
 #cutPause.on { color: #b9ffcf; border-color: rgba(185, 255, 207, .35); background: rgba(10, 30, 20, .55); }
 #cutPause[hidden] { display: none; }
 body.bossing #cutPause { display: none; }
+
+/* ---------------- phone portrait: the top bar must fit every button ----------------
+   row 1: coins (shrinks) + luck / auto / sound / settings (never cut off)
+   row 2: the event banner, slim and full width */
+@media (max-width: 600px) {
+  #topline { flex-wrap: wrap; gap: 6px 6px; padding-bottom: 6px; }
+  #coinBox { order: 1; flex: 1 1 0; min-width: 0; gap: 6px; }
+  #coinBox > div { min-width: 0; }
+  #coinIco { width: 22px; height: 22px; }
+  #coinVal { font-size: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #coinBox small { font-size: 8px; margin-bottom: 2px; }
+  #crysRow { flex-wrap: wrap; row-gap: 2px; font-size: 11px; }
+  #crysRow .cur { margin-left: 4px; font-size: 11px; }
+  #cps { margin-left: 4px; }
+  #rightBox { order: 2; flex: none; gap: 4px; }
+  #luckChip { min-width: 0; padding: 4px 7px; }
+  #luckChip span { font-size: 7.5px; letter-spacing: .15em; }
+  #luckChip b { font-size: 12.5px; }
+  #btnAuto { width: 36px; }
+  #btnSound, #btnGear { width: 34px; }
+  #btnEvent { order: 3; flex: 1 1 100%; height: 34px; margin: 0; padding: 0 8px; gap: 7px; }
+  #btnEvent .evt { grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 8px; }
+  #btnEvent .evt small { font-size: 8px; }
+  #btnEvent .evt b { font-size: 12px; }
+  #btnEvent .dday { font-size: 10px; padding: 3px 5px; }
+  .tab { height: 34px; }
+  #cutPause { bottom: 30px; right: 8px; }
+}
+@media (max-width: 360px) {
+  #coinVal { font-size: 18px; }
+  #luckChip span { display: none; }
+  #btnAuto em { display: none; }
+}

@@ -10,7 +10,7 @@
   - The three top crystals (`red`) are bought with RED crystals only, and only work on the 5th map
     and deeper (`minZone`) - they are for the 1억 ~ 999해 ladder there, not for farming maps 1-4.
 */
-G.data.exchange = { rate: 1e6 };            // 1M coins = 1 crystal
+G.data.exchange = { rate: 2e7 };            // 20M coins = 1 crystal
 
 G.data.potions = [
   { id: 'ember',   name: '불씨 크리스탈',   en: 'EMBER CRYSTAL',    hue: 18,  star: 1,  luck: 2.5e3 },

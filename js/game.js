@@ -100,8 +100,9 @@
   const center = () => ({ x: W / 2, y: H * 0.56 });
 
   /* ---------------- particles ---------------- */
-  function cap() { if (fxs.length > 260) fxs.splice(0, fxs.length - 260); }
-  const fewer = () => Math.random() > G.opt('particles');          // 설정 - 파티클 양
+  // particle budget follows 설정 - 이펙트 (high 260 / mid 110 / low 45 live particles)
+  function cap() { const m = G.opt('fx') === 'low' ? 45 : G.opt('fx') === 'mid' ? 110 : 260; if (fxs.length > m) fxs.splice(0, fxs.length - m); }
+  const fewer = () => Math.random() > G.opt('particles') * G.fxK();   // 설정 - 파티클 양 x 이펙트
   function shard(x, y, hue, sp = 1) {
     if (fewer()) return;
     const a = Math.random() * TAU, v = (120 + Math.random() * 380) * sp;
@@ -113,8 +114,11 @@
     const a = Math.random() * TAU, v = (180 + Math.random() * 420) * sp;
     fxs.push({ k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: 0.25 + Math.random() * 0.25, col });
   }
-  function ring(x, y, col, r1 = 90, w = 2, max = 0.45) { fxs.push({ k: 'ring', x, y, life: 0, max, r1, col, w }); }
-  function text(x, y, str, col, size = 16, max = 0.9) { if (!G.opt('floatText')) return; let n = 0; for (const p of fxs) if (p.k === 'text') n++; if (n > 8) return; fxs.push({ k: 'text', x, y, vy: -60, life: 0, max, str, col, size }); }
+  function ring(x, y, col, r1 = 90, w = 2, max = 0.45) {
+    if (G.opt('fx') !== 'high') { let n = 0; for (const p of fxs) if (p.k === 'ring') n++; if (n >= (G.opt('fx') === 'low' ? 2 : 6)) return; }
+    fxs.push({ k: 'ring', x, y, life: 0, max, r1, col, w });
+  }
+  function text(x, y, str, col, size = 16, max = 0.9) { if (!G.opt('floatText')) return; let n = 0; for (const p of fxs) if (p.k === 'text') n++; if (n > (G.opt('fx') === 'low' ? 2 : G.opt('fx') === 'mid' ? 5 : 8)) return; fxs.push({ k: 'text', x, y, vy: -60, life: 0, max, str, col, size }); }
   /* single small coins (capped hard - hundreds of sprites is what made it laggy) */
   function coins(x, y, n, spread = 1) {
     n = Math.min(n, 3);
@@ -456,13 +460,16 @@
     const gl = g.createRadialGradient(c.x, c.y, 0, c.x, c.y, R * 3.2);
     gl.addColorStop(0, `hsla(${h},80%,50%,${0.22 + pulse * 0.2})`); gl.addColorStop(1, `hsla(${h},80%,50%,0)`);
     g.fillStyle = gl; g.fillRect(0, 0, W, H);
-    // moving diagonal lattice
-    g.strokeStyle = `hsla(${bh},70%,70%,0.045)`; g.lineWidth = 1;
-    const sp = 64, off = (t * 8) % sp;
-    g.beginPath();
-    for (let x = -H; x < W + H; x += sp) { g.moveTo(x + off, 0); g.lineTo(x + off - H, H); g.moveTo(x - off, 0); g.lineTo(x - off + H, H); }
-    g.stroke();
-    ambient(th ? th.ambient : 'dust', t, bh);
+    // moving diagonal lattice + theme ambience - the first things 설정 - 이펙트 drops
+    const fxL = G.opt('fx');
+    if (fxL === 'high') {
+      g.strokeStyle = `hsla(${bh},70%,70%,0.045)`; g.lineWidth = 1;
+      const sp = 64, off = (t * 8) % sp;
+      g.beginPath();
+      for (let x = -H; x < W + H; x += sp) { g.moveTo(x + off, 0); g.lineTo(x + off - H, H); g.moveTo(x - off, 0); g.lineTo(x - off + H, H); }
+      g.stroke();
+    }
+    if (fxL !== 'low') ambient(th ? th.ambient : 'dust', t, bh);
     // vignette
     const vg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) * 0.6);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.65)');

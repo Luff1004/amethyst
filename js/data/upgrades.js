@@ -20,7 +20,7 @@ G.data.upgrades = [
   { id: 'critMul', name: '치명타 배율', en: 'CRIT POWER', desc: '치명타 코인 배율',
     cost: _geo(120, 1.8), value: lv => 5 + 0.5 * lv, show: v => 'x' + v.toFixed(1), max: 40 },
   { id: 'auto', name: '자동 채굴기', en: 'AUTO MINER', desc: '초당 자동 채굴 횟수',
-    cost: _geo(900, 1.85), value: lv => 0.4 * lv, show: v => v.toFixed(1) + '/s', max: 60 },
+    cost: _geo(27000, 1.85), value: lv => 0.22 * lv, show: v => v.toFixed(1) + '/s', max: 60 },
   { id: 'value', name: '코인 가치', en: 'COIN VALUE', desc: '모든 코인 획득량 배율',
     cost: _geo(300, 2.4), value: lv => Math.pow(1.2, lv), show: v => 'x' + (v >= 100 ? v.toFixed(0) : v.toFixed(2)), max: 40 },
   { id: 'luck', name: '행운의 핵', en: 'LUCK CORE', desc: '영구 행운 보너스',

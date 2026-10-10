@@ -321,6 +321,8 @@
   };
   function paint(which, g, W, H, t) {
     if (G.config.viewer || !G.state) return;
+    const fxL = G.opt('fx');                       // 설정 - 이펙트: mid drops the front layer (rain, snow...), low draws no sky at all
+    if (fxL === 'low' || (fxL === 'mid' && which === 'front')) return;
     const w = current(), tbl = which === 'back' ? BACK : FRONT;
     const k = prev ? Math.min(1, (performance.now() - fadeT) / 2500) : 1;
     if (prev && k < 1 && tbl[prev]) { g.save(); g.globalAlpha = 1 - k; tbl[prev](g, W, H, t); g.restore(); }
@@ -330,6 +332,7 @@
 
   /* ---------------- mutation overlays on the cutscene ---------------- */
   function mutOverlay(g, e, m, time) {
+    if (G.opt('fx') === 'low') return;
     const { W, H, cx, cy, u } = e, t = time / 1000, k = Math.min(1, Math.max(0, time / 1200));
     g.save(); g.globalAlpha = k;
     switch (m.id) {

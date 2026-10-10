@@ -39,8 +39,9 @@
         <div class="pkhead"><b>${pk.name}</b><span class="off">-${off}%</span></div>
         <ul class="pkitems">${items}</ul>
         <div class="pkfoot">
-          <div class="price"><s>${G.icon('crystal', 11)}${G.fmtInt(pk.price)}</s><b>${G.icon('crystal', 15)}${G.fmtInt(pk.sale)}</b>${bought ? `<small>구매 ${bought}회</small>` : ''}</div>
-          <button class="buy bevel ${poor ? 'poor' : ''} ${confirming ? 'confirm' : ''}" data-pkg="${pk.id}"><span>${confirming ? '한 번 더 눌러 구매' : '구매'}</span></button>
+          <div class="price"><s>${G.icon('crystal', 11)}${G.fmtInt(pk.price)}</s><b>${G.icon('crystal', 15)}${G.fmtInt(pk.sale)}</b><small>${bought ? '구매 완료' : '1회 한정'}</small></div>
+          ${bought ? '<button class="buy bevel max" disabled><span>구매 완료</span></button>'
+            : `<button class="buy bevel ${poor ? 'poor' : ''} ${confirming ? 'confirm' : ''}" data-pkg="${pk.id}"><span>${confirming ? '한 번 더 눌러 구매' : '구매'}</span></button>`}
         </div></div>`;
     }).join('');
     const prevCard = modal.querySelector('.tcard'), keepScroll = prevCard ? prevCard.scrollTop : 0;
@@ -128,7 +129,7 @@
     clearTimeout(confirmT); confirmId = null;
     const r = G.act.buyPackage(id);        // emits 'change' -> repaint (scroll kept)
     if (r === 'ok') celebrate(pk);
-    else { G.audio.deny(); G.emit('toast', r === 'poor' ? '크리스탈이 부족합니다' : '지금은 구매할 수 없습니다'); }
+    else { G.audio.deny(); G.emit('toast', r === 'poor' ? '크리스탈이 부족합니다' : r === 'limit' ? '패키지는 1회만 구매할 수 있습니다' : '지금은 구매할 수 없습니다'); }
   });
 
   G.on('change', () => { if (!modal.hidden && modal.classList.contains('show')) paint(); });

@@ -6,6 +6,7 @@ G.defaultSettings = () => ({
   volume: 100, cutVolume: 100, sndMine: true, sndUi: true, bgMute: false,
   // screen
   shake: 1, lessFlash: false, particles: 1, floatText: true, quality: 'high', numFmt: 'short',
+  fx: 'high',                        // 이펙트: high / mid / low - how much screen effects (weather, particles, backdrop) to draw
   // cutscenes
   autoSkipSeen: false, minOdds: 0, bannerStyle: 'banner', bannerTime: 1, captions: true,
   // convenience
@@ -13,6 +14,8 @@ G.defaultSettings = () => ({
   upgMulti: 1,                       // 강화 tab: how many levels one tap buys (1 / 10 / 'max')
   drinkN: 1,                         // 크리스탈 tab: how many of a crystal one 마시기 drinks (typed by the player)
 });
+/* 설정 - 이펙트: one dial for everything decorative (particle budget, weather layers, backdrop motion) */
+G.fxK = () => ({ high: 1, mid: 0.45, low: 0.15 })[G.opt('fx')] || 1;
 G.opt = key => {
   const s = G.state && G.state.settings;
   return s && key in s ? s[key] : G.defaultSettings()[key];
@@ -290,6 +293,7 @@ G.opt = key => {
     buyPackage(pkgId) {
       const ev = G.event.current(), pk = ev && ev.packages.find(p => p.id === pkgId), s = G.state;
       if (!pk) return 'closed';
+      if ((s.pkgBought[pk.id] || 0) >= 1) return 'limit';                 // one of each package per player
       if (s.crystals < pk.sale) return 'poor';
       s.crystals -= pk.sale;
       for (const it of pk.items) {

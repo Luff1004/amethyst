@@ -55,10 +55,10 @@
   ];
 
   const TIERS = [
-    { key: 'epic',  label: '에픽',   color: '#b878ff', price: 63000,  sale: 51000 },
-    { key: 'delta', label: '델타',   color: '#4fe0c4', price: 96000,  sale: 87000 },
-    { key: 'mega',  label: '메가',   color: '#ff5ad6', price: 195000, sale: 183000 },
-    { key: 'hyper', label: '하이퍼', color: '#ffb63d', price: 560000, sale: 545000 },
+    { key: 'epic',  label: '에픽',   color: '#b878ff', price: 630000,  sale: 510000 },
+    { key: 'delta', label: '델타',   color: '#4fe0c4', price: 960000,  sale: 870000 },
+    { key: 'mega',  label: '메가',   color: '#ff5ad6', price: 1950000, sale: 1830000 },
+    { key: 'hyper', label: '하이퍼', color: '#ffb63d', price: 5600000, sale: 5450000 },
   ];
 
   G.data.events = EV.map(e => {

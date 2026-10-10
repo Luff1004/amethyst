@@ -12,7 +12,7 @@
   G.sp = (m, o) => {
     const ev = G.data.events.find(e => e.m === m);
     G.cutscenes.register(Object.assign({
-      id: 'sp_' + ev.id, name: ev.mineral[0], odds: 3e10, tier: 'special', special: true, zone: -1,
+      id: 'sp_' + ev.id, name: ev.mineral[0], odds: 3e10, tier: 'special', special: true, zone: -1, rewardMul: 0.0067,   // pays about what a 1억 find does
       month: m, event: ev.id, eventName: ev.name, duration: 18000, revealAt: 0.68,
     }, o));
   };
