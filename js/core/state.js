@@ -31,6 +31,7 @@ G.opt = key => {
     ybuff: { luck: 0, coin: 0 },     // 옐로우 상점 buffs: timestamps they last until
     mutTickets: 0,                   // 옐로우 상점 - 변이 확정권 waiting to be used
     biome: null,                     // the rare biome in effect { id, until, t0 } (js/biome.js)
+    eggCoin: false,                  // the coin-counter easter egg (75 quick taps) - paid out once per save
     stats: { playMs: 0, boxes: 0, drunk: 0, since: Date.now() },   // 설정 - 통계 (counted from the update that added them)
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
     /* monthly event packages (js/data/events.js): free box openings, limited foods waiting to be

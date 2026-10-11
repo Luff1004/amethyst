@@ -827,6 +827,23 @@
   }
   G.on('tutorialDone', () => toast('견습생의 크리스탈이 장전되었습니다 - 화면을 탭해보세요'));
   G.on('tutorialReplayDone', () => toast('튜토리얼을 다시 봤습니다 (크리스탈은 처음 한 번만 지급돼요)'));
+  /* easter egg: tap the coin counter 75 times quickly (each tap within 0.6s of the last) for 250T coins.
+     Once per save (eggCoin) - meant as a head start for anyone whose save got wiped. No hint until it pays. */
+  let eggN = 0, eggT = 0;
+  coinBox.addEventListener('pointerdown', ev => {
+    if (G.config.viewer || G.state.eggCoin) return;
+    const t = performance.now();
+    eggN = t - eggT < 600 ? eggN + 1 : 1; eggT = t;
+    if (eggN < 75) return;
+    eggN = 0; G.state.eggCoin = true;
+    const amt = 2.5e14; G.addCoins(amt); G.save();
+    const r = coinBox.getBoundingClientRect();
+    if (G.game && G.game.reward) G.game.reward(r.left + r.width / 2, r.bottom + 40, amt, 8);
+    G.audio.init(); G.audio.blast(8); G.audio.pour && G.audio.pour(14); G.buzz && G.buzz([40, 30, 40, 30, 160]);
+    fireWin(`<small>SECRET</small><b>숨겨진 보물</b><span>코인을 75번 두드린 자에게</span><em>+ ${G.fmt(amt)}</em>`, '#ffcf5a', 3600);
+    toast('숨겨진 보물을 찾았다! +250T 코인 (한 번만)');
+    G.emit('change');
+  });
   G.on('coinArrive', () => {
     if (bumpT) return;
     coinBox.classList.add('bump');
