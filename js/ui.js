@@ -15,6 +15,9 @@
   const mapTab = document.querySelector('[data-tab=map]');
   mapTab.insertAdjacentHTML('beforeend', '<i class="badge"></i>');
   const mapBadge = mapTab.querySelector('.badge');
+  const upTab = document.querySelector('[data-tab=up]');
+  upTab.insertAdjacentHTML('beforeend', '<i class="badge newb"></i>');
+  const upBadge = upTab.querySelector('.badge'), labTold = new Set();
   // a NEW dot on 도감 while anything found hasn't been looked at in the codex yet
   const codexTab = document.querySelector('[data-tab=codex]');
   // (the NEW badge on 도감 was removed on request - the codex no longer nags about unseen finds)
@@ -192,10 +195,68 @@
 
   /* 강화: buy 1 / 10 / as many as you can afford per tap; the card you just upgraded flashes */
   let lastUp = null, lastUpT = 0;
+  /* 강화 tab has two pages: the upgrades, and the research lab */
+  let upView = 'up', labSel = null;     // labSel: the cube shown in the hologram (null = the current one)
+  const labReady = () => { const L = G.state.lab; return L && L.run && L.run.end <= Date.now() ? 1 : 0; };
+  const upSwitch = () => { const n = labReady(); return `<div class="upswitch"><button class="seg bevel ${upView === 'up' ? 'on' : ''}" data-upview="up">강화</button><button class="seg bevel ${upView === 'lab' ? 'on' : ''}" data-upview="lab">연구소${n ? ` <i class="labdot">${n}</i>` : ''}</button></div>`; };
+  const fmtDur = ms => { const sec = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s2 = sec % 60; return h ? `${h}시간 ${m}분` : m ? `${m}분 ${String(s2).padStart(2, '0')}초` : `${s2}초`; };
+  const LAB_RING = 2 * Math.PI * 46, LAB_HRING = 2 * Math.PI * 40;
+  /* 연구소: one winding path of cubes, three to a row, walked one cube at a time. The picked cube
+     drops a wire into a hologram that tells what it does, takes the coins and counts the time down. */
+  function labView() {
+    const s = G.state, R = G.data.lab, T = G.data.labTypes;
+    const head = `<div class="ph"><h2>RESEARCH <small>연구소</small></h2><span>하나씩 차례로 · 꺼둬도 진행</span></div>${upSwitch()}`;
+    if (!G.stats.labOpen()) return head + lockCard('연구소', 'RESEARCH LAB', '2번째 맵(심층 광맥)을 해금하면 열립니다');
+    const n = G.stats.labN(), run = s.lab && s.lab.run, now = Date.now();
+    const sel = labSel == null ? Math.min(n, R.length - 1) : labSel;
+    const col = i => { const r = Math.floor(i / 3), k = i % 3; return r % 2 ? 2 - k : k; };
+    const cx = c => (c * 33.333 + 16.667) + '%';
+    const state = i => i < n ? 'done' : i > n ? 'lock' : run ? (run.end <= now ? 'ready' : 'run') : 'next';
+    const cube = i => {
+      const r = R[i], st = state(i), k = st === 'run' ? Math.min(1, 1 - (run.end - now) / run.dur) : 0;
+      return `<button class="labcube ${st} ${sel === i ? 'sel' : ''}" data-labsel="${i}" style="grid-column:${col(i) + 1}">
+        <span class="cface">${G.icon(r.icon, 24)}<em>${st === 'lock' ? String(i + 1).padStart(2, '0') : st === 'done' ? 'OK' : String(i + 1).padStart(2, '0')}</em></span>
+        ${st === 'run' ? `<svg class="cring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" style="stroke-dasharray:${LAB_RING};stroke-dashoffset:${LAB_RING * (1 - k)}" data-labring/></svg>` : ''}
+        ${st === 'ready' ? '<i class="cdone">!</i>' : ''}</button>`;
+    };
+    let html = '';
+    for (let r = 0; r * 3 < R.length; r++) {
+      const ids = [r * 3, r * 3 + 1, r * 3 + 2].filter(i => i < R.length);
+      // wires between neighbours in this row (lit once the path has run through them)
+      const wires = ids.slice(1).map(i => { const a = col(i - 1), b = col(i); return `<i class="hw ${i <= n ? 'on' : ''}" style="left:${cx(Math.min(a, b))};right:${(2 - Math.max(a, b)) * 33.333 + 16.667}%"></i>`; }).join('');
+      html += `<div class="labrow">${wires}${ids.map(cube).join('')}</div>`;
+      const last = ids[ids.length - 1], turn = R[last + 1] ? `<i class="vw ${last + 1 <= n ? 'on' : ''}" style="left:${cx(col(last))}"></i>` : '';
+      if (ids.includes(sel)) html += `<div class="labgap hasholo">${turn}<i class="labconn" style="left:${cx(col(sel))}"></i>${holo(sel)}</div>`;
+      else if (turn) html += `<div class="labgap">${turn}</div>`;
+    }
+    function holo(i) {
+      const r = R[i], t = T[r.type], st = state(i), had = G.stats.lab(r.type);
+      // what this type totals now, and what it will once this cube is done (done cubes are already counted)
+      const before = st === 'done' ? had - t.per : had, after = before + t.per;
+      let act;
+      if (st === 'done') act = `<div class="hmsg ok">연구 완료 · 효과 적용 중</div>`;
+      else if (st === 'lock') act = `<div class="hmsg">잠김 · 앞의 연구 ${i - n}개를 먼저 끝내세요</div><div class="hpre">${G.icon('coin', 12)} ${G.fmt(r.cost)} &nbsp;·&nbsp; ${G.icon('play', 11)} ${fmtDur(G.stats.labDur(i))}</div>`;
+      else if (st === 'ready') act = `<button class="hbtn hget" data-labget="1"><b>완료 받기</b><span>${r.name}</span></button>`;
+      else if (st === 'run') {
+        const left = run.end - now, k = Math.min(1, 1 - left / run.dur), cost = Math.max(1, Math.ceil(left / 60000)) * G.data.labRush.perMin;
+        act = `<div class="htimer"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="40"/><circle class="fg" cx="50" cy="50" r="40" style="stroke-dasharray:${LAB_HRING};stroke-dashoffset:${LAB_HRING * (1 - k)}" data-labhring/></svg>
+            <div><small>COOLDOWN</small><b data-labtime>${fmtDur(left)}</b><span data-labpct>연구 진행 중 · ${Math.floor(k * 100)}%</span></div></div>
+          <button class="hbtn hrush ${s.crystals < cost ? 'poor' : ''}" data-labrush="1"><b>즉시 완료</b><span>${G.icon('crystal', 12)} 블루 <u data-labrushcost>${G.fmtInt(cost)}</u></span></button>`;
+      } else act = `<button class="hbtn hpay ${s.coins < r.cost ? 'poor' : ''}" data-lab="1" data-cost="${r.cost}"><b>코인 지불 · 연구 시작</b><span>${G.icon('coin', 12)} ${G.fmt(r.cost)} &nbsp;·&nbsp; ${G.icon('play', 11)} ${fmtDur(G.stats.labDur(i))}</span></button>`;
+      return `<div class="holo ${st}"><i class="hc tl"></i><i class="hc tr"></i><i class="hc bl"></i><i class="hc br"></i>
+          <div class="hhead">${G.icon(r.icon, 22)}<div><b>${r.name}</b><small>${r.en}</small></div><em>${String(i + 1).padStart(2, '0')} / ${R.length}</em></div>
+          <div class="heff"><span>${t.desc}</span><b>${t.show(before)} <i>&rarr;</i> <u>${t.show(after)}</u></b></div>
+          ${act}
+          <div class="hfoot">진행 ${n} / ${R.length} · 꺼둬도 진행 · 즉시 완료 = 남은 1분당 블루 ${G.data.labRush.perMin}</div></div>`;
+    }
+    return head + `<div class="labpath">${html}</div>`;
+  }
+
   function upgrades() {
+    if (upView === 'lab') return labView();
     const mode = G.opt('upgMulti');
     const modes = [[1, 'x1'], [10, 'x10'], ['max', '최대']].map(([v, l]) => `<button class="seg bevel ${mode === v ? 'on' : ''}" data-upm="${v}">${l}</button>`).join('');
-    return `<div class="ph"><h2>UPGRADE <small>강화</small></h2><span>영구 적용</span></div>
+    return `<div class="ph"><h2>UPGRADE <small>강화</small></h2><span>영구 적용</span></div>${upSwitch()}
       <div class="upmode"><span>한 번에</span><div class="segset">${modes}</div></div>
       <div class="list">${G.data.upgrades.map(u => {
         const l = G.stats.level(u.id), maxed = l >= u.max;
@@ -579,6 +640,21 @@
       else if (r === 'ok') { G.audio.buy(); toast('맛있게 먹었습니다 - 행운 상승'); }
       else if (r === 'already') { G.audio.deny(); toast('이미 영구 적용 중입니다'); }
       else { G.audio.deny(); toast('보유한 음식이 없습니다'); }
+    } else if (el.dataset.upview) {
+      upView = el.dataset.upview; G.audio.tab(); render(true); panel.scrollTop = 0;
+    } else if (el.dataset.labsel) {
+      const i = +el.dataset.labsel; labSel = i === G.stats.labN() ? null : i; G.audio.tab(); render(true);
+    } else if (el.dataset.lab) {
+      const r = G.data.lab[G.stats.labN()], res = G.act.labStart();
+      if (res === 'ok') { G.audio.buy(); toast(`${r.name} 연구를 시작했습니다`); }
+      else { G.audio.deny(); toast(res === 'poor' ? '코인이 부족합니다' : res === 'running' ? '이미 연구 중입니다' : res === 'max' ? '모든 연구를 마쳤습니다' : '지금은 연구할 수 없습니다'); }
+    } else if (el.dataset.labget) {
+      const r = G.data.lab[G.stats.labN()];
+      if (G.act.labCollect()) { labSel = null; G.audio.buy(); G.audio.blast(5); toast(`${r.name} 완료! 다음 연구가 열렸습니다`); }
+    } else if (el.dataset.labrush) {
+      const r = G.data.lab[G.stats.labN()], res = G.act.labRush();
+      if (res === 'ok') { labSel = null; G.audio.buy(); G.audio.blast(5); toast(`${r.name} 즉시 완료!`); }
+      else { G.audio.deny(); toast('블루 크리스탈이 부족합니다'); }
     } else if (el.dataset.upm) {
       const v = el.dataset.upm === 'max' ? 'max' : +el.dataset.upm;
       G.act.setSetting('upgMulti', v); G.audio.tab();
@@ -678,6 +754,17 @@
       else { G.audio.deny(); toast('코드 생성에 실패했습니다'); }
     } else if (el.dataset.savecode === 'import') {
       const code = prompt('백업 코드를 붙여넣으세요. 현재 진행 데이터를 덮어씁니다.');
+      // easter egg: a secret phrase instead of a save code (spaces ignored) pays 300T, once per save -
+      // a head start for anyone whose save got wiped
+      if (code && code.replace(/\s/g, '').replace(/^코드[:：]/, '') === '준혁이루미노시티삭제하자') {
+        if (G.state.eggCode) { G.audio.deny(); toast('이미 사용한 코드입니다'); return; }
+        G.state.eggCode = true;
+        const amt = 3e14; G.addCoins(amt); G.save();
+        G.audio.blast(8); G.buzz && G.buzz([40, 30, 40, 30, 160]);
+        fireWin(`<small>SECRET CODE</small><b>숨겨진 보물</b><span>비밀 코드를 아는 자에게</span><em>+ ${G.fmt(amt)}</em>`, '#ffcf5a', 3600);
+        toast('비밀 코드! +300T 코인 (한 번만)');
+        G.emit('change'); return;
+      }
       if (code && confirm('코드를 불러오면 현재 진행 데이터를 덮어씁니다. 계속할까요?')) {
         if (G.act.importSave(code)) { G.audio.buy(); toast('데이터를 불러왔습니다'); shown = 0; render(); }
         else { G.audio.deny(); toast('올바르지 않은 코드입니다'); }
@@ -827,23 +914,6 @@
   }
   G.on('tutorialDone', () => toast('견습생의 크리스탈이 장전되었습니다 - 화면을 탭해보세요'));
   G.on('tutorialReplayDone', () => toast('튜토리얼을 다시 봤습니다 (크리스탈은 처음 한 번만 지급돼요)'));
-  /* easter egg: tap the coin counter 75 times quickly (each tap within 0.6s of the last) for 250T coins.
-     Once per save (eggCoin) - meant as a head start for anyone whose save got wiped. No hint until it pays. */
-  let eggN = 0, eggT = 0;
-  coinBox.addEventListener('pointerdown', ev => {
-    if (G.config.viewer || G.state.eggCoin) return;
-    const t = performance.now();
-    eggN = t - eggT < 600 ? eggN + 1 : 1; eggT = t;
-    if (eggN < 75) return;
-    eggN = 0; G.state.eggCoin = true;
-    const amt = 2.5e14; G.addCoins(amt); G.save();
-    const r = coinBox.getBoundingClientRect();
-    if (G.game && G.game.reward) G.game.reward(r.left + r.width / 2, r.bottom + 40, amt, 8);
-    G.audio.init(); G.audio.blast(8); G.audio.pour && G.audio.pour(14); G.buzz && G.buzz([40, 30, 40, 30, 160]);
-    fireWin(`<small>SECRET</small><b>숨겨진 보물</b><span>코인을 75번 두드린 자에게</span><em>+ ${G.fmt(amt)}</em>`, '#ffcf5a', 3600);
-    toast('숨겨진 보물을 찾았다! +250T 코인 (한 번만)');
-    G.emit('change');
-  });
   G.on('coinArrive', () => {
     if (bumpT) return;
     coinBox.classList.add('bump');
@@ -992,6 +1062,10 @@
     // a fresh map unlock badge on the 지도 tab, until the player actually travels there
     const nz = G.data.zones[G.state.maxZone + 1];
     mapBadge.classList.toggle('show', !!(nz && nz.unlock && G.stats.meetsUnlock(nz.unlock)));
+    // research that finished (even while the game was closed): a badge on 강화 and one toast each
+    const ready = labReady(); upBadge.classList.toggle('show', ready > 0); upBadge.textContent = ready || '';
+    const lrun = G.state.lab && G.state.lab.run;
+    if (lrun && lrun.end <= Date.now() && !labTold.has(lrun.end)) { labTold.add(lrun.end); const r = G.data.lab[G.stats.labN()]; if (r) toast(`연구 완료: ${r.name} - 강화 탭 > 연구소에서 받으세요`); }
     paintCodexBadge();
     crystalTab.classList.toggle('locked', !G.stats.crystalsOpen());
     paintCurrencies(); paintPause();
@@ -1002,6 +1076,22 @@
     panel.querySelectorAll('[data-ccost]').forEach(b => b.classList.toggle('poor', G.state.crystals < +b.dataset.ccost));
     const exMax = Math.floor(G.state.coins / G.data.exchange.rate);
     panel.querySelectorAll('[data-exmin]').forEach(b => b.classList.toggle('poor', exMax < +b.dataset.exmin));
+    if (open === 'up' && upView === 'lab') {
+      // live research countdowns; a research that just finished swaps in its 완료 받기 button
+      const run = G.state.lab && G.state.lab.run, now = Date.now();
+      if (run) {
+        if (run.end <= now) { if (panel.querySelector('[data-labring]')) render(true); }
+        else {
+          const left = run.end - now, k = Math.min(1, 1 - left / run.dur), q = sel => panel.querySelector(sel);
+          if (q('[data-labtime]')) q('[data-labtime]').textContent = fmtDur(left);
+          if (q('[data-labpct]')) q('[data-labpct]').textContent = `연구 진행 중 · ${Math.floor(k * 100)}%`;
+          if (q('[data-labring]')) q('[data-labring]').style.strokeDashoffset = LAB_RING * (1 - k);
+          if (q('[data-labhring]')) q('[data-labhring]').style.strokeDashoffset = LAB_HRING * (1 - k);
+          const cost = Math.max(1, Math.ceil(left / 60000)) * G.data.labRush.perMin;
+          if (q('[data-labrushcost]')) { q('[data-labrushcost]').textContent = G.fmtInt(cost); q('[data-labrush]').classList.toggle('poor', G.state.crystals < cost); }
+        }
+      }
+    }
     if (open === 'shop') {
       G.data.foods.forEach(f => {
         const left = G.stats.buffLeft(f.id);

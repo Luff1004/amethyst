@@ -31,7 +31,9 @@ G.opt = key => {
     ybuff: { luck: 0, coin: 0 },     // 옐로우 상점 buffs: timestamps they last until
     mutTickets: 0,                   // 옐로우 상점 - 변이 확정권 waiting to be used
     biome: null,                     // the rare biome in effect { id, until, t0 } (js/biome.js)
-    eggCoin: false,                  // the coin-counter easter egg (75 quick taps) - paid out once per save
+    eggCoin: false,                  // the old coin-counter easter egg (75 quick taps) - retired, kept so old saves stay as they were
+    eggCode: false,                  // the secret code typed into 코드 불러오기 - paid out once per save
+    lab: { n: 0, run: null },        // 연구소: cubes finished along the path, and the one researching now { end, dur }
     stats: { playMs: 0, boxes: 0, drunk: 0, since: Date.now() },   // 설정 - 통계 (counted from the update that added them)
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},
     /* monthly event packages (js/data/events.js): free box openings, limited foods waiting to be
@@ -118,19 +120,24 @@ G.opt = key => {
     zone: () => G.data.zones[G.state.zone],
     level: lv,
     val: id => upg(id).value(lv(id)),
-    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul() * (G.weather ? G.weather.mul('coin') : 1) * (this.ybuffLeft('coin') > 0 ? 2 : 1) * (G.biome ? G.biome.mul('coin') : 1); },
+    coinMul() { return this.val('value') * this.zone().coinMul * this.permCoinMul() * (G.weather ? G.weather.mul('coin') : 1) * (this.ybuffLeft('coin') > 0 ? 2 : 1) * (G.biome ? G.biome.mul('coin') : 1) * (1 + this.lab('coin')); },
     ybuffLeft(k) { const b = G.state.ybuff; return b ? Math.max(0, ((b[k] || 0) - now()) / 1000) : 0; },
     permCoinMul() { let m = 1; for (const f of G.data.foods) if (f.perm && G.state.perm[f.id]) m *= f.coinMul || 1; return m; },
     clickValue() { return this.val('power') * this.coinMul(); },
     critChance() { return this.val('crit'); },
     critMul() { return this.val('critMul'); },
-    autoRate() { return this.val('auto') * (G.weather ? G.weather.mul('auto') : 1); },
+    autoRate() { return this.val('auto') * (G.weather ? G.weather.mul('auto') : 1) * (1 + this.lab('auto')); },
+    /* 연구소 bonus for one research (per x level collected) */
+    labN() { const L = G.state.lab; return (L && L.n) || 0; },
+    lab(type) { const n = this.labN(), t = G.data.labTypes[type]; if (!n || !t) return 0; let c = 0; for (let i = 0; i < n; i++) if (G.data.lab[i].type === type) c++; return c * t.per; },
+    labOpen() { return G.config.unlockCodex || G.state.maxZone >= 1; },
+    labDur(i) { return G.data.lab[i].time * (1 - this.lab('speed')) * 60000; },
     foodLuck() {
       let s = 0;
       for (const f of G.data.foods) if (f.perm ? G.state.perm[f.id] : (G.state.buffs[f.id] || 0) > now()) s += f.bonus;
       return s;
     },
-    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1) * (this.ybuffLeft('luck') > 0 ? 1.5 : 1) * (G.biome ? G.biome.mul('luck') : 1); },
+    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1) * (this.ybuffLeft('luck') > 0 ? 1.5 : 1) * (G.biome ? G.biome.mul('luck') : 1) * (1 + this.lab('luck')); },
     potion: id => G.data.potions.find(p => p.id === id),
     /* several crystals can be armed at once now - their luck stacks (adds up) for the next click */
     armedList() {
@@ -145,7 +152,7 @@ G.opt = key => {
     luckOf(list) {
       const ls = list.filter(p => !(p.minZone && G.state.zone < p.minZone)).map(p => p.luck || 0).sort((a, b) => b - a);
       let s = 0; ls.forEach((l, i) => { s += l * Math.pow(0.85, i); });
-      return s * (1 + this.val('potency'));
+      return s * (1 + this.val('potency')) * (1 + this.lab('reson'));
     },
     armedLuck() { return this.luckOf(this.armedList()); },
     boxCost(b) { return Math.ceil(b.cost * (1 - this.val('discount'))); },
@@ -359,6 +366,35 @@ G.opt = key => {
       if (f.perm) s.perm[id] = true;
       else s.buffs[id] = Math.max(now(), s.buffs[id] || 0) + f.duration * 1000;
       G.save(); G.emit('change'); return f.perm ? 'perm' : 'ok';
+    },
+    /* 연구소: the path is walked one cube at a time - pay for the next one, wait, collect, repeat */
+    labStart() {
+      const s = G.state;
+      if (!s.lab || s.lab.n == null) s.lab = { n: 0, run: null };     // older local shape
+      const L = s.lab, r = G.data.lab[L.n];
+      if (!G.stats.labOpen()) return 'locked';
+      if (!r) return 'max';
+      if (L.run) return 'running';
+      if (s.coins < r.cost) return 'poor';
+      s.coins -= r.cost;
+      const dur = G.stats.labDur(L.n);
+      L.run = { end: now() + dur, dur };
+      G.save(); G.emit('change'); return 'ok';
+    },
+    labCollect() {
+      const L = G.state.lab;
+      if (!L || !L.run || L.run.end > now()) return false;
+      L.run = null; L.n = (L.n || 0) + 1;
+      G.save(); G.emit('change'); return true;
+    },
+    /* finish now for blue crystals - priced by the minutes left */
+    labRush() {
+      const s = G.state, L = s.lab;
+      if (!L || !L.run) return 'none';
+      const cost = Math.max(1, Math.ceil(Math.max(0, L.run.end - now()) / 60000)) * G.data.labRush.perMin;
+      if (s.crystals < cost) return 'poor';
+      s.crystals -= cost; L.run.end = now();
+      return this.labCollect() ? 'ok' : 'none';
     },
     /* LEVEL 1's toll: taken once, after the question is answered */
     level1Pay() {

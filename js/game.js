@@ -211,7 +211,7 @@
       G.audio.potion(); G.emit('change');
     }
     // YELLOW crystals (from the 3rd map on): a hand-swung hit sometimes knocks loose a handful
-    if (!auto && G.stats.yellowOpen() && Math.random() < G.data.yellowDrop.chance * (1 + G.stats.val('yellow')) * G.biome.mul('yellow')) {
+    if (!auto && G.stats.yellowOpen() && Math.random() < G.data.yellowDrop.chance * (1 + G.stats.val('yellow')) * G.biome.mul('yellow') * (1 + G.stats.lab('yellow'))) {
       const n = G.data.yellowDrop.n;
       s.yellow = (s.yellow || 0) + n;
       text(x, y - 56, `+${n} 옐로우 크리스탈`, '#ffd84a', 16, 1.3);

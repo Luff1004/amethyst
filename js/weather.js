@@ -48,7 +48,7 @@
     }
     if (!w.mut) return null;
     const m = D.mutations[w.mut];
-    return Math.random() < m.chance * (1 + G.stats.val('mutate')) ? m : null;     // 강화 - 변이 촉매
+    return Math.random() < m.chance * (1 + G.stats.val('mutate')) * (1 + G.stats.lab('mut')) ? m : null;     // 강화 - 변이 촉매, 연구소 - 변이 생물학
   }
 
   /* ---------------- announcement for rare skies ---------------- */

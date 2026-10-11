@@ -1042,3 +1042,87 @@ body.biome-cuber #coinVal, body.biome-cuber #luckVal { text-shadow: 0 0 12px #3a
 #whoModal.wrong .whobox { animation: whoshake .4s; }
 @keyframes whoshake { 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
 #whoModal.right .whoq { color: #fff; text-shadow: 0 0 20px #fff; animation: none; }
+
+/* ---------------- 연구소 (강화 탭) ---------------- */
+.upswitch { display: flex; gap: 6px; margin: 0 0 10px; }
+.upswitch .seg { flex: 1; height: 34px; font-weight: 800; }
+.labdot { display: inline-grid; place-items: center; min-width: 16px; height: 16px; margin-left: 4px; padding: 0 4px; border-radius: 8px; background: #6dffb0; color: #06140c; font: 800 10px/1 var(--mono); font-style: normal; }
+/* the path: rows of three cubes, wired in a snake (every 2nd row runs back right-to-left) */
+.labpath { --holo: 122, 232, 255; --done: 122, 255, 200; padding: 10px 2px 10px; }
+.labrow { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; align-items: center; height: 88px; }
+.labrow .labcube { grid-row: 1; }
+.labpath .hw, .labpath .vw, .labpath .labconn { position: absolute; display: block; pointer-events: none; background: rgba(var(--holo), .18); }
+.labpath .hw { top: 50%; height: 2px; margin-top: -1px; }
+.labpath .vw { top: -44px; bottom: -44px; width: 2px; margin-left: -1px; }
+.labpath .hw.on, .labpath .vw.on { background: rgb(var(--done)); box-shadow: 0 0 8px rgba(var(--done), .8); }
+.labgap { position: relative; height: 0; }
+.labgap.hasholo { height: auto; padding: 20px 0; z-index: 2; }
+.labpath .labconn { top: -12px; height: 34px; width: 2px; margin-left: -1px; background: rgb(var(--holo)); box-shadow: 0 0 10px rgba(var(--holo), .9); z-index: 1; animation: labflow 1.2s linear infinite; }
+@keyframes labflow { 50% { opacity: .5; } }
+
+/* a cube: a front face, with a lit top and right side for depth */
+.labcube { position: relative; z-index: 1; width: 58px; height: 58px; padding: 0; border: 0; background: none; cursor: pointer; color: rgba(var(--holo), .4); margin: 6px 6px 0 0; }
+.labcube .cface { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: linear-gradient(145deg, #182436, #0b111c); border: 1px solid rgba(var(--holo), .25); }
+.labcube::before, .labcube::after { content: ""; position: absolute; border: 1px solid rgba(var(--holo), .25); }
+.labcube::before { left: 0; right: 0; bottom: 100%; height: 8px; background: #1d2c42; transform-origin: bottom left; transform: skewX(-45deg); }
+.labcube::after { top: 0; bottom: 0; left: 100%; width: 8px; background: #0e1726; transform-origin: top left; transform: skewY(-45deg); }
+.labcube .cface em { font: 800 9px/1 var(--mono); font-style: normal; letter-spacing: .12em; }
+.labcube.lock .cface { opacity: .6; }
+.labcube.done { color: rgb(var(--done)); }
+.labcube.done .cface { border-color: rgba(var(--done), .55); background: linear-gradient(145deg, #12302a, #08140f); box-shadow: inset 0 0 14px rgba(var(--done), .2); }
+.labcube.done::before { background: #1a4a3b; border-color: rgba(var(--done), .5); }
+.labcube.done::after { background: #0f2c23; border-color: rgba(var(--done), .5); }
+.labcube.next, .labcube.run, .labcube.ready { color: #fff; }
+.labcube.next .cface, .labcube.run .cface, .labcube.ready .cface { border-color: rgb(var(--holo)); background: linear-gradient(145deg, #183a52, #0a1624); box-shadow: 0 0 16px rgba(var(--holo), .5), inset 0 0 14px rgba(var(--holo), .3); }
+.labcube.next::before, .labcube.run::before, .labcube.ready::before { background: #23506e; border-color: rgb(var(--holo)); }
+.labcube.next::after, .labcube.run::after, .labcube.ready::after { background: #133048; border-color: rgb(var(--holo)); }
+.labcube.next { animation: labpulse 1.6s ease-in-out infinite; }
+.labcube.ready { animation: labpulse .8s ease-in-out infinite; }
+@keyframes labpulse { 50% { filter: brightness(1.35) drop-shadow(0 0 8px rgba(122, 232, 255, .8)); } }
+.labcube.sel .cface { outline: 2px solid #fff; outline-offset: 4px; }
+.labcube .cring { position: absolute; z-index: 2; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); transform: rotate(-90deg); pointer-events: none; }
+.labcube .cring circle { fill: none; stroke: rgb(var(--holo)); stroke-width: 4; filter: drop-shadow(0 0 3px rgb(var(--holo))); transition: stroke-dashoffset .9s linear; }
+.labcube .cdone { position: absolute; z-index: 2; top: -16px; right: -16px; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: rgb(var(--done)); color: #06140c; font: 900 12px/1 var(--mono); font-style: normal; box-shadow: 0 0 10px rgb(var(--done)); }
+
+/* the hologram: see-through cyan, scanlines, a little flicker, brackets in the corners */
+.holo { position: relative; z-index: 1; padding: 14px 14px 10px; color: rgb(var(--holo)); background: linear-gradient(180deg, rgba(var(--holo), .13), rgba(var(--holo), .05)), repeating-linear-gradient(0deg, rgba(var(--holo), .07) 0 1px, transparent 1px 3px), rgba(6, 14, 24, .82); border: 1px solid rgba(var(--holo), .45); box-shadow: 0 0 24px rgba(var(--holo), .22), inset 0 0 30px rgba(var(--holo), .1); animation: holoin .35s ease-out, holoflick 5s steps(1) infinite .35s; overflow: hidden; }
+.holo::after { content: ""; position: absolute; left: 0; right: 0; height: 40%; top: -40%; background: linear-gradient(transparent, rgba(var(--holo), .1), transparent); animation: holoscan 3.2s linear infinite; pointer-events: none; }
+@keyframes holoin { from { opacity: 0; transform: scaleY(.2); filter: brightness(2); } }
+@keyframes holoflick { 0%, 100% { opacity: 1; } 47% { opacity: .82; } 48% { opacity: 1; } 71% { opacity: .9; } 72% { opacity: 1; } }
+@keyframes holoscan { to { top: 100%; } }
+.holo .hc { position: absolute; width: 12px; height: 12px; border: 2px solid rgb(var(--holo)); }
+.holo .hc.tl { top: 3px; left: 3px; border-right: 0; border-bottom: 0; }
+.holo .hc.tr { top: 3px; right: 3px; border-left: 0; border-bottom: 0; }
+.holo .hc.bl { bottom: 3px; left: 3px; border-right: 0; border-top: 0; }
+.holo .hc.br { bottom: 3px; right: 3px; border-left: 0; border-top: 0; }
+.holo .hhead { display: flex; align-items: center; gap: 10px; text-shadow: 0 0 8px rgba(var(--holo), .8); }
+.holo .hhead > div { flex: 1; min-width: 0; }
+.holo .hhead b { display: block; font-size: 16px; color: #e8fbff; }
+.holo .hhead small { display: block; margin-top: 3px; font: 700 10px/1 var(--mono); letter-spacing: .2em; opacity: .75; }
+.holo .hhead em { font: 800 12px/1 var(--mono); font-style: normal; }
+.holo .heff { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 12px 0; padding: 8px 10px; border-left: 2px solid rgb(var(--holo)); background: rgba(var(--holo), .07); }
+.holo .heff span { font-size: 13px; color: #cdefff; }
+.holo .heff b { font: 800 14px/1 var(--mono); white-space: nowrap; }
+.holo .heff i { font-style: normal; opacity: .6; }
+.holo .heff u { text-decoration: none; color: #fff; text-shadow: 0 0 8px rgb(var(--holo)); }
+.holo.done .heff u { color: rgb(var(--done)); }
+.holo .hbtn { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; padding: 10px; border: 1px solid rgb(var(--holo)); background: rgba(var(--holo), .14); color: #e8fbff; cursor: pointer; font: inherit; text-shadow: 0 0 6px rgba(var(--holo), .9); box-shadow: 0 0 14px rgba(var(--holo), .3), inset 0 0 14px rgba(var(--holo), .15); }
+.holo .hbtn b { font-size: 14px; letter-spacing: .04em; }
+.holo .hbtn span { display: inline-flex; align-items: center; gap: 4px; font: 700 12px/1 var(--mono); }
+.holo .hbtn span u { text-decoration: none; }
+.holo .hbtn:active { transform: scale(.98); }
+.holo .hbtn.poor { opacity: .45; filter: grayscale(.6); }
+.holo .hbtn.hget { border-color: rgb(var(--done)); background: rgba(var(--done), .2); box-shadow: 0 0 18px rgba(var(--done), .5); animation: labpulse .9s ease-in-out infinite; }
+.holo .hbtn.hrush { margin-top: 8px; padding: 7px; }
+.holo .htimer { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.holo .htimer svg { width: 74px; height: 74px; flex: none; transform: rotate(-90deg); }
+.holo .htimer circle { fill: none; stroke-width: 6; }
+.holo .htimer .bg { stroke: rgba(var(--holo), .15); }
+.holo .htimer .fg { stroke: rgb(var(--holo)); filter: drop-shadow(0 0 4px rgb(var(--holo))); transition: stroke-dashoffset .9s linear; }
+.holo .htimer small { display: block; font: 700 10px/1 var(--mono); letter-spacing: .3em; opacity: .7; }
+.holo .htimer b { display: block; margin: 5px 0; font: 800 22px/1 var(--mono); color: #fff; text-shadow: 0 0 10px rgb(var(--holo)); }
+.holo .htimer span { font-size: 11px; opacity: .8; }
+.holo .hmsg { padding: 10px; text-align: center; font-weight: 800; border: 1px dashed rgba(var(--holo), .5); }
+.holo .hmsg.ok { color: rgb(var(--done)); border-color: rgba(var(--done), .6); }
+.holo .hpre { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 6px; font: 700 12px/1 var(--mono); opacity: .7; }
+.holo .hfoot { margin-top: 10px; font-size: 10px; text-align: center; opacity: .6; }

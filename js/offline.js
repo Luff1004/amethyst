@@ -18,7 +18,7 @@
     const sec = Math.min(OFF.capH * 3600, (Date.now() - awayFrom) / 1000), rate = G.stats.autoRate();
     if (sec < OFF.minSec || rate <= 0) return;
     const perHit = G.stats.clickValue() * (1 + G.stats.critChance() * (G.stats.critMul() - 1));
-    const eff = OFF.eff + G.stats.val('offline');           // 강화 - 야간 작업
+    const eff = OFF.eff + G.stats.val('offline') + G.stats.lab('offline');   // 강화 - 야간 작업, 연구소 - 야간 감시
     const coins = Math.floor(rate * perHit * sec * eff), hits = Math.floor(rate * sec * eff);
     if (coins <= 0) return;
     const h = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60), capped = sec >= OFF.capH * 3600 - 1;
