@@ -33,6 +33,7 @@ G.opt = key => {
     biome: null,                     // the rare biome in effect { id, until, t0 } (js/biome.js)
     eggCoin: false,                  // the old coin-counter easter egg (75 quick taps) - retired, kept so old saves stay as they were
     eggCode: false,                  // the secret code typed into 코드 불러오기 - paid out once per save
+    ach: { run8: 0, best8: 0 },      // achievement themes: current / best run of 1억+ finds in a row
     lab: { n: 0, run: null },        // 연구소: cubes finished along the path, and the one researching now { end, dur }
     stats: { playMs: 0, boxes: 0, drunk: 0, since: Date.now() },   // 설정 - 통계 (counted from the update that added them)
     tutorialDone: false, tutorialStep: 0, tutorialPotionGiven: false, eventRedeemed: {},

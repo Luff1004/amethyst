@@ -26,6 +26,7 @@
   function start(id) {
     if (!D[id] || current() || G.config.viewer) return false;
     G.state.biome = { id, until: now() + D[id].min * 60000, t0: now() };
+    const A = G.state.ach || (G.state.ach = { run8: 0, best8: 0 }); (A.biomes || (A.biomes = {}))[id] = true;   // the discovery themes (js/data/themes.js)
     giftAt = now(); G.save();
     paintBody();
     // the trigger usually fires just as a cutscene starts - the title card waits until it's over

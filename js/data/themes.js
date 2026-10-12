@@ -38,7 +38,34 @@ G.data.themes = [
   { id: 'unseen', name: 'THE UNSEEN', en: 'THE UNSEEN', price: 0, css: 'unseen', bg: { hue: 0, s: 0, l: 1 }, ambient: 'unseen',
     unlock: { label: '시크릿 광물 발견', test: s => foundTier(s, 'secret') },
     desc: '보이지 않는 것들이 보고 있다 · 어둠 속에서 뜨는 눈, 동공이 된 크리스탈, 깜빡이는 화면', preview: ['#000000', '#d8d8d8', '#141414'] },
+  /* unlock.progress (optional): [have, need], shown on the locked card */
+  { id: 'archive', name: 'THE ARCHIVE', en: 'THE ARCHIVE', price: 0, css: 'archive', bg: { hue: 28, s: 45, l: 4 }, ambient: 'archive',
+    unlock: { label: '1억 이상 광물 1000번 뽑기', test: s => findsOver(s, 1e8) >= 1000, progress: s => [findsOver(s, 1e8), 1000] },
+    desc: '천 번의 행운을 기록한 서고 · 책장 사이의 펼쳐진 고서, 페이지에서 떠오르는 고대 문자, 일렁이는 촛불', preview: ['#0c0703', '#d6aa50', '#3a2210'] },
+  { id: 'symphony', name: 'THE SYMPHONY', en: 'THE SYMPHONY', price: 0, css: 'symphony', bg: { hue: 0, s: 0, l: 3 }, ambient: 'symphony',
+    unlock: { label: '1억 이상 광물 3번 연속 뽑기', test: s => ((s.ach && s.ach.best8) || 0) >= 3, progress: s => [Math.min(3, (s.ach && s.ach.best8) || 0), 3] },
+    desc: '세 번 연속, 완벽한 화음 · 흑백 악보와 떠다니는 음표, 크리스탈을 감은 오선, 스스로 연주하는 피아노', preview: ['#050505', '#ffffff', '#1c1c1c'] },
 ];
+G.data.themes.push(
+  { id: 'error', name: 'ERR0R', en: 'ERR0R', price: 0, css: 'error', bg: { hue: 300, s: 30, l: 3 }, ambient: 'error',
+    unlock: { label: '글리치 바이옴 발견', test: s => biomeSeen(s, 'glitch') },
+    desc: '세계가 깨진 순간 · 부서지는 화면과 데이터 비, 줄줄이 뜨는 오류창, 어긋나는 RGB', preview: ['#050208', '#ff2a6a', '#1a0a20'] },
+  { id: 'cuber', name: 'CUBER STAGE', en: 'CUBER STAGE', price: 0, css: 'cuber', bg: { hue: 265, s: 60, l: 5 }, ambient: 'cuber',
+    unlock: { label: '큐버 스테이지 바이옴 발견', test: s => biomeSeen(s, 'cuber') },
+    desc: '네온의 무대 · 줄무늬 태양과 달려오는 격자, 조명과 레이저, 4차원 큐브, 128BPM', preview: ['#0a0418', '#3af0ff', '#2a0a40'] },
+);
+// has this rare biome ever come up (recorded since the themes came in), or has one of its minerals been found
+function biomeSeen(s, id) {
+  if ((s.ach && s.ach.biomes && s.ach.biomes[id]) || (s.biome && s.biome.id === id)) return true;
+  for (const k in s.codex) { const d = G.cutscenes.byId[k], c = s.codex[k], n = typeof c === 'number' ? c : c && c.n; if (n > 0 && d && d.biome === id) return true; }
+  return false;
+}
+// how many times minerals at least this rare have been found, all told
+function findsOver(s, odds) {
+  let n = 0;
+  for (const id in s.codex) { const c = s.codex[id], k = typeof c === 'number' ? c : c && c.n, d = G.cutscenes.byId[id]; if (k > 0 && d && d.odds >= odds && !d.special) n += k; }
+  return n;
+}
 // has a mineral of this tier key (G.tiers[].key) ever been found
 function foundTier(s, key) {
   for (const id in s.codex) { const c = s.codex[id], n = typeof c === 'number' ? c : c && c.n, d = G.cutscenes.byId[id]; if (n > 0 && d && G.tiers[d.tierIdx] && G.tiers[d.tierIdx].key === key) return true; }
@@ -46,7 +73,7 @@ function foundTier(s, key) {
 }
 // has any mineral at least this rare ever been found (codex entries are { n, ... })
 function foundOver(s, odds) {
-  for (const id in s.codex) { const c = s.codex[id], n = typeof c === 'number' ? c : c && c.n, d = G.cutscenes.byId[id]; if (n > 0 && d && d.odds >= odds) return true; }
+  for (const id in s.codex) { const c = s.codex[id], n = typeof c === 'number' ? c : c && c.n, d = G.cutscenes.byId[id]; if (n > 0 && d && !d.special && d.odds >= odds) return true; }   // event minerals come guaranteed from a bought crystal - not luck, so they don't count
   return false;
 }
 G.theme = () => G.data.themes.find(t => t.id === (G.state && G.state.theme)) || G.data.themes[0];

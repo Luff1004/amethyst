@@ -1315,49 +1315,49 @@ html[data-theme="crimson"] {
   --rc1: #4a0408; --rc2: #ff5a4a; --rc3: #fff0d0; --rc4: #f0b450; --rcGlow: 255, 40, 50; --rcGem: radial-gradient(circle at 35% 35%, #ffd0d0, #ff1a32 45%, #4a0008);
   --rcTL: url(../img/crm-tl.svg); --rcTR: url(../img/crm-tr.svg); --rcBL: url(../img/crm-bl.svg); --rcBR: url(../img/crm-br.svg); --rcTitle: linear-gradient(180deg, #fff0d0, #f0b450 40%, #ff3a3a 70%, #8a0a10);
 }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) :is(#panel, #tabs .tab.active, #luckChip, .card.using) {
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) :is(#panel, #tabs .tab.active, #luckChip, .card.using) {
   background: linear-gradient(115deg, var(--rc1) 0%, var(--rc2) 24%, var(--rc3) 31%, var(--rc4) 36%, var(--rc2) 43%, var(--rc1) 70%, var(--rc2) 100%);
   background-size: 300% 100%; animation: svSheen 7s linear infinite;
 }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #panel { --fill: radial-gradient(120% 50% at 50% -8%, rgba(var(--rcGlow), .17), transparent 60%), linear-gradient(180deg, var(--panel), rgba(0, 0, 0, .97)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #panel::after { content: ""; display: block; position: sticky; bottom: -16px; height: 48px; margin: -48px -14px -16px; pointer-events: none;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel { --fill: radial-gradient(120% 50% at 50% -8%, rgba(var(--rcGlow), .17), transparent 60%), linear-gradient(180deg, var(--panel), rgba(0, 0, 0, .97)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel::after { content: ""; display: block; position: sticky; bottom: -16px; height: 48px; margin: -48px -14px -16px; pointer-events: none;
   background: var(--rcBL) left bottom / 48px no-repeat, var(--rcBR) right bottom / 48px no-repeat; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #panel > .ph:first-child { position: relative; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #panel > .ph:first-child::before { content: ""; position: absolute; left: -14px; right: -14px; top: -14px; height: 48px; pointer-events: none;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel > .ph:first-child { position: relative; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel > .ph:first-child::before { content: ""; position: absolute; left: -14px; right: -14px; top: -14px; height: 48px; pointer-events: none;
   background: var(--rcTL) left top / 48px no-repeat, var(--rcTR) right top / 48px no-repeat; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) .card::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .card::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
   background: var(--rcTL) left top / 28px no-repeat, var(--rcBR) right bottom / 28px no-repeat; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) .card { --line: rgba(var(--rcGlow), .45); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #tabs .tab { --fill: linear-gradient(180deg, var(--card), rgba(0, 0, 0, .94)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #tabs .tab.active { --fill: linear-gradient(180deg, var(--btn2), rgba(0, 0, 0, .95) 80%); color: #fff; text-shadow: 0 0 9px rgb(var(--rcGlow)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) .ph h2 { font-family: Cinzel, Georgia, "Times New Roman", serif; font-weight: 800; letter-spacing: .14em;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .card { --line: rgba(var(--rcGlow), .45); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #tabs .tab { --fill: linear-gradient(180deg, var(--card), rgba(0, 0, 0, .94)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #tabs .tab.active { --fill: linear-gradient(180deg, var(--btn2), rgba(0, 0, 0, .95) 80%); color: #fff; text-shadow: 0 0 9px rgb(var(--rcGlow)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .ph h2 { font-family: Cinzel, Georgia, "Times New Roman", serif; font-weight: 800; letter-spacing: .14em;
   background: var(--rcTitle); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .85)) drop-shadow(0 0 8px rgba(var(--rcGlow), .6)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) .ph h2 small { font-family: system-ui, "Malgun Gothic", sans-serif; -webkit-text-fill-color: var(--rc2); letter-spacing: .05em; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #coinVal { font-family: Cinzel, Georgia, serif; color: #fff; text-shadow: 0 0 12px rgba(var(--rcGlow), .95), 0 1px 0 var(--rc1); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #coinBox small { color: var(--rc2); letter-spacing: .35em; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) .buy { --fill: linear-gradient(180deg, var(--btn2), var(--btn)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #foot b { font-family: Cinzel, Georgia, serif; color: var(--rc2); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .ph h2 small { font-family: system-ui, "Malgun Gothic", sans-serif; -webkit-text-fill-color: var(--rc2); letter-spacing: .05em; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #coinVal { font-family: Cinzel, Georgia, serif; color: #fff; text-shadow: 0 0 12px rgba(var(--rcGlow), .95), 0 1px 0 var(--rc1); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #coinBox small { color: var(--rc2); letter-spacing: .35em; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .buy { --fill: linear-gradient(180deg, var(--btn2), var(--btn)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #foot b { font-family: Cinzel, Georgia, serif; color: var(--rc2); }
 /* screen frame */
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame { display: block; position: fixed; inset: 0; z-index: 11; pointer-events: none; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame::before, html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame::after { content: ""; position: absolute; pointer-events: none; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame::before { inset: 4px; border: 2px solid transparent;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame { display: block; position: fixed; inset: 0; z-index: 11; pointer-events: none; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::before, html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::after { content: ""; position: absolute; pointer-events: none; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::before { inset: 4px; border: 2px solid transparent;
   border-image: conic-gradient(from var(--rcAng), rgba(var(--rcGlow), .35) 0deg, var(--rc3) 12deg, var(--rc2) 22deg, rgba(var(--rcGlow), .35) 42deg, rgba(var(--rcGlow), .35) 120deg, var(--rc3) 132deg, var(--rc2) 142deg, rgba(var(--rcGlow), .35) 162deg, rgba(var(--rcGlow), .35) 240deg, var(--rc3) 252deg, var(--rc2) 262deg, rgba(var(--rcGlow), .35) 282deg) 1;
   animation: rcSpin 6s linear infinite; }
 @keyframes rcSpin { to { --rcAng: 360deg; } }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame::after { inset: 10px; border: 1px solid rgba(var(--rcGlow), .28); box-shadow: inset 0 0 50px rgba(var(--rcGlow), .12); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame i { position: absolute; width: 100px; height: 100px; background: center / contain no-repeat; filter: drop-shadow(0 0 8px rgba(var(--rcGlow), .6)); animation: rcCorner 4s ease-in-out infinite; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .tl { left: 0; top: 0; background-image: var(--rcTL); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .tr { right: 0; top: 0; background-image: var(--rcTR); animation-delay: -1s; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .bl { left: 0; bottom: 0; background-image: var(--rcBL); animation-delay: -3s; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .br { right: 0; bottom: 0; background-image: var(--rcBR); animation-delay: -2s; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::after { inset: 10px; border: 1px solid rgba(var(--rcGlow), .28); box-shadow: inset 0 0 50px rgba(var(--rcGlow), .12); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame i { position: absolute; width: 100px; height: 100px; background: center / contain no-repeat; filter: drop-shadow(0 0 8px rgba(var(--rcGlow), .6)); animation: rcCorner 4s ease-in-out infinite; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .tl { left: 0; top: 0; background-image: var(--rcTL); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .tr { right: 0; top: 0; background-image: var(--rcTR); animation-delay: -1s; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .bl { left: 0; bottom: 0; background-image: var(--rcBL); animation-delay: -3s; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .br { right: 0; bottom: 0; background-image: var(--rcBR); animation-delay: -2s; }
 @keyframes rcCorner { 50% { filter: drop-shadow(0 0 16px rgba(var(--rcGlow), 1)); } }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame b { display: block; position: absolute; width: 13px; height: 13px; transform: rotate(45deg);
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame b { display: block; position: absolute; width: 13px; height: 13px; transform: rotate(45deg);
   background: var(--rcGem); box-shadow: 0 0 0 2px var(--rc4), 0 0 0 3px var(--rc1), 0 0 14px rgb(var(--rcGlow)); animation: rcCorner 3s ease-in-out infinite; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .mt { left: calc(50% - 6.5px); top: -1px; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .mb { left: calc(50% - 6.5px); bottom: -1px; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .ml { top: calc(50% - 6.5px); left: -1px; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame .mr { top: calc(50% - 6.5px); right: -1px; }
-@media (max-width: 480px) { html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"]) #themeFrame i { width: 74px; height: 74px; } }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .mt { left: calc(50% - 6.5px); top: -1px; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .mb { left: calc(50% - 6.5px); bottom: -1px; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .ml { top: calc(50% - 6.5px); left: -1px; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .mr { top: calc(50% - 6.5px); right: -1px; }
+@media (max-width: 480px) { html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame i { width: 74px; height: 74px; } }
 /* THE CRIMSON: the screen edges throb red to the same heartbeat as the backdrop */
 html[data-theme="crimson"] body::after { content: ""; position: fixed; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 90px rgba(255, 20, 30, .35); animation: rcBeat 1.4s ease-out infinite; }
 @keyframes rcBeat { 0%, 30%, 100% { opacity: .35; } 6% { opacity: 1; } 13% { opacity: .5; } 19% { opacity: .85; } }
@@ -1558,3 +1558,111 @@ html[data-theme="unseen"] .ph h2::before { content: "⌖ "; color: #8a8a8a; }
 .gk.g2 { animation-delay: -2.3s; clip-path: polygon(0 0, 100% 12%, 100% 100%, 0 90%); }
 .gk.g3 { animation-delay: -.4s; transform: translateY(1px); }
 @keyframes gkJerk { 0%, 100% { transform: none; } 47% { transform: translateX(2px); } 48% { transform: translateX(-1px); } 49% { transform: none; } }
+
+/* ================= THE HOARD (1억+ x1000) / THE TRINITY (1억+ x3 in a row) - on the shared court rules ================= */
+
+:is(.tu-archive, .tu-symphony) .tu-box b { font-family: Cinzel, Georgia, serif; }
+:is(.tu-archive, .tu-symphony) .tu-box::before, :is(.tu-archive, .tu-symphony) .tu-box::after { content: ""; position: absolute; width: 80px; height: 80px; pointer-events: none; }
+.tu-archive .tu-box::before { left: -22px; top: -22px; background: url(../img/arc-tl.svg) center / contain no-repeat; }
+.tu-archive .tu-box::after { right: -22px; bottom: -22px; background: url(../img/arc-br.svg) center / contain no-repeat; }
+/* ================= THE SYMPHONY (1억+ x3 in a row) - black and white sheet music, on the shared court rules ================= */
+html[data-theme="symphony"] {
+  --bg: #050505; --panel: rgba(8, 8, 8, .96); --ink: #f5f5f5; --dim: #9a9a9a; --line: rgba(255, 255, 255, .5); --acc: #ffffff;
+  --card: rgba(16, 16, 16, .94); --btn: #1c1c1c; --btn2: #333; --sel: linear-gradient(180deg, #3a3a3a, #0a0a0a); --modal: rgba(8, 8, 8, .98); --scroll: #5a5a5a;
+  --rc1: #2a2a2a; --rc2: #e8e8e8; --rc3: #ffffff; --rc4: #9a9a9a; --rcGlow: 255, 255, 255; --rcGem: radial-gradient(circle at 35% 30%, #fff, #bbb 50%, #222);
+  --rcTL: url(../img/sym-tl.svg); --rcTR: url(../img/sym-tr.svg); --rcBL: url(../img/sym-bl.svg); --rcBR: url(../img/sym-br.svg); --rcTitle: linear-gradient(180deg, #ffffff, #cfcfcf 60%, #7a7a7a);
+}
+/* the edge studs are notes, bobbing to the beat */
+html[data-theme="symphony"] #themeFrame b { width: auto; height: auto; transform: none; background: none; box-shadow: none; clip-path: none; color: #fff; font: 22px/1 "Noto Music", "Segoe UI Symbol", serif; text-shadow: 0 0 10px #fff; animation: symBob .536s ease-in-out infinite alternate; }
+html[data-theme="symphony"] #themeFrame .mt::before { content: "♫"; } html[data-theme="symphony"] #themeFrame .mb::before { content: "♪"; }
+html[data-theme="symphony"] #themeFrame .ml::before { content: "♩"; } html[data-theme="symphony"] #themeFrame .mr::before { content: "♬"; }
+html[data-theme="symphony"] #themeFrame .mt, html[data-theme="symphony"] #themeFrame .mb { left: calc(50% - 8px); }
+html[data-theme="symphony"] #themeFrame .mt { top: 2px; } html[data-theme="symphony"] #themeFrame .mb { bottom: 4px; }
+html[data-theme="symphony"] #themeFrame .ml, html[data-theme="symphony"] #themeFrame .mr { top: calc(50% - 11px); }
+html[data-theme="symphony"] #themeFrame .ml { left: 4px; } html[data-theme="symphony"] #themeFrame .mr { right: 4px; }
+@keyframes symBob { to { transform: translateY(-4px); } }
+html[data-theme="symphony"] .ph h2 { font-family: Cinzel, Georgia, serif; }
+html[data-theme="symphony"] .ph h2::before { content: "𝄞 "; font-family: "Noto Music", "Segoe UI Symbol", serif; -webkit-text-fill-color: #fff; }
+.amb-symphony { background: repeating-linear-gradient(180deg, transparent 0 7px, rgba(255, 255, 255, .5) 7px 8px) center / 100% 40px no-repeat, #050505; }
+.amb-symphony::before { content: "♫" !important; left: 18px; top: 14px; width: auto !important; height: auto !important; background: none !important; color: #fff; font: 26px/1 "Noto Music", "Segoe UI Symbol", serif; text-shadow: 0 0 8px #fff; animation: symBob .536s ease-in-out infinite alternate; }
+.card.tc-symphony:not(.locked) { --line: #ffffff; box-shadow: 0 0 20px rgba(255, 255, 255, .2); }
+.card.tc-symphony:not(.locked) .meta > b { font-family: Cinzel, Georgia, serif; letter-spacing: .12em; color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, .8); }
+.tu-symphony .tu-box::before { left: -22px; top: -22px; background: url(../img/sym-tl.svg) center / contain no-repeat; }
+.tu-symphony .tu-box::after { right: -22px; bottom: -22px; background: url(../img/sym-br.svg) center / contain no-repeat; }
+.tu-symphony .tu-box b { background: none; -webkit-text-fill-color: #fff; }
+/* THE SYMPHONY is truly black and white: the whole mining screen goes grey (cutscenes and bosses keep their colour) */
+html[data-theme="symphony"] body:not(.cut):not(.bossing) #game { filter: grayscale(1) contrast(1.08); }
+/* ================= THE ARCHIVE (1억+ x1000) - leather, parchment and brass, on the shared court rules ================= */
+html[data-theme="archive"] {
+  --bg: #0c0703; --panel: rgba(22, 12, 5, .96); --ink: #f4e6c8; --dim: #b0946a; --line: rgba(214, 170, 80, .6); --acc: #d6aa50;
+  --card: rgba(40, 22, 10, .93); --btn: #3a2210; --btn2: #5a3618; --sel: linear-gradient(180deg, #6a4420, #1e1006); --modal: rgba(22, 12, 5, .98); --scroll: #8a6030;
+  --rc1: #4a2a0c; --rc2: #d6aa50; --rc3: #fff0c0; --rc4: #b83a2a; --rcGlow: 214, 170, 80; --rcGem: radial-gradient(circle at 35% 30%, #fff0c0, #c8963c 50%, #4a2a08);
+  --rcTL: url(../img/arc-tl.svg); --rcTR: url(../img/arc-tr.svg); --rcBL: url(../img/arc-bl.svg); --rcBR: url(../img/arc-br.svg); --rcTitle: linear-gradient(180deg, #fff0c0, #d6aa50 55%, #8a5a1a);
+}
+/* parchment-toned cards, headings in an old book face, the edge studs as brass rivets */
+html[data-theme="archive"] .card { --fill: linear-gradient(180deg, rgba(48, 28, 12, .95), rgba(28, 15, 6, .95)); }
+html[data-theme="archive"] .ph h2, html[data-theme="archive"] #coinVal, html[data-theme="archive"] #foot b, html[data-theme="archive"] .card .meta > b { font-family: "IM Fell English SC", Georgia, serif; letter-spacing: .06em; }
+html[data-theme="archive"] .ph h2 { font-weight: 400; }
+html[data-theme="archive"] #themeFrame b { width: 12px; height: 12px; border-radius: 50%; transform: none; animation: none; box-shadow: 0 0 0 1px #2a1404, 0 2px 4px rgba(0, 0, 0, .7); }
+html[data-theme="archive"] #themeFrame .mt, html[data-theme="archive"] #themeFrame .mb { left: calc(50% - 6px); top: 3px; } html[data-theme="archive"] #themeFrame .mb { top: auto; bottom: 3px; }
+html[data-theme="archive"] #themeFrame .ml, html[data-theme="archive"] #themeFrame .mr { top: calc(50% - 6px); left: 3px; } html[data-theme="archive"] #themeFrame .mr { left: auto; right: 3px; }
+.amb-archive { background: url(../img/arc-tl.svg) left top / 28px no-repeat, url(../img/arc-br.svg) right bottom / 28px no-repeat, linear-gradient(90deg, #5a1a14 0 12%, #2a3a1a 12% 22%, #1a2a4a 22% 30%, transparent 30% 70%, #4a3010 70% 80%, #3a1a3a 80% 88%, #6a4a1a 88%), #0c0703; }
+.amb-archive::before { left: 18px; top: 18px; width: 22px !important; height: 16px !important; border-radius: 1px !important; background: linear-gradient(90deg, #c8b080, #f2e6c8 45%, #8a6a3a 50%, #f2e6c8 55%, #c8b080); }
+.card.tc-archive:not(.locked) { --line: #d6aa50; box-shadow: 0 0 20px rgba(214, 170, 80, .25); }
+.card.tc-archive:not(.locked) .meta > b { font-family: "IM Fell English SC", Georgia, serif; letter-spacing: .1em; color: #fff0c0; text-shadow: 0 0 10px rgba(214, 170, 80, .8); }
+.tu-archive .tu-box b { font-family: "IM Fell English SC", Georgia, serif; }
+/* ================= ERR0R (GLITCH found) / CUBER STAGE (CUBER STAGE found) - on the shared court rules ================= */
+html[data-theme="error"] {
+  --bg: #050208; --panel: rgba(8, 3, 12, .96); --ink: #f0f0ff; --dim: #9a8aa8; --line: rgba(255, 42, 106, .65); --acc: #2affd0;
+  --card: rgba(16, 6, 22, .93); --btn: #1a0a20; --btn2: #3a1040; --sel: linear-gradient(180deg, #4a1050, #0a020e); --modal: rgba(8, 3, 12, .98); --scroll: #7a2a6a;
+  --rc1: #2a0a30; --rc2: #ff2a6a; --rc3: #ffffff; --rc4: #2affd0; --rcGlow: 255, 42, 106; --rcGem: #fff;
+  --rcTL: url(../img/err-tl.svg); --rcTR: url(../img/err-tr.svg); --rcBL: url(../img/err-bl.svg); --rcBR: url(../img/err-br.svg); --rcTitle: linear-gradient(180deg, #fff, #fff);
+}
+html[data-theme="error"] :is(#panel, #tabs .tab.active, #luckChip, .card.using) { animation: svSheen 2.2s steps(6) infinite; }
+html[data-theme="error"] .ph h2, html[data-theme="error"] #coinVal, html[data-theme="error"] #foot b, html[data-theme="error"] .card .meta > b { font-family: ui-monospace, Consolas, "Courier New", monospace; letter-spacing: .08em; }
+html[data-theme="error"] .ph h2 { filter: none; -webkit-text-fill-color: #fff; text-shadow: 2px 0 #ff2a6a, -2px 0 #2affd0; animation: errShake 2.6s steps(1) infinite; }
+html[data-theme="error"] #coinVal { -webkit-text-fill-color: #fff; text-shadow: 2px 0 rgba(255, 42, 106, .8), -2px 0 rgba(42, 255, 208, .8); animation: errShake 3.3s steps(1) infinite; }
+@keyframes errShake { 0%, 100% { transform: none; text-shadow: 2px 0 #ff2a6a, -2px 0 #2affd0; } 8% { transform: translate(-2px, 1px) skewX(-8deg); text-shadow: -4px 0 #ff2a6a, 4px 0 #2affd0; clip-path: inset(10% 0 40% 0); } 9% { transform: none; clip-path: none; } 52% { transform: translateX(3px); text-shadow: 5px 0 #ff2a6a, -3px 0 #2affd0; } 53% { transform: none; } }
+html[data-theme="error"] #themeFrame b { width: 9px; height: 15px; transform: none; border-radius: 0; background: #2affd0; box-shadow: 3px 0 #ff2a6a; animation: errBlink 1s steps(1) infinite; }
+@keyframes errBlink { 50% { opacity: 0; } }
+html[data-theme="error"] #themeFrame i { filter: none; animation: errCorner 3s steps(1) infinite; }
+@keyframes errCorner { 0%, 100% { transform: none; } 30% { transform: translate(3px, -2px); } 31% { transform: none; } 70% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); } 71% { transform: none; filter: none; } }
+html[data-theme="error"] body::after { content: ""; position: fixed; inset: 0; z-index: 4; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .12) 0 1px, transparent 1px 3px); animation: errFlick 4s steps(1) infinite; }
+@keyframes errFlick { 0%, 100% { opacity: 1; } 47% { opacity: .3; } 48% { opacity: 1; } }
+html[data-theme="error"] body.cut::after { display: none; }
+.amb-error { background: url(../img/err-tl.svg) left top / 28px no-repeat, url(../img/err-br.svg) right bottom / 28px no-repeat, repeating-linear-gradient(0deg, #1a0a20 0 3px, #050208 3px 6px); }
+.amb-error::before { left: 16px; top: 22px; width: 26px !important; height: 8px !important; border-radius: 0 !important; background: #ff2a6a; box-shadow: 4px 6px #2affd0, -2px 12px #fff; animation: errBlink .7s steps(1) infinite; }
+.card.tc-error:not(.locked) { --line: #ff2a6a; }
+.card.tc-error:not(.locked) .meta > b { font-family: ui-monospace, Consolas, monospace; color: #fff; text-shadow: 2px 0 #ff2a6a, -2px 0 #2affd0; animation: errShake 2.6s steps(1) infinite; }
+.tu-error { background: #050208 !important; }
+.tu-error .tu-rays { background: repeating-linear-gradient(0deg, rgba(255, 42, 106, .15) 0 2px, transparent 2px 6px); -webkit-mask: none; mask: none; animation: none; }
+.tu-error .tu-box b { font-family: ui-monospace, Consolas, monospace; background: none; -webkit-text-fill-color: #fff; filter: none; text-shadow: 4px 0 #ff2a6a, -4px 0 #2affd0; animation: tuTitle 1s .35s both, errShake 1.6s steps(1) infinite 1.4s; }
+.tu-error .tu-box b::after { display: none; }
+
+html[data-theme="cuber"] {
+  --bg: #0a0418; --panel: rgba(10, 4, 24, .95); --ink: #f4f0ff; --dim: #a096c8; --line: rgba(58, 240, 255, .65); --acc: #3af0ff;
+  --card: rgba(20, 8, 44, .92); --btn: #2a0a40; --btn2: #4a1470; --sel: linear-gradient(180deg, #5a1a88, #0a0418); --modal: rgba(10, 4, 24, .98); --scroll: #6a3ab0;
+  --rc1: #2a0a48; --rc2: #3af0ff; --rc3: #ffffff; --rc4: #ff3ad8; --rcGlow: 58, 240, 255; --rcGem: linear-gradient(180deg, #ffe04a, #ff3ad8);
+  --rcTL: url(../img/cub-tl.svg); --rcTR: url(../img/cub-tr.svg); --rcBL: url(../img/cub-bl.svg); --rcBR: url(../img/cub-br.svg); --rcTitle: linear-gradient(180deg, #fff, #3af0ff 50%, #ff3ad8);
+}
+html[data-theme="cuber"] :is(#panel, #tabs .tab.active, #luckChip, .card.using) { background: linear-gradient(115deg, #ff3ad8, #3af0ff 25%, #ffffff 32%, #3af0ff 40%, #ff3ad8 60%, #ffe04a 80%, #ff3ad8); background-size: 300% 100%; animation: svSheen 3.75s linear infinite; }
+html[data-theme="cuber"] .ph h2, html[data-theme="cuber"] #coinVal, html[data-theme="cuber"] #foot b, html[data-theme="cuber"] .card .meta > b { font-family: Audiowide, "Arial Black", sans-serif; letter-spacing: .08em; }
+html[data-theme="cuber"] .ph h2 { filter: drop-shadow(0 0 6px #ff3ad8) drop-shadow(0 0 2px #3af0ff); animation: cubFlick 5s steps(1) infinite; }
+@keyframes cubFlick { 0%, 100% { opacity: 1; } 61% { opacity: .55; } 62% { opacity: 1; } 64% { opacity: .7; } 65% { opacity: 1; } }
+html[data-theme="cuber"] #coinVal { color: #fff; text-shadow: 0 0 8px #3af0ff, 0 0 18px #ff3ad8; }
+/* the edge studs are little equaliser bars bouncing to 128 BPM */
+html[data-theme="cuber"] #themeFrame b { width: 14px; height: 14px; transform: none; border-radius: 0; background: linear-gradient(90deg, #ffe04a 0 3px, transparent 3px 5px, #ff3ad8 5px 8px, transparent 8px 10px, #3af0ff 10px 13px, transparent 13px); box-shadow: none; transform-origin: bottom; animation: cubEq .469s ease-out infinite; }
+@keyframes cubEq { 0% { transform: scaleY(1); } 100% { transform: scaleY(.3); } }
+html[data-theme="cuber"] body::after { content: ""; position: fixed; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 70px rgba(255, 58, 216, .35); animation: cubBeat .469s ease-out infinite; }
+@keyframes cubBeat { 0% { opacity: 1; } 100% { opacity: .25; } }
+html[data-theme="cuber"] body.cut::after { display: none; }
+.amb-cuber { background: url(../img/cub-tl.svg) left top / 28px no-repeat, url(../img/cub-br.svg) right bottom / 28px no-repeat, linear-gradient(180deg, #05021a 0 55%, #12042a 55%), radial-gradient(circle at 50% 55%, #ff6a8a 0 22%, transparent 23%); }
+.amb-cuber::before { left: 14px; top: 34px; width: 30px !important; height: 2px !important; border-radius: 0 !important; background: #3af0ff; box-shadow: 0 5px #ff3ad8, 0 10px #3af0ff; }
+.card.tc-cuber:not(.locked) { --line: #3af0ff; box-shadow: 0 0 22px rgba(255, 58, 216, .35); }
+.card.tc-cuber:not(.locked) .meta > b { font-family: Audiowide, sans-serif; color: #fff; text-shadow: 0 0 8px #3af0ff, 0 0 16px #ff3ad8; }
+:is(.tu-error, .tu-cuber) .tu-box::before, :is(.tu-error, .tu-cuber) .tu-box::after { content: ""; position: absolute; width: 80px; height: 80px; pointer-events: none; }
+.tu-error .tu-box::before { left: -22px; top: -22px; background: url(../img/err-tl.svg) center / contain no-repeat; }
+.tu-error .tu-box::after { right: -22px; bottom: -22px; background: url(../img/err-br.svg) center / contain no-repeat; }
+.tu-cuber .tu-box::before { left: -22px; top: -22px; background: url(../img/cub-tl.svg) center / contain no-repeat; }
+.tu-cuber .tu-box::after { right: -22px; bottom: -22px; background: url(../img/cub-br.svg) center / contain no-repeat; }
+.tu-cuber .tu-box b { font-family: Audiowide, sans-serif; }

@@ -522,7 +522,7 @@
           : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>`
             + (own ? `<button class="buy bevel small ready" data-themeuse="${t.id}"><span>적용</span></button>` : t.unlock ? '' : crystalBtn(t.price, `data-themebuy="${t.id}"`));
         // achievement themes say what unlocks them instead of a price
-        const tag = t.unlock ? (own ? `<span class="tprice tach">${G.icon('check', 11)} 업적 달성 · ${t.unlock.label}</span>` : `<span class="tprice tach lock">${G.icon('lock', 11)} 해금 조건 · ${t.unlock.label}</span>`)
+        const tag = t.unlock ? (own ? `<span class="tprice tach">${G.icon('check', 11)} 업적 달성 · ${t.unlock.label}</span>` : `<span class="tprice tach lock">${G.icon('lock', 11)} 해금 조건 · ${t.unlock.label}${t.unlock.progress ? (([a, b]) => ` (${G.fmtInt(a)} / ${G.fmtInt(b)})`)(t.unlock.progress(G.state)) : ''}</span>`)
           : `<span class="tprice">${t.price ? (own ? '보유 중' : `${G.icon('crystal', 11)} ${G.fmtInt(t.price)}`) : '기본 테마'}</span>`;
         return `<div class="card bevel themecard ${using ? 'using' : ''} ${t.unlock ? 'tachv tc-' + t.id : ''} ${t.unlock && !own ? 'locked' : ''}" style="--tbg:${bg};--tacc:${acc};--tbtn:${btn}">
           <div class="tswatch"><i></i><i></i><i></i><em class="amb-${t.ambient}"></em></div>

@@ -282,6 +282,10 @@
       const cx = s.codex[def.id] || (s.codex[def.id] = { n: 0, t: Date.now(), best: 0 });
       first = cx.n === 0; cx.n++; cx.best = Math.max(cx.best, reward);
       if (mut) { cx.mut = cx.mut || {}; cx.mut[mut.id] = (cx.mut[mut.id] || 0) + 1; }     // mutations found, per mineral
+      if (!def.special && !def.boss && !def.biome) {           // THE TRINITY: 1억+ finds in a row (any lesser find breaks the run)
+        const A = s.ach || (s.ach = { run8: 0, best8: 0 });
+        A.run8 = def.odds >= 1e8 ? (A.run8 || 0) + 1 : 0; A.best8 = Math.max(A.best8 || 0, A.run8);
+      }
       G.save();
       G.biome.onFind(def);                                    // two 1억+ in a row opens CUBER STAGE
     }
@@ -1118,6 +1122,370 @@
     g.restore();
     g.restore();
   }
+  /* ---------------- THE ARCHIVE (1억+ found 1000 times) ----------------
+     a library at night: tall bookcases down both sides (rendered once per screen size), a great open
+     tome behind the crystal - parchment, handwriting, an illuminated capital - whose page turns every
+     few seconds, letters of old alphabets lifting off it and drifting up, two candles guttering below */
+  let shelfCv = null, shelfKey = '';
+  const SPINES = ['#5a1a14', '#2a3a1a', '#1a2a4a', '#4a3010', '#3a1a3a', '#6a4a1a', '#2a1a10', '#4a2420'];
+  function shelfLayer() {
+    const key = W + 'x' + H + '@' + DPR;
+    if (shelfCv && shelfKey === key) return shelfCv;
+    const cv = document.createElement('canvas'); cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    const x = cv.getContext('2d'); x.scale(DPR, DPR);
+    const h = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
+    const caseW = Math.max(70, W * 0.24), shelfH = Math.max(70, H * 0.13);
+    for (const side of [0, 1]) {
+      const x0 = side ? W - caseW : 0;
+      x.fillStyle = '#1a0e06'; x.fillRect(x0, 0, caseW, H);
+      for (let r = 0, y = shelfH * 0.6; y < H; r++, y += shelfH) {
+        let bx = x0 + 6;
+        while (bx < x0 + caseW - 8) {
+          const i = bx * 7 + r * 13, bw = 6 + h(i, 1) * 9, bh = shelfH * (0.62 + h(i, 2) * 0.3), lean = h(i, 3) < 0.08;
+          x.save(); x.translate(bx, y); if (lean) x.rotate(-0.18);
+          const col = SPINES[Math.floor(h(i, 4) * SPINES.length)];
+          const sg = x.createLinearGradient(0, 0, bw, 0); sg.addColorStop(0, '#000'); sg.addColorStop(0.3, col); sg.addColorStop(0.7, col); sg.addColorStop(1, '#000');
+          x.fillStyle = sg; x.fillRect(0, -bh, bw, bh);
+          x.fillStyle = 'rgba(214,170,80,.75)'; x.fillRect(1, -bh + 5, bw - 2, 1.2); x.fillRect(1, -bh + 8, bw - 2, 0.8); x.fillRect(1, -8, bw - 2, 1);
+          if (bw > 10) { x.fillStyle = 'rgba(214,170,80,.5)'; x.fillRect(bw / 2 - 1, -bh * 0.6, 2, bh * 0.2); }
+          x.restore();
+          bx += bw + (lean ? 4 : 0.6);
+        }
+        const wg = x.createLinearGradient(0, y, 0, y + 9); wg.addColorStop(0, '#5a3618'); wg.addColorStop(1, '#1e1006');
+        x.fillStyle = wg; x.fillRect(x0, y, caseW, 9);
+      }
+      x.fillStyle = '#2a1608'; x.fillRect(side ? x0 : x0 + caseW - 7, 0, 7, H);           // the case's upright
+      const fade = x.createLinearGradient(side ? x0 : x0 + caseW, 0, side ? x0 + caseW : x0, 0);
+      fade.addColorStop(0, 'rgba(8,4,1,.85)'); fade.addColorStop(1, 'rgba(8,4,1,.15)');
+      x.fillStyle = fade; x.fillRect(x0, 0, caseW, H);
+    }
+    shelfCv = cv; shelfKey = key; return cv;
+  }
+  const RUNES = 'ΑΒΓΔΘΛΞΠΣΦΨΩᚠᚢᚦᚨᚱᚲᚷᚹאבגדℵ✦';
+  function scribble(x0, y0, w, lines, seed, col) {
+    g.strokeStyle = col; g.lineWidth = 0.9; g.beginPath();
+    for (let l = 0; l < lines; l++) {
+      const y = y0 + l * 7.5, len = w * (l === lines - 1 ? 0.5 : 0.82 + 0.18 * Math.abs(Math.sin(seed + l * 2.1)));
+      g.moveTo(x0, y);
+      for (let x = 0; x < len; x += 3) g.lineTo(x0 + x, y + Math.sin((x + seed * 10 + l * 7) * 0.9) * 1.2);
+    }
+    g.stroke();
+  }
+  function archive(t, fr) {
+    const c = center(), R = crystalR(), k = G.fxK();
+    g.save();
+    g.drawImage(shelfLayer(), 0, 0, W, H);
+    // candlelight
+    const cands = [[W * 0.12, H * 0.9], [W * 0.88, H * 0.9]];
+    for (const [cx, cy] of cands) {
+      const fl = 0.85 + 0.15 * Math.sin(t * 13 + cx) * Math.sin(t * 7.3 + cy);
+      const lg = g.createRadialGradient(cx, cy - 30, 0, cx, cy - 30, H * 0.45);
+      lg.addColorStop(0, `rgba(255,170,70,${0.3 * fl})`); lg.addColorStop(1, 'rgba(255,140,40,0)');
+      g.fillStyle = lg; g.fillRect(0, 0, W, H);
+    }
+    // the tome
+    const bw = Math.min(W * 0.94, R * 4.4), bh = bw * 0.6, pw = bw / 2;
+    g.translate(c.x, c.y + R * 0.15);
+    g.fillStyle = '#2a1206'; g.beginPath(); g.moveTo(-pw - 10, -bh / 2 + 8); g.lineTo(pw + 10, -bh / 2 + 8); g.lineTo(pw + 10, bh / 2 + 12); g.lineTo(-pw - 10, bh / 2 + 12); g.closePath(); g.fill();   // cover
+    const page = (dir, w, shade) => {
+      g.beginPath(); g.moveTo(0, -bh / 2 + 6);
+      g.quadraticCurveTo(dir * w * 0.5, -bh / 2 - 6, dir * w, -bh / 2); g.lineTo(dir * w, bh / 2); g.quadraticCurveTo(dir * w * 0.5, bh / 2 - 8, 0, bh / 2 + 4); g.closePath();
+      const pg = g.createLinearGradient(0, 0, dir * w, 0);
+      pg.addColorStop(0, `rgba(${120 - shade},${92 - shade},${48 - shade},.92)`); pg.addColorStop(0.18, `rgba(${226 - shade},${206 - shade},${158 - shade},.92)`); pg.addColorStop(1, `rgba(${200 - shade},${174 - shade},${120 - shade},.92)`);
+      g.fillStyle = pg; g.fill();
+    };
+    page(-1, pw, 0); page(1, pw, 0);
+    // writing on both pages, an illuminated capital on the left
+    const ink = 'rgba(70,40,12,.55)', m = pw * 0.14, lines = Math.max(6, Math.floor((bh - 40) / 7.5));
+    const capS = Math.min(34, pw * 0.2);
+    g.fillStyle = 'rgba(150,20,20,.85)'; g.fillRect(-pw + m, -bh / 2 + 18, capS, capS);
+    g.strokeStyle = 'rgba(214,170,80,.95)'; g.lineWidth = 1.5; g.strokeRect(-pw + m, -bh / 2 + 18, capS, capS);
+    g.fillStyle = '#ffd98a'; g.font = `700 ${capS * 0.8}px "IM Fell English SC", Georgia, serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('A', -pw + m + capS / 2, -bh / 2 + 18 + capS / 2 + 1);
+    scribble(-pw + m + capS + 6, -bh / 2 + 22, pw - m * 2 - capS - 6, Math.ceil(capS / 7.5), 1, ink);
+    scribble(-pw + m, -bh / 2 + 22 + capS + 6, pw - m * 2, lines - Math.ceil(capS / 7.5) - 1, 2, ink);
+    scribble(m * 0.8, -bh / 2 + 22, pw - m * 1.8, lines, 3, ink);
+    // a page turning every 7s, from right to left
+    const pc = t % 7;
+    if (pc < 1.3) {
+      const p = pc / 1.3, e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, cs = Math.cos(e * Math.PI), w = pw * Math.abs(cs), dir = cs >= 0 ? 1 : -1;
+      g.save(); page(dir, Math.max(2, w), Math.round(70 * (1 - Math.abs(cs))));
+      g.strokeStyle = 'rgba(80,50,15,.4)'; g.lineWidth = 1; g.stroke(); g.restore();
+    }
+    // the spine's shadow
+    const sp = g.createLinearGradient(-14, 0, 14, 0); sp.addColorStop(0, 'rgba(40,20,5,0)'); sp.addColorStop(0.5, 'rgba(40,20,5,.55)'); sp.addColorStop(1, 'rgba(40,20,5,0)');
+    g.fillStyle = sp; g.fillRect(-14, -bh / 2, 28, bh);
+    g.restore(); g.save();                         // out of the tome's translate
+    // letters lifting off the pages
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const n = Math.round(26 * Math.max(0.5, k));
+    for (let i = 0; i < n; i++) {
+      const life = fr(t * (0.06 + (i % 5) * 0.012) + i * 0.137), x = c.x + (fr(i * 0.618) - 0.5) * bw * 0.9 + Math.sin(t * 0.7 + i) * 20 * life, y = c.y - life * H * 0.55;
+      const a = Math.sin(life * Math.PI) * 0.85;
+      g.save(); g.translate(x, y); g.rotate(Math.sin(t + i) * 0.5 * life); g.globalAlpha = a;
+      g.shadowColor = '#ffb84a'; g.shadowBlur = 10; g.fillStyle = '#ffe2a0'; g.font = `${14 + (i % 4) * 4}px "IM Fell English SC", Georgia, serif`;
+      g.fillText(RUNES[(i * 7) % RUNES.length], 0, 0); g.restore();
+    }
+    // dust in the candlelight
+    for (let i = 0, m2 = Math.round(40 * k); i < m2; i++) {
+      const x = fr(i * 0.618 + t * 0.003) * W, y = fr(i * 0.382 + Math.sin(t * 0.2 + i) * 0.02) * H, tw = 0.3 + 0.7 * Math.pow(0.5 + 0.5 * Math.sin(t * 1.5 + i * 2), 3);
+      g.fillStyle = `rgba(255,220,160,${0.35 * tw})`; g.fillRect(x, y, 1.6, 1.6);
+    }
+    // the candles themselves
+    for (const [cx, cy] of cands) {
+      const ch = Math.max(46, H * 0.08), fl = Math.sin(t * 13 + cx) * Math.sin(t * 7.3 + cy);
+      const bg2 = g.createLinearGradient(cx - 8, 0, cx + 8, 0); bg2.addColorStop(0, '#b8a078'); bg2.addColorStop(0.5, '#f2e6c8'); bg2.addColorStop(1, '#a08860');
+      g.fillStyle = bg2; g.fillRect(cx - 8, cy - ch, 16, ch);
+      g.fillStyle = '#3a2410'; g.fillRect(cx - 14, cy, 28, 5);
+      g.fillStyle = '#1a1006'; g.fillRect(cx - 0.8, cy - ch - 5, 1.6, 6);
+      g.save(); g.translate(cx + fl * 1.5, cy - ch - 6); g.globalCompositeOperation = 'lighter';
+      const fh = 18 + fl * 3, flg = g.createRadialGradient(0, -fh * 0.35, 0, 0, -fh * 0.35, fh);
+      flg.addColorStop(0, 'rgba(255,250,220,1)'); flg.addColorStop(0.35, 'rgba(255,190,80,.9)'); flg.addColorStop(1, 'rgba(255,100,20,0)');
+      g.fillStyle = flg; g.beginPath(); g.moveTo(0, -fh); g.quadraticCurveTo(7, -fh * 0.3, 0, 2); g.quadraticCurveTo(-7, -fh * 0.3, 0, -fh); g.fill();
+      g.restore();
+    }
+    g.restore();
+  }
+
+  /* ---------------- THE SYMPHONY (three 1억+ finds in a row) ----------------
+     black and white sheet music: staves drifting across the dark like pages in a draught, notes riding
+     them; a circular stave wound round the crystal with notes turning on it; notes floating up and away;
+     a piano along the bottom playing itself; a pulse on every beat; notes bursting from where you tap */
+  const MFONT = '"Noto Music", "Segoe UI Symbol", "Apple Symbols", serif';
+  const NOTES = ['♩', '♪', '♫', '♬', '♪', '♫', '♯', '♭'];
+  let mfontAsked = false;
+  function symphony(t, fr) {
+    if (!mfontAsked && document.fonts) { mfontAsked = true; document.fonts.load('20px "Noto Music"', '♫𝄞').catch(() => {}); }   // canvas text alone never triggers the webfont
+    const c = center(), R = crystalR(), k = G.fxK(), bpm = 112, beat = t * bpm / 60, bp = beat % 1;
+    g.save();
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    // staves across the screen, each a slightly different speed and wave
+    const systems = 4, gap = Math.max(6, H * 0.008);
+    for (let s = 0; s < systems; s++) {
+      const y0 = H * (0.14 + s * 0.22), amp = 4 + s, ph = s * 1.7, spd = 22 + s * 7;
+      const yAt = x => y0 + Math.sin(x * 0.006 + t * 0.6 + ph) * amp;
+      g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 1;
+      for (let l = 0; l < 5; l++) { g.beginPath(); for (let x = 0; x <= W; x += 20) { const y = yAt(x) + (l - 2) * gap; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+      // clef at the left, notes scrolling past
+      g.fillStyle = 'rgba(255,255,255,.35)'; g.font = `${gap * 6.5}px ${MFONT}`; g.fillText('𝄞', 18, yAt(18) + gap * 0.3);
+      const sp = 46, n = Math.ceil(W / sp) + 2;
+      for (let i = 0; i < n; i++) {
+        const idx = i + Math.floor(t * spd / sp), x = ((i * sp - (t * spd) % sp) + W) % (W + sp) + 30;
+        if (x > W - 4) continue;
+        const pitch = Math.round((fr(idx * 0.618 + s * 0.31) - 0.5) * 8), y = yAt(x) - pitch * gap / 2;
+        const glyph = NOTES[Math.floor(fr(idx * 0.377 + s) * 6)], near = Math.hypot(x - c.x, y - c.y) < R * 1.4;
+        g.fillStyle = `rgba(255,255,255,${near ? 0.12 : 0.55})`; g.font = `${gap * 4.2}px ${MFONT}`; g.fillText(glyph, x, y);
+        if (idx % 7 === 0) { g.strokeStyle = 'rgba(255,255,255,.22)'; g.beginPath(); g.moveTo(x + 14, yAt(x + 14) - gap * 2); g.lineTo(x + 14, yAt(x + 14) + gap * 2); g.stroke(); }   // bar line
+      }
+    }
+    // the circular stave around the crystal
+    g.save(); g.translate(c.x, c.y);
+    const r0 = R * 1.5, rg = Math.max(5, R * 0.045), pulse = Math.exp(-bp * 6);
+    g.strokeStyle = `rgba(255,255,255,${0.35 + 0.35 * pulse})`; g.lineWidth = 1 + pulse;
+    for (let l = 0; l < 5; l++) { g.beginPath(); g.arc(0, 0, r0 + l * rg, 0, TAU); g.stroke(); }
+    g.save(); g.rotate(t * 0.18);
+    for (let i = 0; i < 24; i++) {
+      const a = i / 24 * TAU, line = Math.floor(fr(i * 0.618) * 9) / 2, rr = r0 + line * rg;
+      g.save(); g.translate(Math.cos(a) * rr, Math.sin(a) * rr); g.rotate(a + Math.PI / 2);
+      g.fillStyle = 'rgba(255,255,255,.9)'; g.font = `${rg * 4}px ${MFONT}`; g.fillText(NOTES[i % 6], 0, 0); g.restore();
+      if (i % 6 === 5) { g.strokeStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.moveTo(Math.cos(a + 0.12) * r0, Math.sin(a + 0.12) * r0); g.lineTo(Math.cos(a + 0.12) * (r0 + 4 * rg), Math.sin(a + 0.12) * (r0 + 4 * rg)); g.stroke(); }
+    }
+    g.restore();
+    // a beat ring
+    g.strokeStyle = `rgba(255,255,255,${0.5 * pulse})`; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, r0 + 4 * rg + bp * R * 0.8, 0, TAU); g.stroke();
+    g.restore();
+    // notes floating up and away
+    const n = Math.round(30 * Math.max(0.5, k));
+    for (let i = 0; i < n; i++) {
+      const sp = 18 + (i % 6) * 6, y = H + 30 - fr(t * sp / (H + 60) + i * 0.29) * (H + 60), x = fr(i * 0.618) * W + Math.sin(t * 0.8 + i * 1.3) * 26;
+      const life = Math.min(1, (H - y) / (H * 0.2) + 0.1) * Math.min(1, y / (H * 0.25)), sz = 14 + (i % 4) * 6;
+      g.save(); g.translate(x, y); g.rotate(Math.sin(t * 1.2 + i) * 0.4); g.globalAlpha = Math.max(0, life) * 0.75;
+      g.shadowColor = '#fff'; g.shadowBlur = 8; g.fillStyle = '#fff'; g.font = `${sz}px ${MFONT}`; g.fillText(NOTES[i % NOTES.length], 0, 0);
+      g.restore();
+    }
+    // a burst of notes from your last tap
+    if (lookAt) {
+      const age = (performance.now() - lookAt.at) / 1000;
+      if (age < 1.4) for (let i = 0; i < 7; i++) {
+        const a = -Math.PI / 2 + (i - 3) * 0.32, d = 20 + age * 120;
+        g.save(); g.globalAlpha = 1 - age / 1.4; g.fillStyle = '#fff'; g.shadowColor = '#fff'; g.shadowBlur = 10; g.font = `${18 + (i % 3) * 5}px ${MFONT}`;
+        g.fillText(NOTES[i % 6], lookAt.x + Math.cos(a) * d, lookAt.y + Math.sin(a) * d - age * 30); g.restore();
+      }
+    }
+    // the piano along the bottom, playing itself on the beat
+    const kh = Math.max(34, H * 0.06), ky = H - kh, keys = W > 700 ? 28 : 21, kw = W / keys, now = Math.floor(beat * 2);
+    const down = new Set([0, 1, 2].map(j => Math.floor(fr(Math.sin((now - j) * 12.9898) * 43758.5453) * keys)));
+    for (let i = 0; i < keys; i++) {
+      const pressed = down.has(i) && bp * 2 % 1 < 0.6;
+      g.fillStyle = pressed ? '#bdbdbd' : '#f2f2f2'; g.fillRect(i * kw + 0.5, ky + (pressed ? 2 : 0), kw - 1, kh);
+      if (pressed) { g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(i * kw, ky - 30, kw, 30); }
+    }
+    for (let i = 0; i < keys - 1; i++) { const m = i % 7; if (m === 2 || m === 6) continue; g.fillStyle = '#0a0a0a'; g.fillRect((i + 1) * kw - kw * 0.3, ky, kw * 0.6, kh * 0.6); }
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, ky, W, 3);
+    g.restore();
+  }
+
+  /* ---------------- ERR0R (the GLITCH biome was found) ----------------
+     the world failing to render: columns of hex raining down, macroblocks of flat colour smearing in,
+     pixel-sorted streaks dripping, a huge ERR0R behind the crystal split into RGB, XP error windows
+     cascading in, slices of the frame torn sideways and the odd inverted flash */
+  const ERRS = ['error.exe', 'crystal.dll', 'C:\\AMETHYST', 'luck.sys', '0xC0000005', 'kernel32'];
+  const EMSG = ['예상치 못한 오류가 발생했습니다', 'The crystal has stopped responding', '0x00000000 메모리를 참조했습니다', 'ERR_CRYSTAL_NOT_FOUND', '이 프로그램은 잘못된 작업을 수행했습니다', 'stack overflow at line ∞'];
+  function errWindow(x, y, w, seed, a) {
+    const h = w * 0.42;
+    g.save(); g.globalAlpha = a;
+    g.fillStyle = '#d4d0c8'; g.fillRect(x, y, w, h);
+    const tb = g.createLinearGradient(x, 0, x + w, 0); tb.addColorStop(0, '#0a246a'); tb.addColorStop(1, '#a6caf0');
+    g.fillStyle = tb; g.fillRect(x + 3, y + 3, w - 6, 16);
+    g.fillStyle = '#fff'; g.font = '700 10px Tahoma, Verdana, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    g.fillText(ERRS[seed % ERRS.length], x + 8, y + 11);
+    g.fillStyle = '#d4d0c8'; g.fillRect(x + w - 18, y + 5, 12, 12); g.fillStyle = '#000'; g.fillText('×', x + w - 15, y + 11);
+    g.fillStyle = '#e81123'; g.beginPath(); g.arc(x + 22, y + 38, 10, 0, TAU); g.fill();
+    g.fillStyle = '#fff'; g.font = '700 13px Tahoma, sans-serif'; g.fillText('×', x + 18, y + 38);
+    g.fillStyle = '#000'; g.font = '11px Tahoma, "Malgun Gothic", sans-serif'; g.fillText(EMSG[seed % EMSG.length], x + 40, y + 38, w - 48);
+    g.fillStyle = '#d4d0c8'; g.strokeStyle = '#000'; g.lineWidth = 1; g.fillRect(x + w / 2 - 26, y + h - 22, 52, 16); g.strokeRect(x + w / 2 - 26, y + h - 22, 52, 16);
+    g.fillStyle = '#000'; g.textAlign = 'center'; g.fillText('확인', x + w / 2, y + h - 14);
+    g.strokeStyle = '#fff'; g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y); g.lineTo(x + w, y); g.stroke();
+    g.strokeStyle = '#404040'; g.beginPath(); g.moveTo(x + w, y); g.lineTo(x + w, y + h); g.lineTo(x, y + h); g.stroke();
+    g.restore();
+  }
+  function errorTheme(t, fr) {
+    const c = center(), R = crystalR(), k = G.fxK(), step = Math.floor(t * 10), rnd = n => fr(Math.sin(n * 12.9898 + step * 78.233) * 43758.5453);
+    g.save();
+    // hex rain
+    g.font = '11px ui-monospace, Consolas, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const cols = Math.floor(W / 16 * Math.max(0.5, k));
+    for (let i = 0; i < cols; i++) {
+      const x = (i + 0.5) * W / cols, sp = 40 + (i % 7) * 18, head = (t * sp + i * 97) % (H + 200) - 100;
+      for (let j = 0; j < 12; j++) {
+        const y = head - j * 13; if (y < -10 || y > H + 10) continue;
+        const ch = '0123456789ABCDEF'[Math.floor(fr(Math.sin(i * 7 + j * 3 + Math.floor(t * 6)) * 999) * 16)];
+        g.fillStyle = j === 0 ? 'rgba(255,255,255,.75)' : i % 3 === 0 ? `rgba(42,255,208,${0.35 - j * 0.028})` : `rgba(255,42,106,${0.3 - j * 0.024})`;
+        g.fillText(ch, x, y);
+      }
+    }
+    // macroblocks: square tiles of flat colour flickering in on a coarse grid
+    const bs = 24;
+    for (let i = 0; i < 18; i++) {
+      if (rnd(i) < 0.55) continue;
+      const bx = Math.floor(rnd(i + 30) * W / bs) * bs, by = Math.floor(rnd(i + 60) * H / bs) * bs, bw = bs * (1 + Math.floor(rnd(i + 90) * 4)), bh = bs * (1 + Math.floor(rnd(i + 120) * 2));
+      g.fillStyle = ['rgba(255,42,106,.22)', 'rgba(42,255,208,.18)', 'rgba(140,90,255,.2)', 'rgba(220,255,40,.14)', 'rgba(0,0,0,.6)'][i % 5];
+      g.fillRect(bx, by, bw, bh);
+    }
+    // pixel-sorted drips
+    for (let i = 0; i < 10; i++) {
+      const x = fr(i * 0.618 + Math.floor(t / 2) * 0.13) * W, y0 = fr(i * 0.371) * H * 0.6, len = 40 + fr(i * 0.77) * H * 0.35, gl = g.createLinearGradient(0, y0, 0, y0 + len);
+      gl.addColorStop(0, ['rgba(255,42,106,.5)', 'rgba(42,255,208,.45)', 'rgba(255,255,255,.4)'][i % 3]); gl.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gl; g.fillRect(x, y0, 2 + (i % 3) * 2, len);
+    }
+    // the huge ERR0R behind the crystal, split into red / cyan and jittering
+    const fs = Math.min(W * 0.26, R * 1.3), jx = rnd(200) < 0.3 ? (rnd(201) - 0.5) * 20 : 0;
+    g.font = `900 ${fs}px ui-monospace, Consolas, monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.globalCompositeOperation = 'lighter';
+    g.fillStyle = 'rgba(255,0,60,.33)'; g.fillText('ERR0R', c.x - 5 + jx, c.y);
+    g.fillStyle = 'rgba(0,255,220,.3)'; g.fillText('ERR0R', c.x + 5 - jx, c.y + 2);
+    g.globalCompositeOperation = 'source-over';
+    g.fillStyle = 'rgba(255,255,255,.08)'; g.fillText('ERR0R', c.x, c.y);
+    // XP error windows cascading in, a new stack every 6s
+    const sc = t % 6, seedS = Math.floor(t / 6);
+    if (sc < 4.5) {
+      const n = Math.min(7, Math.floor(sc * 3) + 1), w = Math.min(250, W * 0.62), x0 = fr(seedS * 0.618) * (W - w - 60) + 10, y0 = H * (0.12 + fr(seedS * 0.37) * 0.35);
+      for (let i = 0; i < n; i++) errWindow(x0 + i * 14, y0 + i * 14, w, seedS + i, Math.min(1, (4.5 - sc) * 2) * 0.92);
+    }
+    g.restore();
+    // torn slices of the frame
+    if (rnd(300) < 0.25 * k + 0.05) {
+      const cv = g.canvas, dpr = cv.width / W;
+      for (let i = 0; i < 3; i++) {
+        const y = rnd(i + 302) * H, h = 4 + rnd(i + 305) * 34, dx = (rnd(i + 308) - 0.5) * 70;
+        try { g.drawImage(cv, 0, y * dpr, cv.width, h * dpr, dx, y, W, h); } catch (e) {}
+      }
+    }
+    // the rare inverted flash
+    if (!G.opt('lessFlash') && rnd(400) < 0.012) { g.save(); g.globalCompositeOperation = 'difference'; g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.restore(); }
+    // scanlines
+    g.fillStyle = 'rgba(0,0,0,.18)'; for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+  }
+
+  /* ---------------- CUBER STAGE (the CUBER STAGE biome was found) ----------------
+     a synthwave concert: a huge striped neon sun behind the crystal, mountains in wireframe on the
+     horizon, the grid floor rushing in, moving stage lights from above and a fan of lasers from below,
+     an equaliser along the horizon, a tesseract turning in four dimensions on each side, 128 BPM */
+  function tesseract(cx, cy, s, t, col) {
+    const V = [];
+    for (let i = 0; i < 16; i++) V.push([(i & 1) ? 1 : -1, (i & 2) ? 1 : -1, (i & 4) ? 1 : -1, (i & 8) ? 1 : -1]);
+    const a = t * 0.6, b = t * 0.45, P = V.map(([x, y, z, w]) => {
+      let x1 = x * Math.cos(a) - w * Math.sin(a), w1 = x * Math.sin(a) + w * Math.cos(a);      // x-w rotation
+      let y1 = y * Math.cos(b) - z * Math.sin(b), z1 = y * Math.sin(b) + z * Math.cos(b);      // y-z rotation
+      const f4 = 1 / (2.6 - w1), x3 = x1 * f4, y3 = y1 * f4, z3 = z1 * f4;
+      const rx = x3 * Math.cos(t * 0.3) - z3 * Math.sin(t * 0.3), rz = x3 * Math.sin(t * 0.3) + z3 * Math.cos(t * 0.3), f3 = 1 / (2.4 - rz);
+      return [cx + rx * f3 * s, cy + y3 * f3 * s];
+    });
+    g.strokeStyle = col; g.lineWidth = 1.4; g.beginPath();
+    for (let i = 0; i < 16; i++) for (let d = 0; d < 4; d++) { const j = i ^ (1 << d); if (j > i) { g.moveTo(P[i][0], P[i][1]); g.lineTo(P[j][0], P[j][1]); } }
+    g.stroke();
+  }
+  function cuberTheme(t, fr) {
+    const c = center(), R = crystalR(), k = G.fxK(), beat = t * 128 / 60, bp = beat % 1, kick = Math.exp(-bp * 5), bar4 = Math.floor(beat) % 4 === 0;
+    const hz = H * 0.66;
+    g.save();
+    // night sky
+    const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, '#05021a'); sky.addColorStop(0.7, '#2a0a48'); sky.addColorStop(1, '#5a1060');
+    g.globalAlpha = 0.85; g.fillStyle = sky; g.fillRect(0, 0, W, hz); g.globalAlpha = 1;
+    for (let i = 0; i < 50; i++) { const x = fr(i * 0.618) * W, y = fr(i * 0.382) * hz * 0.8, tw = 0.4 + 0.6 * Math.abs(Math.sin(t * 2 + i)); g.fillStyle = `rgba(255,255,255,${tw * 0.6})`; g.fillRect(x, y, 1.5, 1.5); }
+    // the striped sun, crystal sitting in it
+    const sr = Math.min(W * 0.44, R * 2.1), sy = c.y;
+    g.save(); g.beginPath(); g.arc(c.x, sy, sr, 0, TAU); g.clip();
+    const sg = g.createLinearGradient(0, sy - sr, 0, sy + sr); sg.addColorStop(0, '#ffe04a'); sg.addColorStop(0.45, '#ff6a8a'); sg.addColorStop(1, '#c02aff');
+    g.globalAlpha = 0.8 + 0.2 * kick; g.fillStyle = sg; g.fillRect(c.x - sr, sy - sr, sr * 2, sr * 2); g.globalAlpha = 1;
+    g.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 9; i++) { const p = fr(i / 9 + t * 0.08), y = sy + p * sr, hgt = 2 + p * sr * 0.09; g.fillRect(c.x - sr, y, sr * 2, hgt); }
+    g.restore();
+    g.save(); g.globalCompositeOperation = 'lighter';
+    const halo = g.createRadialGradient(c.x, sy, sr * 0.9, c.x, sy, sr * 1.6); halo.addColorStop(0, `rgba(255,80,200,${0.3 + 0.2 * kick})`); halo.addColorStop(1, 'rgba(255,80,200,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(c.x, sy, sr * 1.6, 0, TAU); g.fill(); g.restore();
+    // wireframe mountains on the horizon
+    g.strokeStyle = 'rgba(58,240,255,.7)'; g.lineWidth = 1.3; g.fillStyle = '#0a0418';
+    g.beginPath(); g.moveTo(0, hz);
+    for (let x = 0; x <= W; x += W / 16) { const m = Math.abs(Math.sin(x * 0.011) * 0.6 + Math.sin(x * 0.027 + 1) * 0.4); g.lineTo(x, hz - m * H * 0.09); }
+    g.lineTo(W, hz); g.closePath(); g.fill(); g.stroke();
+    // floor: dark, the grid rushing toward you
+    const fl = g.createLinearGradient(0, hz, 0, H); fl.addColorStop(0, '#12042a'); fl.addColorStop(1, '#04010c');
+    g.fillStyle = fl; g.fillRect(0, hz, W, H - hz);
+    g.globalCompositeOperation = 'lighter'; g.lineWidth = 1.2;
+    for (let i = 0; i < 16; i++) { const q = fr(i / 16 + t * 0.32), y = hz + (H - hz) * q * q; g.strokeStyle = `rgba(255,58,216,${0.1 + q * 0.6})`; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    for (let i = -16; i <= 16; i++) { g.strokeStyle = `rgba(58,240,255,${0.35 - Math.abs(i) * 0.016})`; g.beginPath(); g.moveTo(W / 2 + i * W * 0.02, hz); g.lineTo(W / 2 + i * W * 0.24, H); g.stroke(); }
+    // equaliser on the horizon
+    const bars = 32, bw = W / bars;
+    for (let i = 0; i < bars; i++) {
+      const v = Math.abs(Math.sin(t * 3.1 + i * 0.7) * Math.sin(t * 1.7 + i * 0.31)) * 0.7 + kick * 0.3 * Math.abs(Math.sin(i)), h = v * H * 0.12;
+      const eg = g.createLinearGradient(0, hz - h, 0, hz); eg.addColorStop(0, 'rgba(255,224,74,.75)'); eg.addColorStop(1, 'rgba(255,58,216,.2)');
+      g.fillStyle = eg; g.fillRect(i * bw + 1, hz - h, bw - 2, h);
+    }
+    // stage lights sweeping from above
+    for (let i = 0; i < 4; i++) {
+      const ox = W * (0.1 + i * 0.27), a = Math.PI / 2 + Math.sin(t * (0.6 + i * 0.13) + i * 1.7) * 0.55, len = H * 0.9, sp = 0.13;
+      const lg = g.createLinearGradient(ox, 0, ox + Math.cos(a) * len, Math.sin(a) * len);
+      const col = i % 2 ? '58,240,255' : '255,58,216'; lg.addColorStop(0, `rgba(${col},${0.32 + 0.2 * kick})`); lg.addColorStop(1, `rgba(${col},0)`);
+      g.fillStyle = lg; g.beginPath(); g.moveTo(ox, -10); g.lineTo(ox + Math.cos(a - sp) * len, Math.sin(a - sp) * len); g.lineTo(ox + Math.cos(a + sp) * len, Math.sin(a + sp) * len); g.closePath(); g.fill();
+    }
+    // lasers fanning up from the stage floor
+    const lx = W / 2, ly = H;
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI / 2 + (i - 4) * 0.16 + Math.sin(t * 1.3) * 0.3;
+      g.strokeStyle = i % 2 ? `rgba(80,255,120,${0.35 + 0.4 * kick})` : `rgba(255,58,216,${0.3 + 0.4 * kick})`; g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + Math.cos(a) * H, ly + Math.sin(a) * H); g.stroke();
+    }
+    // tesseracts either side
+    const ts = Math.min(W, H) * 0.13;
+    tesseract(W * 0.14, H * 0.3, ts, t, 'rgba(58,240,255,.85)');
+    tesseract(W * 0.86, H * 0.3, ts, t + 2, 'rgba(255,58,216,.85)');
+    // strobe on the downbeat of every bar
+    if (bar4 && bp < 0.08) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(0, 0, W, H); }
+    g.restore();
+    g.fillStyle = 'rgba(0,0,0,.08)'; for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+  }
+
   /* the drifting effect behind the crystal, one per theme (js/data/themes.js). Positions are pure
      functions of time + index, so there's no particle state to keep. */
   function ambient(kind, t, h) {
@@ -1129,6 +1497,14 @@
       empyreanFront(t, royal(t, ROYAL.empyrean, fr));
     } else if (kind === 'verdant') {
       verdantFront(t, royal(t, ROYAL.verdant, fr), fr);
+    } else if (kind === 'error') {
+      errorTheme(t, fr);
+    } else if (kind === 'cuber') {
+      cuberTheme(t, fr);
+    } else if (kind === 'archive') {
+      archive(t, fr);
+    } else if (kind === 'symphony') {
+      symphony(t, fr);
     } else if (kind === 'unseen') {
       unseen(t, fr);
     } else if (kind === 'origin') {
@@ -1374,7 +1750,7 @@
     const sk = shake * G.opt('shake');                                // 설정 - 화면 흔들림
     if (sk > 0) g.translate((Math.random() - 0.5) * sk * 10, (Math.random() - 0.5) * sk * 10);
     drawBackground(t);
-    const quietSky = G.activeTheme && G.activeTheme().ambient === 'unseen';     // THE UNSEEN keeps its dark: no weather painted over it (the weather itself still runs)
+    const quietSky = G.activeTheme && ['unseen', 'symphony', 'error', 'cuber'].includes(G.activeTheme().ambient);     // THE UNSEEN keeps its dark: no weather painted over it (the weather itself still runs)
     if (!quietSky) G.weather.drawBack(g, W, H, t);
     G.biome.drawBack(g, W, H, t);                                    // a rare biome paints over the sky
     if (G.boss && G.boss.active) G.boss.draw(g, W, H, now);          // a boss fight replaces the crystal
