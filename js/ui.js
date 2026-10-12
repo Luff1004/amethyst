@@ -514,17 +514,20 @@
       toggle('lessFlash', '번쩍임 줄이기', '화면 전체가 하얗게 번쩍이는 효과를 크게 줄입니다 (눈이 피로하거나 빛에 민감할 때)') +
       toggle('floatText', '떠오르는 숫자', '채굴할 때 크리스탈 위로 떠오르는 +코인 · CRIT 글자') +
       seg('numFmt', '숫자 표기', `예시: ${[['short', '1.23M'], ['kr', '123만'], ['full', '1,230,000']].map(([, e]) => e).join(' / ')}`, [['short', '1.23M'], ['kr', '123만'], ['full', '전체 숫자']]);
-    else if (setSec === 'theme') body = `<div class="sub">게임 전체의 색과 배경 분위기를 바꿉니다 · 한 번 사면 언제든 바꿔 쓸 수 있어요 · 보유 크리스탈 <b class="cy">${G.fmtInt(G.state.crystals)}</b></div>` +
+    else if (setSec === 'theme') body = `<div class="sub">게임 전체의 색과 배경 분위기를 바꿉니다 · 한 번 얻으면 언제든 바꿔 쓸 수 있어요 · 업적 테마는 조건을 달성하면 열려요 · 보유 크리스탈 <b class="cy">${G.fmtInt(G.state.crystals)}</b></div>` +
       G.data.themes.map(t => {
         const own = G.state.themesOwned[t.id], using = G.state.theme === t.id, trying = G.isPreviewing && G.isPreviewing(t.id);
         const [bg, acc, btn] = t.preview;
         const btns = using ? '<button class="buy bevel small max" disabled><span>사용 중</span></button>'
-          : own ? `<button class="buy bevel small ready" data-themeuse="${t.id}"><span>적용</span></button>`
-          : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>${crystalBtn(t.price, `data-themebuy="${t.id}"`)}`;
-        return `<div class="card bevel themecard ${using ? 'using' : ''}" style="--tbg:${bg};--tacc:${acc};--tbtn:${btn}">
+          : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>`
+            + (own ? `<button class="buy bevel small ready" data-themeuse="${t.id}"><span>적용</span></button>` : t.unlock ? '' : crystalBtn(t.price, `data-themebuy="${t.id}"`));
+        // achievement themes say what unlocks them instead of a price
+        const tag = t.unlock ? (own ? `<span class="tprice tach">${G.icon('check', 11)} 업적 달성 · ${t.unlock.label}</span>` : `<span class="tprice tach lock">${G.icon('lock', 11)} 해금 조건 · ${t.unlock.label}</span>`)
+          : `<span class="tprice">${t.price ? (own ? '보유 중' : `${G.icon('crystal', 11)} ${G.fmtInt(t.price)}`) : '기본 테마'}</span>`;
+        return `<div class="card bevel themecard ${using ? 'using' : ''} ${t.unlock ? 'tachv tc-' + t.id : ''} ${t.unlock && !own ? 'locked' : ''}" style="--tbg:${bg};--tacc:${acc};--tbtn:${btn}">
           <div class="tswatch"><i></i><i></i><i></i><em class="amb-${t.ambient}"></em></div>
           <div class="meta"><b>${t.name}</b><small>${t.en}</small><span>${t.desc}</span>
-            <span class="tprice">${t.price ? (own ? '보유 중' : `${G.icon('crystal', 11)} ${G.fmtInt(t.price)}`) : '기본 테마'}</span></div>
+            ${tag}</div>
           <div class="side">${btns}</div></div>`;
       }).join('');
     else if (setSec === 'cut') body =
@@ -719,7 +722,7 @@
     } else if (el.dataset.themeuse) {
       if (G.act.setTheme(el.dataset.themeuse)) { G.audio.potion(); toast(`${G.data.themes.find(t => t.id === el.dataset.themeuse).name} 테마를 적용했습니다`); }
     } else if (el.dataset.themetry) {
-      G.previewTheme(el.dataset.themetry); G.audio.tab(); render(); toast('6초 동안 미리보기 중입니다');
+      G.audio.tab(); G.previewTheme(el.dataset.themetry);
     } else if (el.dataset.themebuy) {
       const t = G.data.themes.find(x => x.id === el.dataset.themebuy);
       if (G.state.crystals < t.price) { G.audio.deny(); toast(`크리스탈이 부족합니다 (${G.fmtInt(t.price)} 필요)`); }

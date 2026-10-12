@@ -433,6 +433,7 @@ G.opt = key => {
       const t = G.data.themes.find(x => x.id === id), s = G.state;
       if (!t) return 'none';
       if (s.themesOwned[id]) return 'owned';
+      if (t.unlock) return 'locked';               // achievement themes can't be bought
       if (s.crystals < t.price) return 'poor';
       s.crystals -= t.price; s.themesOwned[id] = true; s.theme = id;
       G.save(); G.emit('theme'); G.emit('change'); return 'ok';
