@@ -384,12 +384,12 @@
     const chips = Z.map((z, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''} ${mapOpen(i) ? '' : 'off'}" data-cz="${i}" style="--zh:${z.hue}">
         <b>${String(i + 1).padStart(2, '0')}</b><span>${mapOpen(i) ? foundOf(i) + '/' + zc(i).length : '?'}</span>${dot(i)}</button>`).join('') + spChip(foundOf(SP) + '/' + zc(SP).length) + bioChip(showAllBio ? foundOf(BIO) + '/' + zc(BIO).length : foundOf(BIO));
     const z = codexZone === SP ? { name: '스페셜', en: 'SPECIAL · 월별 이벤트 & 보스 처치 광물', hue: 45 }
-      : codexZone === BIO ? { name: '희귀 바이옴', en: showAllBio ? 'RARE BIOME · CUBER STAGE & GLITCH 한정 광물' : 'RARE BIOME · 뽑으면 여기에 기록됩니다', hue: 185 } : Z[codexZone];
+      : codexZone === BIO ? { name: '희귀 바이옴', en: showAllBio ? 'RARE BIOME · CUBER STAGE · GLITCH · THE HEAVEN 한정 광물' : 'RARE BIOME · 뽑으면 여기에 기록됩니다', hue: 185 } : Z[codexZone];
     // 필터: 전체 / 발견 / 미발견 / NEW
     const keep = c => codexFilter === 'found' ? isFound(c) : codexFilter === 'unfound' ? !isFound(c) : codexFilter === 'new' ? isNew(c) : true;
     const L = zc(codexZone).filter(c => G.config.viewer || keep(c)), open = codexZone === SP || codexZone === BIO || mapOpen(codexZone);
     const oddsTxt = c => c.special ? `SPECIAL · ${c.month}월 ${c.eventName} 한정` : c.boss ? `BOSS · ${c.bossName} 처치 보상`
-      : c.aura ? 'AURA · CUBER STAGE 한정 · 1 in 1,000,000 (럭 무시)' : c.biome ? `1 in ${G.fmtOdds(c.odds)} · GLITCH 한정`
+      : c.aura ? 'AURA · CUBER STAGE 한정 · 1 in 1,000,000 (럭 무시)' : c.biome ? `1 in ${G.fmtOdds(c.odds)} · ${(G.data.biomes[c.biome] || {}).name || c.biome} 한정`
       : c.weather ? `1 in ${G.fmtOdds(c.odds)} · ${G.data.weathers[c.weather].name} 전용` : `1 in ${G.fmtOdds(c.odds)}`;
     // mutations this mineral has been found with
     const mutChips = rec => rec && rec.mut ? `<span class="mutchips">${Object.keys(rec.mut).map(k => { const m = G.data.mutations[k]; return m ? `<i style="--mc:${m.color}">${m.name} ×${rec.mut[k]}</i>` : ''; }).join('')}</span>` : '';
@@ -519,8 +519,8 @@
         const own = G.state.themesOwned[t.id], using = G.state.theme === t.id, trying = G.isPreviewing && G.isPreviewing(t.id);
         const [bg, acc, btn] = t.preview;
         const btns = using ? '<button class="buy bevel small max" disabled><span>사용 중</span></button>'
-          : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>`
-            + (own ? `<button class="buy bevel small ready" data-themeuse="${t.id}"><span>적용</span></button>` : t.unlock ? '' : crystalBtn(t.price, `data-themebuy="${t.id}"`));
+          : (t.noPreview && !own ? '' : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>`)
+            +(own ? `<button class="buy bevel small ready" data-themeuse="${t.id}"><span>적용</span></button>` : t.unlock ? '' : crystalBtn(t.price, `data-themebuy="${t.id}"`));
         // achievement themes say what unlocks them instead of a price
         const tag = t.unlock ? (own ? `<span class="tprice tach">${G.icon('check', 11)} 업적 달성 · ${t.unlock.label}</span>` : `<span class="tprice tach lock">${G.icon('lock', 11)} 해금 조건 · ${t.unlock.label}${t.unlock.progress ? (([a, b]) => ` (${G.fmtInt(a)} / ${G.fmtInt(b)})`)(t.unlock.progress(G.state)) : ''}</span>`)
           : `<span class="tprice">${t.price ? (own ? '보유 중' : `${G.icon('crystal', 11)} ${G.fmtInt(t.price)}`) : '기본 테마'}</span>`;

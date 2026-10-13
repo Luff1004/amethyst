@@ -1486,6 +1486,89 @@
     g.fillStyle = 'rgba(0,0,0,.08)'; for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
   }
 
+  /* ---------------- G.O.D.S (THE GODS found) ----------------
+     a clear sky full of them. Three depths of winged eyes from GOD@2.jpg: far ones small and hazy,
+     drifting slow; middle ones gliding; near ones huge, sweeping past close enough to fill the screen.
+     Behind the crystal the ring of eyes from GOD.jpg hangs big in a burning halo, turning slowly, light
+     pouring out round it, feathers falling. Every 24 seconds the sky goes wrong for a few seconds -
+     black and red, every eye stops and closes in round the crystal, staring, the picture shudders -
+     then the day comes back. html.gods-eerie is set meanwhile so the UI turns with it. */
+  function godsTheme(t, fr) {
+    const S = G.gods, c = center(), R = crystalR(), k = G.fxK(), m = Math.min(W, H), M = Math.max(W, H);
+    const cyc = t % 24, dark = cyc < 18 ? 0 : cyc < 19 ? E.inOut(cyc - 18) : cyc < 22.5 ? 1 : 1 - E.inOut((cyc - 22.5) / 1.5);
+    const eerie = dark > 0.5;
+    if (eerie !== document.documentElement.classList.contains('gods-eerie')) document.documentElement.classList.toggle('gods-eerie', eerie);
+    if (!S || !S.sky) return;
+    g.save();
+    S.sky(g, W, H, dark);
+    // the sun behind the ring: a wide bloom (red in the dark)
+    const sun = g.createRadialGradient(c.x, c.y, 0, c.x, c.y, M * 0.75);
+    sun.addColorStop(0, dark > 0.5 ? `rgba(255,40,30,${0.5 * dark})` : `rgba(255,252,235,${0.75 * (1 - dark)})`);
+    sun.addColorStop(0.3, dark > 0.5 ? `rgba(160,0,0,${0.25 * dark})` : `rgba(255,244,210,${0.28 * (1 - dark)})`);
+    sun.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = sun; g.fillRect(0, 0, W, H);
+    S.clouds(g, W, H, t * 1000, t * 0.003, 0.85 - dark * 0.6);
+    // soft beams fanning out of the sun, turning very slowly
+    g.save(); g.globalCompositeOperation = 'lighter'; g.translate(c.x, c.y); g.rotate(t * 0.02);
+    for (let i = 0; i < 16; i++) {
+      const a0 = i / 16 * TAU, L = M, wd = 0.09 + 0.05 * Math.sin(t * 0.4 + i * 1.3);
+      const lg = g.createLinearGradient(0, 0, Math.cos(a0) * L, Math.sin(a0) * L);
+      lg.addColorStop(0, `rgba(255,250,230,${0.13 * (1 - dark)})`); lg.addColorStop(1, 'rgba(255,250,230,0)');
+      g.fillStyle = lg; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(a0 - wd) * L, Math.sin(a0 - wd) * L); g.lineTo(Math.cos(a0 + wd) * L, Math.sin(a0 + wd) * L); g.closePath(); g.fill();
+    }
+    g.restore();
+    if (S.ready) {
+      const shake = dark > 0.6 ? (Math.random() - 0.5) * 5 * dark : 0;
+      // the flock in three depths; layer 0 far, 2 near. Each eye crosses the sky, then comes round again.
+      const LAYERS = [{ n: 4, w: 0.34, sp: 0.006, a: 0.55, y0: 0.08, y1: 0.42 }, { n: 3, w: 0.62, sp: 0.011, a: 0.85, y0: 0.15, y1: 0.85 }, { n: 2, w: 1.05, sp: 0.018, a: 1, y0: 0.25, y1: 0.95 }];
+      const drawLayer = (L, li) => {
+        for (let i = 0; i < L.n; i++) {
+          const s = S.flock[(i + li * 2) % S.flock.length], dir = (i + li) % 2 ? -1 : 1, w = m * L.w;
+          const span = W + w * 1.6, u = fr(i / L.n + li * 0.37 + t * L.sp), gx = dir > 0 ? -w * 0.8 + u * span : W + w * 0.8 - u * span;
+          const gy = H * (L.y0 + (L.y1 - L.y0) * fr(i * 0.618 + li * 0.29)) + Math.sin(t * 0.5 + i * 2 + li) * H * 0.02;
+          const a0 = (i / L.n + li * 0.13) * TAU + t * 0.12, rr = m * (0.34 + li * 0.07);
+          const x = G.lerp(gx, c.x + Math.cos(a0) * rr, dark) + shake, y = G.lerp(gy, c.y + Math.sin(a0) * rr * 0.85, dark) + shake;
+          const ww = G.lerp(w, m * (0.32 + li * 0.08), dark);
+          g.save();
+          if (li === 0) g.filter = 'blur(1.5px)';
+          if (dir < 0 && dark < 0.5) { g.translate(x, 0); g.scale(-1, 1); g.translate(-x, 0); }
+          S.draw(g, s, x, y, ww, t * (0.6 + li * 0.2), L.a, 1 - dark * 0.9);
+          g.restore();
+        }
+      };
+      drawLayer(LAYERS[0], 0);
+      // the ring of eyes behind the crystal: big, turning, in a halo of light rings
+      const rw = Math.min(W * 1.25, R * 6) * (1 - dark * 0.1), ry = c.y;
+      g.save(); g.globalCompositeOperation = 'lighter';
+      for (let j = 0; j < 4; j++) {
+        g.strokeStyle = dark > 0.5 ? `rgba(255,60,40,${0.4 - j * 0.08})` : `rgba(255,248,225,${0.45 - j * 0.09})`; g.lineWidth = 4 - j;
+        g.beginPath(); g.arc(c.x, ry, rw * (0.3 + j * 0.09) * (1 + 0.03 * Math.sin(t * 1.3 + j)), 0, TAU); g.stroke();
+      }
+      g.restore();
+      g.save(); g.translate(c.x + shake, ry + shake); g.rotate(Math.sin(t * 0.15) * 0.12); g.translate(-(c.x + shake), -(ry + shake));
+      S.draw(g, S.ring, c.x + shake, ry + shake, rw, t * 0.5, 0.85 + 0.15 * dark, 0.45);
+      g.restore();
+      drawLayer(LAYERS[1], 1);
+      drawLayer(LAYERS[2], 2);
+    }
+    // feathers falling through it all
+    for (let i = 0, n = Math.round(26 * Math.max(0.5, k)); i < n; i++) {
+      const x = fr(i * 0.618 + Math.sin(t * 0.3 + i) * 0.02) * W, y = fr(i * 0.37 + t * (0.03 + (i % 4) * 0.01)) * (H + 40) - 20, s2 = 5 + (i % 4) * 3;
+      g.save(); g.translate(x, y); g.rotate(Math.sin(t * 1.2 + i) * 0.9); g.globalAlpha = 0.8 * (1 - dark * 0.7);
+      g.fillStyle = '#fff'; g.beginPath(); g.ellipse(0, 0, s2 * 0.34, s2, 0, 0, TAU); g.fill();
+      g.strokeStyle = 'rgba(190,205,230,.9)'; g.lineWidth = 0.7; g.beginPath(); g.moveTo(0, -s2); g.lineTo(0, s2 * 1.2); g.stroke();
+      g.restore();
+    }
+    if (dark > 0.6) {                                   // the picture shudders: grain and torn lines
+      g.save(); g.globalAlpha = 0.12 * dark;
+      for (let i = 0, n = Math.round(140 * k); i < n; i++) { g.fillStyle = i % 2 ? '#fff' : '#000'; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+      g.globalAlpha = 0.25 * dark; g.fillStyle = '#000';
+      for (let i = 0; i < 4; i++) g.fillRect(0, Math.random() * H, W, 1 + Math.random() * 3);
+      g.restore();
+    }
+    g.restore();
+  }
+
   /* the drifting effect behind the crystal, one per theme (js/data/themes.js). Positions are pure
      functions of time + index, so there's no particle state to keep. */
   function ambient(kind, t, h) {
@@ -1497,6 +1580,10 @@
       empyreanFront(t, royal(t, ROYAL.empyrean, fr));
     } else if (kind === 'verdant') {
       verdantFront(t, royal(t, ROYAL.verdant, fr), fr);
+    } else if (kind === 'null') {
+      if (G.n3 && G.n3.auraTheme) G.n3.auraTheme(g, W, H, t, center(), crystalR(), G.fxK());
+    } else if (kind === 'gods') {
+      godsTheme(t, fr);
     } else if (kind === 'error') {
       errorTheme(t, fr);
     } else if (kind === 'cuber') {
@@ -1750,7 +1837,7 @@
     const sk = shake * G.opt('shake');                                // 설정 - 화면 흔들림
     if (sk > 0) g.translate((Math.random() - 0.5) * sk * 10, (Math.random() - 0.5) * sk * 10);
     drawBackground(t);
-    const quietSky = G.activeTheme && ['unseen', 'symphony', 'error', 'cuber'].includes(G.activeTheme().ambient);     // THE UNSEEN keeps its dark: no weather painted over it (the weather itself still runs)
+    const quietSky = G.activeTheme && ['unseen', 'symphony', 'error', 'cuber', 'gods', 'null'].includes(G.activeTheme().ambient);     // THE UNSEEN keeps its dark: no weather painted over it (the weather itself still runs)
     if (!quietSky) G.weather.drawBack(g, W, H, t);
     G.biome.drawBack(g, W, H, t);                                    // a rare biome paints over the sky
     if (G.boss && G.boss.active) G.boss.draw(g, W, H, now);          // a boss fight replaces the crystal

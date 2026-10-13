@@ -2,6 +2,10 @@
      CUBER STAGE : two 1억+ finds in a row. 15 min. luck x7, yellow drop +50%, every 10s a 3% shot
                    at a 창세의 크리스탈, and the limited aura "Luff1004" - 1 in 1,000,000 per mining
                    action, rolled with luck fixed at 1 (js/game.js roll).
+     THE HEAVEN  : 1 in 777 whenever a weather changes (if GLITCH didn't take it). 7 min. luck x7, and only
+                   1억+ minerals can drop (js/cutscenes/engine.js roll) - plus THE GODS, found nowhere else.
+     NULL        : 1 in 1000 whenever a weather changes, only on the 5th map and beyond. 13 min 13 s.
+                   Its own mineral NULLSCAPES (js/cutscenes/nullscapes.js) drops nowhere else.
      GLITCH      : 1 in 1000 whenever a weather changes. 9 min. luck x10, coins x14, no auto-mining,
                    every 19s a 3.12% shot at an 에러 크리스탈, and the 19 error minerals can drop.
    Biome minerals never appear in the codex. State: G.state.biome = { id, until, t0 } (null = none).
@@ -17,7 +21,14 @@
       gift: { every: 19, chance: 0.0312, potion: 'errorc' },
       how: '날씨가 바뀔 때마다 1000분의 1', fx: '럭 x10 · 코인 x14 · 자동 클릭 불가 · 19초마다 3.12% 확률로 에러 크리스탈',
       extra: '에러 광물 19종 (3분의 2가 억대)' },
+    heaven: { id: 'heaven', name: 'THE HEAVEN', ko: '천국', color: '#bfe6ff', color2: '#ffffff', min: 7, luck: 7, chance: 1 / 777, onlyOver: 1e8,
+      how: '날씨가 바뀔 때마다 777분의 1', fx: '1억 이상 광물만 나옵니다 · 럭 x7',
+      extra: '한정 광물 THE GODS · 1 in 12,049,712,324' },
+    null: { id: 'null', name: 'NULL', ko: '널', color: '#ffffff', color2: '#7a7aff', min: 793 / 60, dur: '13분 13초', chance: 0.001, minZone: 4,
+      how: '5번째 맵부터 · 날씨가 바뀔 때마다 1000분의 1', fx: '땅도 하늘도 없는 곳 · 이곳에서만 NULLSCAPES',
+      extra: '한정 광물 NULLSCAPES · 1 in 555,500,000,000' },
   };
+  const durOf = b => b.dur || b.min + '분';
   const now = () => Date.now();
   const current = () => { const b = G.state && G.state.biome; return b && D[b.id] && now() < b.until ? D[b.id] : null; };
   const left = () => { const b = current(); return b ? (G.state.biome.until - now()) / 1000 : 0; };
@@ -50,6 +61,8 @@
   function onWeather(silent) {                 // every weather change (js/weather.js setWeather)
     if (silent || current()) return;
     if (Math.random() < D.glitch.chance) start('glitch');
+    else if (Math.random() < D.heaven.chance) start('heaven');
+    else if (G.state.zone >= D.null.minZone && Math.random() < D.null.chance) start('null');   // NULL only opens out on the 5th map and beyond
   }
   // CUBER STAGE's aura: its own roll per mining action, luck ignored
   function auraRoll() {
@@ -63,7 +76,7 @@
     if (!G.state || G.config.viewer) return;
     const s = G.state;
     if (s.biome && !current()) { end(); return; }
-    const b = current(); if (!b) return;
+    const b = current(); if (!b || !b.gift) return;
     // the gift clock starts fresh after a reload (or a long sleep) - never a burst of catch-up rolls
     if (!giftAt || now() - giftAt > b.gift.every * 3000) giftAt = now();
     if (now() - giftAt >= b.gift.every * 1000) {
@@ -81,12 +94,12 @@
   function intro(b) {
     if (!introEl) { introEl = document.createElement('div'); introEl.id = 'biomeIntro'; introEl.hidden = true; document.body.appendChild(introEl); }
     introEl.className = 'bi-' + b.id;
-    introEl.innerHTML = `<div class="bibg"></div><div class="bibox"><small>RARE BIOME</small><b data-t="${b.name}">${b.name}</b><em>${b.ko} · ${b.min}분</em><span>${b.fx}</span></div>`;
+    introEl.innerHTML = `<div class="bibg"></div><div class="bibox"><small>RARE BIOME</small><b data-t="${b.name}">${b.name}</b><em>${b.ko} · ${durOf(b)}</em><span>${b.fx}</span></div>`;
     introEl.hidden = false; void introEl.offsetWidth; introEl.classList.add('show');
     G.audio.blackout && G.audio.blackout(7); setTimeout(() => G.audio.blast(8), 500); G.buzz && G.buzz([60, 40, 120, 40, 200]);
     clearTimeout(intro.t); intro.t = setTimeout(() => { introEl.classList.remove('show'); setTimeout(() => { introEl.hidden = true; }, 700); }, 4800);
   }
-  const paintBody = () => { const b = current(); document.body.classList.toggle('biome-cuber', !!b && b.id === 'cuber'); document.body.classList.toggle('biome-glitch', !!b && b.id === 'glitch'); };
+  const paintBody = () => { const b = current(); document.body.classList.toggle('biome-cuber', !!b && b.id === 'cuber'); document.body.classList.toggle('biome-glitch', !!b && b.id === 'glitch'); document.body.classList.toggle('biome-heaven', !!b && b.id === 'heaven'); document.body.classList.toggle('biome-null', !!b && b.id === 'null'); };
 
   /* ---------------- the world itself ---------------- */
   function cube(g, x, y, s, ax, ay, col, a) {
@@ -123,6 +136,19 @@
       g.lineWidth = 1.6;
       for (let i = 0; i < 6; i++) { const sd = i % 2 ? 1 : -1, x = vx + sd * W * (0.3 + (i % 3) * 0.08), y = H * (0.18 + (i % 3) * 0.13) + Math.sin(t * 0.8 + i) * 12; cube(g, x, y, Math.min(W, H) * (0.03 + (i % 3) * 0.012), t * (0.5 + i * 0.1), t * (0.7 + i * 0.13), i % 2 ? '#3af0ff' : '#ff3ad8', 0.7); }
       g.restore();
+    } else if (b.id === 'null') {
+      if (G.n3 && G.n3.biomeBack) G.n3.biomeBack(g, W, H, t); else { g.fillStyle = 'rgba(0,0,2,.88)'; g.fillRect(0, 0, W, H); }
+    } else if (b.id === 'heaven') {
+      // THE HEAVEN: the whole mine opens onto a bright sky, clouds drifting, winged eyes gliding past
+      const S = G.gods, sec = t;
+      if (S && S.sky) { g.save(); g.globalAlpha = 0.86; S.sky(g, W, H, 0); g.restore(); S.clouds(g, W, H, sec * 1000, sec * 0.004, 0.8); }
+      if (fx === 'low' || !S || !S.ready) return;
+      S.flock.forEach((s, i) => {
+        const dir = i % 2 ? -1 : 1, x = fr(i * 0.31 + dir * sec * (0.012 + i * 0.003)) * (W + 400) - 200, y = H * (0.18 + i * 0.17) + Math.sin(sec * 0.6 + i) * 18;
+        g.save(); if (dir < 0) { g.translate(W, 0); g.scale(-1, 1); }
+        S.draw(g, s, dir < 0 ? W - x : x, y, Math.min(W, H) * (0.22 + (i % 2) * 0.08), sec, 0.9);
+        g.restore();
+      });
     } else {
       g.fillStyle = 'rgba(6,0,10,.6)'; g.fillRect(0, 0, W, H);
       if (fx === 'low') return;
@@ -136,6 +162,13 @@
     const b = current(); if (!b || G.config.viewer || G.opt('fx') === 'low') return;
     if (b.id === 'cuber') {
       g.fillStyle = 'rgba(0,0,0,.08)'; for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+      return;
+    }
+    if (b.id === 'null') { if (G.n3 && G.n3.biomeFront) G.n3.biomeFront(g, W, H, t); return; }
+    if (b.id === 'heaven') {                   // a soft white veil, brightest at the edges
+      const v = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.6);
+      v.addColorStop(0, 'rgba(255,255,255,0)'); v.addColorStop(1, 'rgba(255,255,255,.3)');
+      g.fillStyle = v; g.fillRect(0, 0, W, H);
       return;
     }
     // GLITCH: torn slices of the frame, RGB fringes, the odd frozen burst of noise
@@ -163,7 +196,7 @@
     return `<div class="bioinfo">
       <b>희귀 바이옴</b><p>날씨보다 훨씬 드물게 나타나 모든 맵을 덮는 특별한 세계입니다. 바이옴 한정 광물은 도감에 기록되지 않습니다.</p>
       ${Object.values(D).map(x => `<div class="biorow ${b && b.id === x.id ? 'on' : ''}" style="--bc:${x.color}">
-        <div><b>${x.name}</b><small>${x.ko} · ${x.min}분</small></div>
+        <div><b>${x.name}</b><small>${x.ko} · ${durOf(x)}</small></div>
         <span>등장: ${x.how}</span><span>효과: ${x.fx}</span><span>${x.extra}</span></div>`).join('')}
     </div>`;
   }

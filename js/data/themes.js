@@ -6,6 +6,7 @@
              hue = fixed hue for the backdrop (null keeps each map's own hue), s/l = its saturation / lightness
   ambient  : the effect drawn over the backdrop (js/game.js ambient): dust (default) / one of each achievement theme's own
   preview  : colours for the swatch on the theme card
+  noPreview: no 미리보기 button while still locked (spoiler guard - the 1조+ themes)
   The crystal itself always keeps its map colour.
 */
 G.data.themes = [
@@ -25,17 +26,17 @@ G.data.themes = [
   { id: 'verdant', name: 'THE VERDANT', en: 'THE VERDANT', price: 0, css: 'verdant', bg: { hue: 145, s: 55, l: 4 }, ambient: 'verdant',
     unlock: { label: '1000억 이상 광물 발견', test: s => foundOver(s, 1e11) },
     desc: '태고의 숲의 왕좌 · 에메랄드 모서리와 덩굴, 크리스탈을 감은 비취 우로보로스, 퍼져나가는 생명의 파동', preview: ['#020a05', '#3ee38a', '#0a2a14'] },
-  { id: 'crimson', name: 'THE CRIMSON', en: 'THE CRIMSON', price: 0, css: 'crimson', bg: { hue: 356, s: 70, l: 4 }, ambient: 'crimson',
+  { id: 'crimson', name: 'THE CRIMSON', en: 'THE CRIMSON', price: 0, noPreview: true, css: 'crimson', bg: { hue: 356, s: 70, l: 4 }, ambient: 'crimson',
     unlock: { label: '1조 이상 광물 발견', test: s => foundOver(s, 1e12) },
     desc: '피의 달 아래 폭군의 옥좌 · 뿔 달린 루비 모서리, 가시 성환과 붉은 번개, 심장처럼 뛰는 화면', preview: ['#0c0102', '#ff2a3a', '#3a0408'] },
-  { id: 'infinite', name: 'THE INFINITE', en: 'THE INFINITE', price: 0, css: 'infinite', bg: { hue: 255, s: 35, l: 3 }, ambient: 'infinite',
+  { id: 'infinite', name: 'THE INFINITE', en: 'THE INFINITE', price: 0, noPreview: true, css: 'infinite', bg: { hue: 255, s: 35, l: 3 }, ambient: 'infinite',
     unlock: { label: '1000조 이상 광물 발견', test: s => foundOver(s, 1e15) },
     desc: '시간의 끝, 무한의 옥좌 · 크리스탈을 삼킨 블랙홀과 천체 시계, 프리즘으로 타오르는 ∞', preview: ['#030306', '#e6e6ff', '#16162a'] },
-  { id: 'origin', name: 'THE ORIGIN', en: 'THE ORIGIN', price: 0, css: 'origin', bg: { hue: 250, s: 40, l: 3 }, ambient: 'origin',
+  { id: 'origin', name: 'THE ORIGIN', en: 'THE ORIGIN', price: 0, noPreview: true, css: 'origin', bg: { hue: 250, s: 40, l: 3 }, ambient: 'origin',
     unlock: { label: '1경 이상 광물 발견', test: s => foundOver(s, 1e16) },
     desc: '모든 것이 시작된 곳 · 3D로 도는 신성기하학, 황금 나선으로 빨려드는 빛, 주기적인 빅뱅', preview: ['#04030a', '#fff1c4', '#1c1830'] },
   /* ---- discovery themes: not a rarity floor but a particular kind of find ---- */
-  { id: 'unseen', name: 'THE UNSEEN', en: 'THE UNSEEN', price: 0, css: 'unseen', bg: { hue: 0, s: 0, l: 1 }, ambient: 'unseen',
+  { id: 'unseen', name: 'THE UNSEEN', en: 'THE UNSEEN', price: 0, noPreview: true, css: 'unseen', bg: { hue: 0, s: 0, l: 1 }, ambient: 'unseen',
     unlock: { label: '시크릿 광물 발견', test: s => foundTier(s, 'secret') },
     desc: '보이지 않는 것들이 보고 있다 · 어둠 속에서 뜨는 눈, 동공이 된 크리스탈, 깜빡이는 화면', preview: ['#000000', '#d8d8d8', '#141414'] },
   /* unlock.progress (optional): [have, need], shown on the locked card */
@@ -53,6 +54,12 @@ G.data.themes.push(
   { id: 'cuber', name: 'CUBER STAGE', en: 'CUBER STAGE', price: 0, css: 'cuber', bg: { hue: 265, s: 60, l: 5 }, ambient: 'cuber',
     unlock: { label: '큐버 스테이지 바이옴 발견', test: s => biomeSeen(s, 'cuber') },
     desc: '네온의 무대 · 줄무늬 태양과 달려오는 격자, 조명과 레이저, 4차원 큐브, 128BPM', preview: ['#0a0418', '#3af0ff', '#2a0a40'] },
+  { id: 'gods', name: 'G.O.D.S', en: 'G.O.D.S', price: 0, css: 'gods', bg: { hue: 210, s: 70, l: 55 }, ambient: 'gods', music: 'audio/gods.mp3',
+    unlock: { label: 'THE GODS 발견 (THE HEAVEN 한정 광물)', test: s => { const c = s.codex.thegods; return !!(c && (typeof c === 'number' ? c : c.n)); } },
+    desc: '하늘의 눈들 · 날개 달린 눈이 떠다니는 맑은 하늘, 눈의 고리 - 그리고 가끔, 하늘이 당신을 내려다본다', preview: ['#7fb8ff', '#ffffff', '#1a3a6a'] },
+  { id: 'null', name: 'NULL', en: 'NULL', price: 0, css: 'null', bg: { hue: 240, s: 15, l: 2 }, ambient: 'null', music: 'audio/flow.mp3',
+    unlock: { label: 'NULLSCAPES 발견 (NULL 한정 광물)', test: s => { const c = s.codex.nullscapes; return !!(c && (typeof c === 'number' ? c : c.n)); } },
+    desc: '아무것도 없는 곳을 뚫고 나온 것 · 크리스탈을 둘러싼 부서진 흑백 모놀리스, 틈에서 새는 빛, Flow', preview: ['#000000', '#ffffff', '#16161c'] },
 );
 // has this rare biome ever come up (recorded since the themes came in), or has one of its minerals been found
 function biomeSeen(s, id) {

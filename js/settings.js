@@ -40,6 +40,7 @@
   const applyTheme = () => {
     const t = previewId ? G.data.themes.find(x => x.id === previewId) : G.theme();
     if (t.css) document.documentElement.dataset.theme = t.css; else delete document.documentElement.dataset.theme;
+    if (t.ambient !== 'gods') document.documentElement.classList.remove('gods-eerie');      // G.O.D.S's dark spell ends with it
     const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = t.preview[0];
   };
   G.activeTheme = () => (previewId ? G.data.themes.find(x => x.id === previewId) : G.theme());

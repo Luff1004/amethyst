@@ -188,4 +188,6 @@ G.icon = (name, size = 22) =>
 G.tiers.push(
   { key: 'aura',  ko: '아우라', en: 'AURA',  below: Infinity, color: '#3af0ff', manual: true },   // CUBER STAGE's limited aura
   { key: 'glitch', ko: '에러',  en: 'ERR0R', below: Infinity, color: '#ff2a6a', manual: true },   // GLITCH's error minerals
+  { key: 'heaven', ko: '천상',  en: 'HEAVENLY', below: Infinity, color: '#dff2ff', manual: true },   // THE HEAVEN's own mineral, THE GODS
+  { key: 'null',   ko: '널',    en: 'NULL', below: Infinity, color: '#ffffff', manual: true },        // NULL's own mineral, NULLSCAPES
 );

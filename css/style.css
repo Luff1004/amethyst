@@ -1315,49 +1315,49 @@ html[data-theme="crimson"] {
   --rc1: #4a0408; --rc2: #ff5a4a; --rc3: #fff0d0; --rc4: #f0b450; --rcGlow: 255, 40, 50; --rcGem: radial-gradient(circle at 35% 35%, #ffd0d0, #ff1a32 45%, #4a0008);
   --rcTL: url(../img/crm-tl.svg); --rcTR: url(../img/crm-tr.svg); --rcBL: url(../img/crm-bl.svg); --rcBR: url(../img/crm-br.svg); --rcTitle: linear-gradient(180deg, #fff0d0, #f0b450 40%, #ff3a3a 70%, #8a0a10);
 }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) :is(#panel, #tabs .tab.active, #luckChip, .card.using) {
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) :is(#panel, #tabs .tab.active, #luckChip, .card.using) {
   background: linear-gradient(115deg, var(--rc1) 0%, var(--rc2) 24%, var(--rc3) 31%, var(--rc4) 36%, var(--rc2) 43%, var(--rc1) 70%, var(--rc2) 100%);
   background-size: 300% 100%; animation: svSheen 7s linear infinite;
 }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel { --fill: radial-gradient(120% 50% at 50% -8%, rgba(var(--rcGlow), .17), transparent 60%), linear-gradient(180deg, var(--panel), rgba(0, 0, 0, .97)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel::after { content: ""; display: block; position: sticky; bottom: -16px; height: 48px; margin: -48px -14px -16px; pointer-events: none;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #panel { --fill: radial-gradient(120% 50% at 50% -8%, rgba(var(--rcGlow), .17), transparent 60%), linear-gradient(180deg, var(--panel), rgba(0, 0, 0, .97)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #panel::after { content: ""; display: block; position: sticky; bottom: -16px; height: 48px; margin: -48px -14px -16px; pointer-events: none;
   background: var(--rcBL) left bottom / 48px no-repeat, var(--rcBR) right bottom / 48px no-repeat; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel > .ph:first-child { position: relative; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #panel > .ph:first-child::before { content: ""; position: absolute; left: -14px; right: -14px; top: -14px; height: 48px; pointer-events: none;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #panel > .ph:first-child { position: relative; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #panel > .ph:first-child::before { content: ""; position: absolute; left: -14px; right: -14px; top: -14px; height: 48px; pointer-events: none;
   background: var(--rcTL) left top / 48px no-repeat, var(--rcTR) right top / 48px no-repeat; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .card::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) .card::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
   background: var(--rcTL) left top / 28px no-repeat, var(--rcBR) right bottom / 28px no-repeat; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .card { --line: rgba(var(--rcGlow), .45); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #tabs .tab { --fill: linear-gradient(180deg, var(--card), rgba(0, 0, 0, .94)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #tabs .tab.active { --fill: linear-gradient(180deg, var(--btn2), rgba(0, 0, 0, .95) 80%); color: #fff; text-shadow: 0 0 9px rgb(var(--rcGlow)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .ph h2 { font-family: Cinzel, Georgia, "Times New Roman", serif; font-weight: 800; letter-spacing: .14em;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) .card { --line: rgba(var(--rcGlow), .45); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #tabs .tab { --fill: linear-gradient(180deg, var(--card), rgba(0, 0, 0, .94)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #tabs .tab.active { --fill: linear-gradient(180deg, var(--btn2), rgba(0, 0, 0, .95) 80%); color: #fff; text-shadow: 0 0 9px rgb(var(--rcGlow)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) .ph h2 { font-family: Cinzel, Georgia, "Times New Roman", serif; font-weight: 800; letter-spacing: .14em;
   background: var(--rcTitle); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .85)) drop-shadow(0 0 8px rgba(var(--rcGlow), .6)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .ph h2 small { font-family: system-ui, "Malgun Gothic", sans-serif; -webkit-text-fill-color: var(--rc2); letter-spacing: .05em; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #coinVal { font-family: Cinzel, Georgia, serif; color: #fff; text-shadow: 0 0 12px rgba(var(--rcGlow), .95), 0 1px 0 var(--rc1); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #coinBox small { color: var(--rc2); letter-spacing: .35em; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) .buy { --fill: linear-gradient(180deg, var(--btn2), var(--btn)); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #foot b { font-family: Cinzel, Georgia, serif; color: var(--rc2); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) .ph h2 small { font-family: system-ui, "Malgun Gothic", sans-serif; -webkit-text-fill-color: var(--rc2); letter-spacing: .05em; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #coinVal { font-family: Cinzel, Georgia, serif; color: #fff; text-shadow: 0 0 12px rgba(var(--rcGlow), .95), 0 1px 0 var(--rc1); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #coinBox small { color: var(--rc2); letter-spacing: .35em; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) .buy { --fill: linear-gradient(180deg, var(--btn2), var(--btn)); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #foot b { font-family: Cinzel, Georgia, serif; color: var(--rc2); }
 /* screen frame */
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame { display: block; position: fixed; inset: 0; z-index: 11; pointer-events: none; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::before, html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::after { content: ""; position: absolute; pointer-events: none; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::before { inset: 4px; border: 2px solid transparent;
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame { display: block; position: fixed; inset: 0; z-index: 11; pointer-events: none; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame::before, html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame::after { content: ""; position: absolute; pointer-events: none; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame::before { inset: 4px; border: 2px solid transparent;
   border-image: conic-gradient(from var(--rcAng), rgba(var(--rcGlow), .35) 0deg, var(--rc3) 12deg, var(--rc2) 22deg, rgba(var(--rcGlow), .35) 42deg, rgba(var(--rcGlow), .35) 120deg, var(--rc3) 132deg, var(--rc2) 142deg, rgba(var(--rcGlow), .35) 162deg, rgba(var(--rcGlow), .35) 240deg, var(--rc3) 252deg, var(--rc2) 262deg, rgba(var(--rcGlow), .35) 282deg) 1;
   animation: rcSpin 6s linear infinite; }
 @keyframes rcSpin { to { --rcAng: 360deg; } }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame::after { inset: 10px; border: 1px solid rgba(var(--rcGlow), .28); box-shadow: inset 0 0 50px rgba(var(--rcGlow), .12); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame i { position: absolute; width: 100px; height: 100px; background: center / contain no-repeat; filter: drop-shadow(0 0 8px rgba(var(--rcGlow), .6)); animation: rcCorner 4s ease-in-out infinite; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .tl { left: 0; top: 0; background-image: var(--rcTL); }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .tr { right: 0; top: 0; background-image: var(--rcTR); animation-delay: -1s; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .bl { left: 0; bottom: 0; background-image: var(--rcBL); animation-delay: -3s; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .br { right: 0; bottom: 0; background-image: var(--rcBR); animation-delay: -2s; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame::after { inset: 10px; border: 1px solid rgba(var(--rcGlow), .28); box-shadow: inset 0 0 50px rgba(var(--rcGlow), .12); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame i { position: absolute; width: 100px; height: 100px; background: center / contain no-repeat; filter: drop-shadow(0 0 8px rgba(var(--rcGlow), .6)); animation: rcCorner 4s ease-in-out infinite; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .tl { left: 0; top: 0; background-image: var(--rcTL); }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .tr { right: 0; top: 0; background-image: var(--rcTR); animation-delay: -1s; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .bl { left: 0; bottom: 0; background-image: var(--rcBL); animation-delay: -3s; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .br { right: 0; bottom: 0; background-image: var(--rcBR); animation-delay: -2s; }
 @keyframes rcCorner { 50% { filter: drop-shadow(0 0 16px rgba(var(--rcGlow), 1)); } }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame b { display: block; position: absolute; width: 13px; height: 13px; transform: rotate(45deg);
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame b { display: block; position: absolute; width: 13px; height: 13px; transform: rotate(45deg);
   background: var(--rcGem); box-shadow: 0 0 0 2px var(--rc4), 0 0 0 3px var(--rc1), 0 0 14px rgb(var(--rcGlow)); animation: rcCorner 3s ease-in-out infinite; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .mt { left: calc(50% - 6.5px); top: -1px; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .mb { left: calc(50% - 6.5px); bottom: -1px; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .ml { top: calc(50% - 6.5px); left: -1px; }
-html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame .mr { top: calc(50% - 6.5px); right: -1px; }
-@media (max-width: 480px) { html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"]) #themeFrame i { width: 74px; height: 74px; } }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .mt { left: calc(50% - 6.5px); top: -1px; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .mb { left: calc(50% - 6.5px); bottom: -1px; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .ml { top: calc(50% - 6.5px); left: -1px; }
+html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame .mr { top: calc(50% - 6.5px); right: -1px; }
+@media (max-width: 480px) { html:is([data-theme="verdant"], [data-theme="crimson"], [data-theme="origin"], [data-theme="archive"], [data-theme="symphony"], [data-theme="error"], [data-theme="cuber"], [data-theme="gods"]) #themeFrame i { width: 74px; height: 74px; } }
 /* THE CRIMSON: the screen edges throb red to the same heartbeat as the backdrop */
 html[data-theme="crimson"] body::after { content: ""; position: fixed; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 90px rgba(255, 20, 30, .35); animation: rcBeat 1.4s ease-out infinite; }
 @keyframes rcBeat { 0%, 30%, 100% { opacity: .35; } 6% { opacity: 1; } 13% { opacity: .5; } 19% { opacity: .85; } }
@@ -1666,3 +1666,96 @@ html[data-theme="cuber"] body.cut::after { display: none; }
 .tu-cuber .tu-box::before { left: -22px; top: -22px; background: url(../img/cub-tl.svg) center / contain no-repeat; }
 .tu-cuber .tu-box::after { right: -22px; bottom: -22px; background: url(../img/cub-br.svg) center / contain no-repeat; }
 .tu-cuber .tu-box b { font-family: Audiowide, sans-serif; }
+/* THE HEAVEN's arrival card: daylight, a celestial face, a slow glow */
+#biomeIntro.bi-heaven { --bc: #ffffff; }
+#biomeIntro.bi-heaven .bibg { background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.55), rgba(120,180,240,.85) 60%, rgba(60,120,220,.95)); }
+#biomeIntro.bi-heaven b { font-family: "Cinzel Decorative", Cinzel, Georgia, serif; color: #fff; text-shadow: 0 0 24px #fff, 0 0 60px #bfe6ff, 0 2px 0 rgba(40,80,160,.5); animation: biHeaven 4.8s ease-out; }
+#biomeIntro.bi-heaven em, #biomeIntro.bi-heaven span { color: #0a2a5a; font-weight: 800; }
+@keyframes biHeaven { from { letter-spacing: .5em; opacity: 0; filter: blur(10px); } 30% { opacity: 1; filter: none; } }
+body.biome-heaven #coinVal, body.biome-heaven #luckVal { text-shadow: 0 0 12px #fff, 0 0 2px #bfe6ff; }
+/* ================= G.O.D.S (THE GODS found) - frosted glass over a bright sky; red and black when the sky turns ================= */
+html[data-theme="gods"] {
+  --bg: #7fb8ff; --panel: rgba(20, 44, 90, .62); --ink: #ffffff; --dim: #d6e4ff; --line: rgba(255, 246, 216, .8); --acc: #fff6d8;
+  --card: rgba(30, 60, 120, .5); --btn: rgba(30, 60, 120, .7); --btn2: rgba(60, 100, 170, .8); --sel: linear-gradient(180deg, rgba(120, 170, 240, .8), rgba(30, 60, 120, .7)); --modal: rgba(20, 44, 90, .9); --scroll: #fff6d8;
+  --rc1: #8aa8d8; --rc2: #fff6d8; --rc3: #ffffff; --rc4: #f0d080; --rcGlow: 255, 250, 230; --rcGem: radial-gradient(circle at 40% 40%, #fff, #f0d080 55%, #a88430);
+  --rcTL: url(../img/god-tl.svg); --rcTR: url(../img/god-tr.svg); --rcBL: url(../img/god-bl.svg); --rcBR: url(../img/god-br.svg); --rcTitle: linear-gradient(180deg, #ffffff, #fff6d8 50%, #f0d080);
+}
+html[data-theme="gods"] #panel, html[data-theme="gods"] .card, html[data-theme="gods"] #tabs .tab { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+html[data-theme="gods"] .ph h2, html[data-theme="gods"] #coinVal, html[data-theme="gods"] #foot b, html[data-theme="gods"] .card .meta > b { font-family: "Cinzel Decorative", Cinzel, Georgia, serif; letter-spacing: .06em; }
+html[data-theme="gods"] .ph h2 { filter: drop-shadow(0 0 8px rgba(255, 255, 255, .9)); }
+html[data-theme="gods"] #coinVal { color: #fff; text-shadow: 0 0 12px #fff, 0 1px 0 rgba(20, 44, 90, .8); }
+html[data-theme="gods"] #foot b, html[data-theme="gods"] #foot span { color: #fff; text-shadow: 0 1px 3px rgba(20, 44, 90, .9); }
+html[data-theme="gods"] #hint b, html[data-theme="gods"] #hint span { text-shadow: 0 1px 4px rgba(20, 44, 90, .9); }
+/* the edge studs: small golden eyes, blinking */
+html[data-theme="gods"] #themeFrame b { width: 22px; height: 13px; transform: none; border-radius: 50%; background: radial-gradient(circle, #000 0 2.4px, #5a2a10 2.8px 4.6px, #f4ece6 5px); box-shadow: 0 0 0 1.5px #f0d080, 0 0 12px #fff; animation: unBlink 5s infinite; }
+html[data-theme="gods"] #themeFrame .mt, html[data-theme="gods"] #themeFrame .mb { left: calc(50% - 11px); }
+html[data-theme="gods"] #themeFrame .ml, html[data-theme="gods"] #themeFrame .mr { top: calc(50% - 6.5px); }
+/* when the sky turns: everything goes black and red, the frame throbs, the type shivers */
+html[data-theme="gods"].gods-eerie {
+  --panel: rgba(20, 0, 0, .78); --card: rgba(30, 0, 2, .7); --btn: rgba(40, 0, 4, .85); --btn2: rgba(80, 0, 8, .9); --line: rgba(255, 40, 40, .8); --acc: #ff3a3a;
+  --rc1: #2a0000; --rc2: #ff2a2a; --rc3: #ffd0d0; --rc4: #000; --rcGlow: 255, 30, 30; --rcTitle: linear-gradient(180deg, #ffd0d0, #ff2a2a);
+}
+html[data-theme="gods"].gods-eerie .ph h2, html[data-theme="gods"].gods-eerie #coinVal { animation: godShiver .12s steps(2) infinite; filter: drop-shadow(0 0 8px #ff2020); }
+@keyframes godShiver { 50% { transform: translate(1px, -1px); } }
+html[data-theme="gods"].gods-eerie #themeFrame b { box-shadow: 0 0 0 1.5px #ff2a2a, 0 0 14px #ff0000; animation: none; }
+html[data-theme="gods"].gods-eerie #themeFrame i { filter: drop-shadow(0 0 10px #ff0000) hue-rotate(-40deg) saturate(3) brightness(.7); }
+html[data-theme="gods"] body::after { content: ""; position: fixed; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 120px rgba(255, 255, 255, .45); transition: box-shadow .8s; }
+html[data-theme="gods"].gods-eerie body::after { box-shadow: inset 0 0 140px rgba(120, 0, 0, .8); }
+html[data-theme="gods"] body.cut::after { display: none; }
+.amb-gods { background: url(../img/god-tl.svg) left top / 30px no-repeat, url(../img/god-br.svg) right bottom / 30px no-repeat, linear-gradient(180deg, #5a9ae8, #cfe6ff); }
+.amb-gods::before { left: 17px; top: 21px; width: 24px !important; height: 15px !important; border-radius: 50% !important; background: radial-gradient(circle, #000 0 2.5px, #5a2a10 3px 5px, #f4ece6 5.5px); box-shadow: 0 0 0 1.5px #f0d080, 0 0 10px #fff; animation: unBlink 3s infinite; }
+.card.tc-gods:not(.locked) { --line: #fff6d8; box-shadow: 0 0 24px rgba(200, 230, 255, .45); }
+.card.tc-gods:not(.locked) .meta > b { font-family: "Cinzel Decorative", Cinzel, serif; color: #fff; text-shadow: 0 0 12px #bfe6ff, 0 0 2px #fff; letter-spacing: .14em; }
+.tu-gods { background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, .5), rgba(80, 140, 230, .95) 70%) !important; }
+.tu-gods .tu-box b { font-family: "Cinzel Decorative", Cinzel, serif; }
+.tu-gods .tu-box::before, .tu-gods .tu-box::after { content: ""; position: absolute; width: 84px; height: 84px; pointer-events: none; }
+.tu-gods .tu-box::before { left: -24px; top: -24px; background: url(../img/god-tl.svg) center / contain no-repeat; }
+.tu-gods .tu-box::after { right: -24px; bottom: -24px; background: url(../img/god-br.svg) center / contain no-repeat; }
+.tu-gods .tu-box span, .tu-gods .tu-box em { color: #0a2a5a; }
+html[data-theme="gods"] #themeFrame i { width: 70px; height: 70px; }
+@media (max-width: 480px) { html[data-theme="gods"] #themeFrame i { width: 56px; height: 56px; } }
+/* G.O.D.S keeps its eyes in the sky: no ornaments on the screen corners, the edges, the panel or the cards -
+   just a thin glowing frame round the screen */
+html[data-theme="gods"] { --rcTL: none; --rcTR: none; --rcBL: none; --rcBR: none; }
+html[data-theme="gods"] #themeFrame i, html[data-theme="gods"] #themeFrame b { display: none !important; }
+html[data-theme="gods"] .card::after, html[data-theme="gods"] #panel::after, html[data-theme="gods"] #panel > .ph:first-child::before { background: none !important; }
+/* G.O.D.S's swatch on the theme card: the photograph itself - the ring of eyes on its wings */
+.amb-gods { background: #7fb8ff url(../GOD.jpg) center 42% / 112% auto no-repeat !important; }
+.amb-gods::before, .amb-gods::after { display: none !important; }
+
+/* ================= NULL (NULLSCAPES found) =================
+   no ornament at all: black glass panels lit from inside by a cold white, wide geometric type,
+   the screen edge breathing white on the beat of Flow (128 BPM) */
+html[data-theme="null"] {
+  --bg: #000; --panel: rgba(4, 4, 8, .9); --ink: #f2f3ff; --dim: #8a8ca6; --line: rgba(230, 232, 255, .32); --acc: #ffffff;
+  --card: rgba(10, 10, 16, .88); --btn: #101018; --btn2: #20202c; --sel: linear-gradient(180deg, #2c2c3a, #08080c); --modal: rgba(4, 4, 8, .97); --scroll: #50526a;
+}
+html[data-theme="null"] #panel { --fill: radial-gradient(140% 60% at 50% -10%, rgba(220, 224, 255, .14), transparent 60%), rgba(4, 4, 8, .92); backdrop-filter: blur(6px); }
+html[data-theme="null"] .card { --fill: linear-gradient(180deg, rgba(16, 16, 24, .92), rgba(4, 4, 8, .92)); }
+html[data-theme="null"] #tabs .tab.active { --line: #fff; --fill: linear-gradient(180deg, #2a2a38, #050508); color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, .9); }
+html[data-theme="null"] .ph h2, html[data-theme="null"] #coinVal, html[data-theme="null"] #foot b, html[data-theme="null"] .card .meta > b { font-family: Syncopate, "Arial Black", sans-serif; font-weight: 700; letter-spacing: .12em; }
+html[data-theme="null"] .ph h2 { color: #fff; text-shadow: 0 0 14px rgba(220, 225, 255, .9); }
+html[data-theme="null"] .ph h2 small { font-family: system-ui, "Malgun Gothic", sans-serif; letter-spacing: .05em; color: #9a9cb8; text-shadow: none; }
+html[data-theme="null"] #coinVal { color: #fff; text-shadow: 0 0 12px rgba(220, 225, 255, .9); }
+html[data-theme="null"] .buy { --fill: linear-gradient(180deg, #1c1c26, #08080c); }
+html[data-theme="null"] body::after { content: ""; position: fixed; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 70px rgba(230, 232, 255, .22); animation: nullBeat .46875s ease-out infinite; }
+@keyframes nullBeat { 0% { opacity: 1; } 100% { opacity: .35; } }
+html[data-theme="null"] body.cut::after { display: none; }
+html[data-theme="null"] #themeFrame { display: none; }
+/* the swatch: the split monolith with light in the crack */
+.amb-null { background: linear-gradient(90deg, transparent 0 26%, #0c0c12 26% 46%, #fff 48% 52%, #0c0c12 54% 74%, transparent 74%) center 60% / 100% 70% no-repeat, radial-gradient(circle at 50% 45%, rgba(230, 232, 255, .8), rgba(60, 62, 90, .4) 40%, #000 72%) !important; }
+.amb-null::before, .amb-null::after { display: none !important; }
+.card.tc-null:not(.locked) { --line: #fff; box-shadow: 0 0 24px rgba(230, 232, 255, .25); }
+.card.tc-null:not(.locked) .meta > b { font-family: Syncopate, sans-serif; letter-spacing: .3em; color: #fff; text-shadow: 0 0 12px rgba(230, 232, 255, .9); }
+.tu-null { background: #000 !important; }
+.tu-null .tu-rays { background: radial-gradient(circle, rgba(230, 232, 255, .5), transparent 40%); -webkit-mask: none; mask: none; animation: none; }
+.tu-null .tu-ring { border-color: rgba(255, 255, 255, .5); box-shadow: 0 0 60px rgba(230, 232, 255, .5); }
+.tu-null .tu-box b { font-family: Syncopate, sans-serif; letter-spacing: .4em; background: none; -webkit-text-fill-color: #fff; filter: drop-shadow(0 0 14px #fff); }
+.tu-null .tu-box b::after { display: none; }
+.tu-null .tu-eq { background: #fff; color: #000; box-shadow: 0 0 24px rgba(255, 255, 255, .7); }
+/* NULL biome arrival card */
+#biomeIntro.bi-null { --bc: #ffffff; }
+#biomeIntro.bi-null .bibg { background: radial-gradient(circle at 50% 45%, rgba(230, 232, 255, .25), #000 60%); }
+#biomeIntro.bi-null b { font-family: Syncopate, "Arial Black", sans-serif; letter-spacing: .5em; text-shadow: 0 0 30px #fff, 0 0 2px #fff; animation: biNull 4.8s ease-out; }
+@keyframes biNull { 0% { opacity: 0; letter-spacing: 1.4em; } 8% { opacity: 1; } 9% { opacity: .2; } 10% { opacity: 1; } }
+body.biome-null #coinVal, body.biome-null #luckVal { text-shadow: 0 0 12px #fff; }

@@ -216,6 +216,8 @@
     const wxId = G.weather ? G.weather.current().id : null;
     // a special sky (one with its own exclusive mineral) holds back the regular secrets - only its own 100억 can drop
     const specialSky = wxId && C.list.some(c => c.weather === wxId);
+    // THE HEAVEN: nothing under 1억 can be found while it lasts
+    const bio = G.biome && G.biome.current(), floor = (bio && bio.onlyOver) || 0;
     let pick = null, wsum = 0;
     for (let i = C.list.length - 1; i >= 0; i--) {
       const c = C.list[i];
@@ -225,6 +227,7 @@
       // weather-exclusive minerals only exist while their weather is overhead
       if (c.weather && wxId !== c.weather) continue;
       if (specialSky && !c.weather && G.isSecret(c)) continue;
+      if (c.odds < floor) break;                         // the list runs rarest-first: everything after this is commoner
       if (Math.random() < Math.min(cap, luck / c.odds)) {
         const w = Math.pow(c.odds, 0.35); wsum += w;
         if (Math.random() * wsum < w) pick = c;          // weighted reservoir pick among the hits
@@ -244,12 +247,13 @@
   /* ---------- playback ---------- */
   C.start = (def, opt = {}) => {
     // TRANSCENDENT and above open with a short blackout (time runs negative during it)
-    const pre = def.tierIdx >= 7 ? 1800 : 0;
+    const pre = def.pre != null ? def.pre : def.tierIdx >= 7 ? 1800 : 0;     // def.pre: a film can ask for its own blackout length
     C.active = {
       def, reward: opt.reward || 0, first: !!opt.first, replay: !!opt.replay, mut: opt.mut || null,
       t0: performance.now() + pre, pre, revealed: false, time: -pre, guard: 0, audioOn: pre === 0,
     };
-    if (pre) G.audio.blackout(def.tierIdx);
+    if (def.music) { /* a recorded score (js/music.js) plays instead of the synth one */ }
+    else if (pre) G.audio.blackout(def.tierIdx);
     else G.audio.riser(def.tierIdx, (def.duration * def.revealAt) / 1000, def.snd);
     G.emit('cut:start', C.active);
   };
@@ -285,8 +289,8 @@
     if (a.frozen != null) a.t0 = now - a.frozen;    // debug: G.debug.seek() parks the film on one frame
     a.time = now - a.t0;
     const revealMs = a.def.duration * a.def.revealAt;
-    if (!a.audioOn && a.time >= 0) { a.audioOn = true; G.audio.riser(a.def.tierIdx, revealMs / 1000, a.def.snd); }
-    if (!a.revealed && a.time >= revealMs) { a.revealed = true; G.audio.reveal(a.def.tierIdx, a.def.snd); G.emit('cut:reveal', a); }
+    if (!a.audioOn && a.time >= 0) { a.audioOn = true; if (!a.def.music) G.audio.riser(a.def.tierIdx, revealMs / 1000, a.def.snd); G.emit('cut:go', a); }   // cut:go - the blackout is over (js/music.js starts a recorded score here)
+    if (!a.revealed && a.time >= revealMs) { a.revealed = true; if (!a.def.music) G.audio.reveal(a.def.tierIdx, a.def.snd); G.emit('cut:reveal', a); }
   };
 
   const FONT = 'system-ui,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif';
@@ -394,6 +398,28 @@
           }
         });
       }
+    } else if (style === 'holy') {
+      // celestial: clean letters (no glitch), lighting up from the middle outward, the spacing drawing
+      // in as they settle, white fading into gold, a soft halo round the line
+      g.save(); g.textAlign = 'left'; g.textBaseline = 'middle';
+      let fpx = fontPx; g.font = `700 ${fpx}px ${c.font || CAP_SERIF}`;
+      const chars = [...txt], gap = () => fpx * 0.16 * (1 + (1 - clamp(k)) * 1.4);
+      let widths = chars.map(ch => g.measureText(ch).width), full = widths.reduce((a, b) => a + b, 0) + gap() * (chars.length - 1);
+      if (full > W * 0.86) { const kk = (W * 0.86) / full; fpx *= kk; g.font = `700 ${fpx}px ${c.font || CAP_SERIF}`; widths = chars.map(ch => g.measureText(ch).width); full = widths.reduce((a, b) => a + b, 0) + gap() * (chars.length - 1); }
+      const mid = (chars.length - 1) / 2, grad = g.createLinearGradient(0, py - fpx * 0.5, 0, py + fpx * 0.5);
+      const wt = c.tone === 'white';      // tone:'white' - cold white light instead of gold
+      grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.55, wt ? '#eef0ff' : '#fff6d8'); grad.addColorStop(1, wt ? '#b8c0ff' : '#e8c870');
+      const halo = g.createRadialGradient(W / 2, py, 0, W / 2, py, full * 0.6);
+      halo.addColorStop(0, `rgba(255,250,230,${0.22 * k})`); halo.addColorStop(1, 'rgba(255,250,230,0)');
+      g.fillStyle = halo; g.fillRect(W / 2 - full * 0.6, py - fpx * 1.6, full * 1.2, fpx * 3.2);
+      let x = W / 2 - full / 2;
+      chars.forEach((ch, i) => {
+        const delay = Math.abs(i - mid) / Math.max(1, mid) * 0.45, kk = clamp((k - delay) / 0.55);
+        g.globalAlpha = kk; g.shadowColor = 'rgba(255,255,255,.95)'; g.shadowBlur = fpx * (0.25 + (1 - kk) * 0.8);
+        g.fillStyle = grad; g.fillText(ch, x, py + (1 - kk) * fpx * 0.25);
+        x += widths[i] + gap();
+      });
+      g.restore();
     } else if (style === 'type') {
       // clean typewriter reveal - no jitter/dropout, characters appear in sequence with a blinking cursor
       g.save(); g.font = `800 ${fontPx}px ${c.font || CAP_SERIF}`; g.textAlign = 'left'; g.textBaseline = 'middle';
@@ -449,11 +475,11 @@
     if (rt > 0 && rt < fl) { g.fillStyle = `rgba(255,255,255,${(grand ? 0.7 : 0.55) * (1 - rt / fl) * G.flashMul()})`; g.fillRect(0, 0, W, H); }
 
     // letterbox
-    const bar = H * (grand ? 0.12 : 0.085) * E.outCubic(seg(a.time, 0, 800));
-    g.fillStyle = '#000'; g.fillRect(0, 0, W, bar); g.fillRect(0, H - bar, W, bar);
+    const bar = d.fullscreen ? 0 : H * (grand ? 0.12 : 0.085) * E.outCubic(seg(a.time, 0, 800));   // def.fullscreen: no letterbox
+    if (bar > 0) { g.fillStyle = '#000'; g.fillRect(0, 0, W, bar); g.fillRect(0, H - bar, W, bar);
     g.fillStyle = rgba(tier.color, 0.7);
     g.fillRect(0, bar, W * E.outCubic(seg(a.time, 100, 1000)), 1);
-    g.fillRect(W - W * E.outCubic(seg(a.time, 100, 1000)), H - bar - 1, W, 1);
+    g.fillRect(W - W * E.outCubic(seg(a.time, 100, 1000)), H - bar - 1, W, 1); }
 
     // captions: original-language line only, no tier colour - a flickering, jittering, dropout-glitchy signal.
     // big and legible by default; v:true swaps in a huge vertical title-card treatment; pos:'top'|'center'|'bottom'
@@ -518,7 +544,7 @@
       k = E.outCubic(seg(rt, 300, 900)); g.globalAlpha = k;
       g.fillStyle = tier.color; g.font = `700 ${18 * s}px ${MONO}`; spc('0px');
       const wxName = d.weather && G.data.weathers[d.weather] ? G.data.weathers[d.weather].name : '';
-      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : d.boss ? `BOSS  ·  ${d.bossName} 처치 보상` : d.aura ? `CUBER STAGE 한정  ·  1 in 1,000,000` : d.biome ? `1 in ${G.fmtOdds(d.odds)}  ·  GLITCH 한정` : d.weather ? `1 in ${G.fmtOdds(d.odds)}  ·  ${wxName} 전용` : `1 in ${G.fmtOdds(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
+      g.fillText(d.special ? `SPECIAL  ·  ${d.eventName} 한정` : d.boss ? `BOSS  ·  ${d.bossName} 처치 보상` : d.aura ? `CUBER STAGE 한정  ·  1 in 1,000,000` : d.biome ? `1 in ${G.fmtOdds(d.odds)}  ·  ${(G.data.biomes && G.data.biomes[d.biome] || {}).name || d.biome} 한정` : d.weather ? `1 in ${G.fmtOdds(d.odds)}  ·  ${wxName} 전용` : `1 in ${G.fmtOdds(d.odds)}`, W / 2, y0 + (grand ? 86 : 72) * s);
       // reward
       if (!a.replay) {
         k = E.outCubic(seg(rt, 500, 900)); g.globalAlpha = k;
