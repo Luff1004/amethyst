@@ -1727,7 +1727,7 @@ html[data-theme="gods"] .card::after, html[data-theme="gods"] #panel::after, htm
    no ornament at all: black glass panels lit from inside by a cold white, wide geometric type,
    the screen edge breathing white on the beat of Flow (128 BPM) */
 html[data-theme="null"] {
-  --bg: #000; --panel: rgba(4, 4, 8, .9); --ink: #f2f3ff; --dim: #8a8ca6; --line: rgba(230, 232, 255, .32); --acc: #ffffff;
+  --bg: #000; --panel: rgba(4, 4, 8, .9); --ink: #f2f3ff; --dim: #8a8ca6; --line: #ffffff; --acc: #ffffff;
   --card: rgba(10, 10, 16, .88); --btn: #101018; --btn2: #20202c; --sel: linear-gradient(180deg, #2c2c3a, #08080c); --modal: rgba(4, 4, 8, .97); --scroll: #50526a;
 }
 html[data-theme="null"] #panel { --fill: radial-gradient(140% 60% at 50% -10%, rgba(220, 224, 255, .14), transparent 60%), rgba(4, 4, 8, .92); backdrop-filter: blur(6px); }

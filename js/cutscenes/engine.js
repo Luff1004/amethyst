@@ -216,7 +216,7 @@
     const wxId = G.weather ? G.weather.current().id : null;
     // a special sky (one with its own exclusive mineral) holds back the regular secrets - only its own 100억 can drop
     const specialSky = wxId && C.list.some(c => c.weather === wxId);
-    // THE HEAVEN: nothing under 1억 can be found while it lasts
+    // THE HEAVEN: the roll runs exactly as usual, but a find under 1억 simply doesn't show up (no swap for a rarer one)
     const bio = G.biome && G.biome.current(), floor = (bio && bio.onlyOver) || 0;
     let pick = null, wsum = 0;
     for (let i = C.list.length - 1; i >= 0; i--) {
@@ -227,19 +227,19 @@
       // weather-exclusive minerals only exist while their weather is overhead
       if (c.weather && wxId !== c.weather) continue;
       if (specialSky && !c.weather && G.isSecret(c)) continue;
-      if (c.odds < floor) break;                         // the list runs rarest-first: everything after this is commoner
       if (Math.random() < Math.min(cap, luck / c.odds)) {
         const w = Math.pow(c.odds, 0.35); wsum += w;
         if (Math.random() * wsum < w) pick = c;          // weighted reservoir pick among the hits
       }
     }
-    return pick;
+    return pick && pick.odds < floor ? null : pick;
   };
   /* the same weighted roll over an explicit list (the 에러 크리스탈 rolls only the error minerals) */
   C.rollFrom = (list, luck, cap = 0.9) => {
+    const bio = G.biome && G.biome.current(), floor = (bio && bio.onlyOver) || 0;   // THE HEAVEN's floor holds here too
     let pick = null, wsum = 0;
     for (const c of list) if (Math.random() < Math.min(cap, luck / c.odds)) { const w = Math.pow(c.odds, 0.35); wsum += w; if (Math.random() * wsum < w) pick = c; }
-    return pick;
+    return pick && pick.odds < floor ? null : pick;
   };
 
   C.reward = def => Math.floor(def.odds * def.rewardMul * G.stats.coinMul() * (1 + G.stats.val('reward')));   // 강화 - 광물 감정

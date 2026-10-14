@@ -1,33 +1,43 @@
 /*
-  NULLSCAPES - the NULL biome's own mineral (js/biome.js), 1 in 555,500,000,000. Nowhere else.
-  Modelled on Sol's RNG's BREAKTHROUGH and Geometry Dash's Nullscapes (Kiba; song "Flow" by Creo).
-  All 2D, all light: everything that glows is drawn with soft bloom sprites, flares and additive light,
-  not strokes.
-  The score is Flow from its biggest drop: silence at 93.44 s, "da" at 93.55, "DAN" at 93.78, then the
-  heaviest stretch of the song until ~126.4 s. 128 BPM. Everything below is timed to that grid:
-    blackout (2 s): motes of light pull into a star, its flare growing
-    "da"  (T 0)    : the star flashes and white cracks of light burst across the screen
-    "DAN" (T 0.23) : the screen shatters outward into light
-    bars 1-8       : the crown of shattered black monoliths stands in the light; a pillar of light through
-                     the split in the great one, pulsing on every beat, a shockwave on every bar
-    bars 9-12      : the split tears wider, the monoliths drift apart, a storm of white motes
-    bars 13-16     : the cracks come back across the screen, everything climbs
-    T 30.23        : the flash - NULLSCAPES - and the light settles as the song calms
-  Captions land on downbeats, top and lower third in turn, never across the middle of the picture.
+  NULLSCAPES - the NULL biome's own mineral (js/biome.js), 1 in 555,555,555,555. Nowhere else.
+  A motion-graphics film to Flow (Creo): black and white with one cold violet, fine instrument-like
+  linework (scales, ticks, brackets, dimension lines), slow grand camera moves on the 128 BPM grid.
+  Laid out like BREAKTHROUGH's own film (38 s of Flow, the i - iv lines over the build, "get out of
+  my head" in the break, the rest over the drop). The song comes in at 33.9 s, at the start of the
+  phrase eight bars before the drop (49.02 s); bars below count from the drop.
+    blackout (2 s)    : a hairline draws itself across the dark, and goes
+    bars -8..-6  i    : an eclipse - a black disc in a corona, ringed by measuring scales
+    bars -6..-4  ii   : an endless floor running to a horizon, a monolith rising out of it
+    bars -4..-2  iii  : a long corridor of frames, light at the end
+    bars -2..    iv   : stripes sliding across; over the rising run of eight notes (45.03 - 46.67 s)
+                        "how much do you believe in this world?" stacks up, a word a note
+    the break (46.95) : nothing on screen but "get out of my head", in on the piano "da" (47.86 s)
+    bars 0-2   WHITE  : a white world, small black fragments hanging in it
+    bars 2-4   FIVE   : five shards standing in the light from a crack in the ground
+    bars 4-6   ODDS   : 1 in 555,555,555,555, counted up
+    bars 6-8   FORM   : the crystal drawn like a blueprint - guides, edges, dimensions - then filled
+    bars 8-10  RISE   : the light swells until the screen is white
+    bar 10            : NULLSCAPES - its true form, an obsidian bipyramid, turns above the floor
+  Words snap in whole on a beat, drawn with 'difference' so they read on black and on white alike.
   G.n3 also carries the NULL theme (js/game.js ambient 'null') and the NULL biome's look (js/biome.js).
 */
 (() => {
   const { E, seg, clamp } = G;
   const TAU = Math.PI * 2, fr = v => v - Math.floor(v);
-  const BEAT = 60 / 128, BAR = BEAT * 4, DA = 46.15, DAN = 2.49;      // play from 46.15 s; DAN = the drop (48.64 s)
-  const HIT1 = 0.05, HIT2 = 0.5;                                      // "da" (46.20 s) and "dan" (46.65 s)
-  const barAt = n => DAN + n * BAR;                                     // the downbeat of bar n of the drop
+  const BEAT = 60 / 128, BAR = BEAT * 4;
+  const DA = 33.9;                                                      // the song starts here (s)
+  const BREAK = 46.95 - DA, HIT1 = 47.86 - DA, DAN = 49.02 - DA;        // the break, the piano "da", the drop
+  const RUN = [45.03, 45.27, 45.51, 45.74, 45.97, 46.2, 46.44, 46.67].map(t => t - DA);   // the rising run
+  const barAt = n => DAN + n * BAR, beatAt = n => DAN + n * BEAT;      // downbeat of bar n / beat n of the drop
   const WIDE = 'Syncopate, "Arial Black", sans-serif';
-  const rnd = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
-  const DPRx = () => Math.min(2, window.devicePixelRatio || 1);
+  const THIN = '"Helvetica Neue", "Segoe UI", Arial, sans-serif';
+  const MONO = 'Consolas, "Courier New", monospace';
+  const ACC = '#8c8cff';
+  // seeded random (Lehmer); the seed is scrambled first so neighbouring seeds don't start out in step
+  const rnd = s => { s = ((s * 2654435761) % 2147483646) + 1; const f = () => (s = (s * 16807) % 2147483647) / 2147483647; f(); f(); return f; };
   const N3 = G.n3 = {};
 
-  /* ---------------- light: one soft bloom sprite, reused everywhere ---------------- */
+  /* ---------------- light: one soft bloom sprite ---------------- */
   let bloomSpr = null;
   const bloom = () => {
     if (bloomSpr) return bloomSpr;
@@ -37,329 +47,309 @@
     x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
     return (bloomSpr = c);
   };
-  // a beam of light, pointing up: brightest at the bottom (the source), fading along its length, and
-  // feathered softly across its width so it has no edge
-  let raySpr = null;
-  const raySprite = () => {
-    if (raySpr) return raySpr;
-    const c = document.createElement('canvas'); c.width = 64; c.height = 512;
-    const x = c.getContext('2d'), along = x.createLinearGradient(0, 512, 0, 0);
-    along.addColorStop(0, 'rgba(255,255,255,.55)'); along.addColorStop(0.35, 'rgba(240,242,255,.22)'); along.addColorStop(1, 'rgba(230,234,255,0)');
-    x.fillStyle = along; x.fillRect(0, 0, 64, 512);
-    x.globalCompositeOperation = 'destination-in';
-    const across = x.createLinearGradient(0, 0, 64, 0);
-    [[0, 0], [0.2, 0.25], [0.4, 0.85], [0.5, 1], [0.6, 0.85], [0.8, 0.25], [1, 0]].forEach(([p, v]) => across.addColorStop(p, `rgba(0,0,0,${v})`));
-    x.fillStyle = across; x.fillRect(0, 0, 64, 512);
-    return (raySpr = c);
-  };
   const glowAt = (g, x, y, r, a) => { if (a <= 0 || r <= 0) return; g.globalAlpha = Math.min(1, a); g.drawImage(bloom(), x - r, y - r, r * 2, r * 2); g.globalAlpha = 1; };
-  // a lens flare: core bloom, an anamorphic streak, a few ghosts along the axis through the centre
-  function flare(g, W, H, x, y, s, a) {
+  const light = (g, x, y, r, a) => { g.save(); g.globalCompositeOperation = 'lighter'; glowAt(g, x, y, r, a); g.restore(); };
+
+  /* ---------------- the linework kit ---------------- */
+  // stroke the current path as light: a wide faint halo, a softer core, then the crisp line
+  function glowStroke(g, w, a, col = '255,255,255') {
     g.save(); g.globalCompositeOperation = 'lighter';
-    glowAt(g, x, y, s * 3, a); glowAt(g, x, y, s * 1.2, a);
-    const st = g.createLinearGradient(x - W, 0, x + W, 0);
-    st.addColorStop(0, 'rgba(180,190,255,0)'); st.addColorStop(0.5, `rgba(235,240,255,${0.8 * a})`); st.addColorStop(1, 'rgba(180,190,255,0)');
-    g.fillStyle = st; g.fillRect(x - W, y - s * 0.06, W * 2, s * 0.12);
-    g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x - s * 0.04, y - s * 1.6, s * 0.08, s * 3.2);
-    const cx = W / 2, cy = H / 2;
-    [[-0.4, 0.5, 0.25], [-0.8, 0.25, 0.18], [0.5, 0.35, 0.14], [1.3, 0.6, 0.1]].forEach(([k, r, al]) => glowAt(g, cx + (cx - x) * k, cy + (cy - y) * k, s * r, a * al));
+    g.lineWidth = w * 7; g.strokeStyle = `rgba(${col},${0.05 * a})`; g.stroke();
+    g.lineWidth = w * 2.6; g.strokeStyle = `rgba(${col},${0.16 * a})`; g.stroke();
+    g.restore();
+    g.lineWidth = w; g.strokeStyle = `rgba(${col},${a})`; g.stroke();
+  }
+  function circle(g, x, y, r) { g.beginPath(); g.arc(x, y, Math.max(0, r), 0, TAU); }
+  function square(g, x, y, s, rot) { g.save(); g.translate(x, y); g.rotate(rot); g.beginPath(); g.rect(-s / 2, -s / 2, s, s); g.restore(); }
+  // a measuring ring: double line, a dotted outer track, a 3-degree scale with 15/90-degree majors,
+  // four heavy arc brackets, optional bearing labels
+  function hudRing(g, x, y, r, rot, a, labels) {
+    if (a <= 0 || r <= 2) return;
+    g.save(); g.translate(x, y); g.rotate(rot); g.globalAlpha = Math.min(1, a); g.strokeStyle = '#fff';
+    circle(g, 0, 0, r); g.lineWidth = 1.3; g.stroke();
+    circle(g, 0, 0, r * 0.955); g.lineWidth = 0.6; g.stroke();
+    g.setLineDash([1.5, 5]); circle(g, 0, 0, r * 1.05); g.lineWidth = 1; g.stroke(); g.setLineDash([]);
+    g.beginPath();
+    for (let i = 0; i < 120; i++) {
+      const an = (i / 120) * TAU, L = i % 30 === 0 ? r * 0.09 : i % 5 === 0 ? r * 0.045 : r * 0.018, c = Math.cos(an), s = Math.sin(an);
+      g.moveTo(c * r * 0.955, s * r * 0.955); g.lineTo(c * (r * 0.955 - L), s * (r * 0.955 - L));
+    }
+    g.lineWidth = 0.8; g.stroke();
+    g.lineWidth = 3; for (let q = 0; q < 4; q++) { g.beginPath(); g.arc(0, 0, r * 1.1, (q * TAU) / 4 - 0.1, (q * TAU) / 4 + 0.1); g.stroke(); }
+    if (labels) {
+      g.font = `400 ${Math.max(8, r * 0.05)}px ${MONO}`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      ['000', '090', '180', '270'].forEach((s, q) => { const an = (q * TAU) / 4 - TAU / 4 + 0.22; g.fillText(s, Math.cos(an) * r * 1.19, Math.sin(an) * r * 1.19); });
+    }
     g.restore();
   }
-
-  /* ---------------- cracks of light ---------------- */
-  const CRACK = (() => {
-    const r = rnd(1442), rays = 14, ang = Array.from({ length: rays }, (_, i) => (i + r() * 0.7) / rays * TAU);
-    const lines = ang.map(a => { const l = [[0, 0]]; let x = 0, y = 0, aa = a; for (let s = 1; s <= 12; s++) { aa += (r() - 0.5) * 0.35; const st = 0.06 + r() * 0.07; x += Math.cos(aa) * st; y += Math.sin(aa) * st; l.push([x, y]); } return l; });
-    const br = []; lines.forEach(l => { for (let b = 0; b < 2; b++) { const i = 3 + Math.floor(r() * 7), [x0, y0] = l[i], a = Math.atan2(y0, x0) + (r() < 0.5 ? -1 : 1) * (0.5 + r() * 0.6); const s = [[x0, y0]]; let x = x0, y = y0; for (let k = 0; k < 4; k++) { x += Math.cos(a) * 0.05; y += Math.sin(a) * 0.05; s.push([x, y]); } br.push(s); } });
-    const shards = [], rings = [0, 0.16, 0.36, 0.66, 1.3];
-    for (let ri = 0; ri < rings.length - 1; ri++) for (let ai = 0; ai < rays; ai++) {
-      const a0 = ang[ai], a1 = ang[(ai + 1) % rays] + (ai === rays - 1 ? TAU : 0), poly = [[a0, rings[ri]], [a1, rings[ri]], [a1, rings[ri + 1]], [a0, rings[ri + 1]]].map(([a, rr]) => [Math.cos(a) * rr, Math.sin(a) * rr]);
-      const cx = poly.reduce((s, p) => s + p[0], 0) / 4, cy = poly.reduce((s, p) => s + p[1], 0) / 4;
-      shards.push({ poly, cx, cy, spin: (r() - 0.5) * 2.5, push: 0.7 + r() * 0.8 });
+  // corner brackets round a box
+  function brackets(g, x, y, w, h, L) {
+    g.beginPath();
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const cx = x + (sx * w) / 2, cy = y + (sy * h) / 2;
+      g.moveTo(cx - sx * L, cy); g.lineTo(cx, cy); g.lineTo(cx, cy - sy * L);
     }
-    return { lines, br, shards };
+  }
+  // a dimension line: end ticks, arrowheads, the figure in the middle
+  function dimension(g, x0, y0, x1, y1, label, a, k = 1) {
+    const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len, nx = -uy, ny = ux, e = len * k;
+    if (e < 2) return;
+    g.save(); g.globalAlpha = a; g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + ux * e, y0 + uy * e);
+    g.moveTo(x0 + nx * 6, y0 + ny * 6); g.lineTo(x0 - nx * 6, y0 - ny * 6);
+    if (k >= 1) { g.moveTo(x1 + nx * 6, y1 + ny * 6); g.lineTo(x1 - nx * 6, y1 - ny * 6); }
+    g.stroke();
+    if (k >= 1) {
+      for (const [px, py, s] of [[x0, y0, 1], [x1, y1, -1]]) { g.beginPath(); g.moveTo(px, py); g.lineTo(px + (ux * 7 + nx * 2.5) * s, py + (uy * 7 + ny * 2.5) * s); g.lineTo(px + (ux * 7 - nx * 2.5) * s, py + (uy * 7 - ny * 2.5) * s); g.closePath(); g.fill(); }
+      g.font = `400 10px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      const mx = (x0 + x1) / 2 + nx * 10, my = (y0 + y1) / 2 + ny * 10;
+      g.save(); g.translate(mx, my); g.rotate(Math.atan2(dy, dx)); g.fillText(label, 0, 0); g.restore();
+    }
+    g.restore();
+  }
+  // a fine drafting grid: minor and major lines
+  function fineGrid(g, W, H, step, ox, oy, a) {
+    for (const [mul, al] of [[1, 0.06], [5, 0.14]]) {
+      const s = step * mul; g.beginPath();
+      for (let x = ((ox % s) + s) % s; x < W; x += s) { g.moveTo(x, 0); g.lineTo(x, H); }
+      for (let y = ((oy % s) + s) % s; y < H; y += s) { g.moveTo(0, y); g.lineTo(W, y); }
+      g.strokeStyle = `rgba(255,255,255,${al * a})`; g.lineWidth = mul > 1 ? 0.8 : 0.5; g.stroke();
+    }
+  }
+  // a floor of lines running to a horizon at hy (and, faint, its mirror above), moving toward you
+  function floor(g, W, H, hy, t, a, speed = 0.5) {
+    const vx = W / 2;
+    g.save(); g.strokeStyle = '#fff'; g.lineWidth = 0.8;
+    g.beginPath(); for (let i = -16; i <= 16; i++) { g.moveTo(vx + i * W * 0.004, hy); g.lineTo(vx + i * W * 0.13, H * 1.02); }
+    g.globalAlpha = a * 0.3; g.stroke();
+    const ph = fr(t * speed);
+    for (let j = 0; j < 22; j++) {
+      const zz = j + 1 - ph, y = hy + ((H - hy) * 1.15) / zz;
+      if (y > H + 2) continue;
+      g.globalAlpha = a * Math.min(0.75, 1.4 / zz); g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
+      const yc = hy - ((hy) * 0.9) / zz; g.globalAlpha = a * Math.min(0.2, 0.4 / zz); g.beginPath(); g.moveTo(0, yc); g.lineTo(W, yc); g.stroke();
+    }
+    g.restore();
+    g.beginPath(); g.moveTo(0, hy); g.lineTo(W, hy); glowStroke(g, 1.2, a);
+    light(g, vx, hy, Math.min(W, H) * 0.35, 0.3 * a);
+  }
+  /* ---------------- a small 3D kit: meshes turned round their upright axis, seen from a little above ----------------
+     A mesh is { v: [[x, y, z], ...], f: [[i, j, k, ...], ...] } in model units, y pointing down. drawMesh
+     shades the faces that face you (painter's order), draws the hidden edges faint and dashed as if seen
+     through glass, and burns the visible edges white. */
+  const VIEW = [0, -0.21, 0.98];
+  function meshEdges(M) {
+    const seen = {}, out = [];
+    M.f.forEach((f, fi) => f.forEach((a, i) => {
+      const b = f[(i + 1) % f.length], k = a < b ? a + ',' + b : b + ',' + a;
+      if (seen[k]) seen[k].faces.push(fi); else out.push(seen[k] = { a, b, faces: [fi] });
+    }));
+    return out;
+  }
+  function drawMesh(g, M, x, y, s, turn, o = {}) {
+    const A = o.alpha != null ? o.alpha : 1;
+    g.save(); g.globalAlpha = A;
+    const tilt = o.tilt != null ? o.tilt : 0.22, c = Math.cos(turn), sn = Math.sin(turn);
+    const R = M.v.map(([X, Y, Z]) => [X * c + Z * sn, Y, -X * sn + Z * c]);
+    const P = R.map(([X, Y, Z]) => ({ x: x + X * s, y: y + (Y + Z * tilt) * s, z: Z }));
+    const cen = R.reduce((a, p) => [a[0] + p[0] / R.length, a[1] + p[1] / R.length, a[2] + p[2] / R.length], [0, 0, 0]);
+    const L = o.light || [-0.45, -0.65, 0.6], Ll = Math.hypot(...L);
+    const F = M.f.map(f => {
+      const [a, b, d] = [R[f[0]], R[f[1]], R[f[2]]], u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [d[0] - a[0], d[1] - a[1], d[2] - a[2]];
+      let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+      const fc = f.reduce((acc, i) => [acc[0] + R[i][0] / f.length, acc[1] + R[i][1] / f.length, acc[2] + R[i][2] / f.length], [0, 0, 0]);
+      if (n[0] * (fc[0] - cen[0]) + n[1] * (fc[1] - cen[1]) + n[2] * (fc[2] - cen[2]) < 0) n = n.map(q => -q);
+      const nl = Math.hypot(...n) || 1;
+      return { f, vis: (n[0] * VIEW[0] + n[1] * VIEW[1] + n[2] * VIEW[2]) / nl > 0, depth: fc[2], lit: Math.max(0, (n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) / nl / Ll) };
+    });
+    const ED = M.edges || (M.edges = meshEdges(M)), fill = o.fill != null ? o.fill : 1, ek = o.edges != null ? o.edges : 1, n = ED.length;
+    const seg2 = (e, i) => { const k = clamp(ek * n - i); if (k <= 0) return false; const A = P[e.a], B = P[e.b]; g.moveTo(A.x, A.y); g.lineTo(A.x + (B.x - A.x) * k, A.y + (B.y - A.y) * k); return true; };
+    // hidden edges, through the glass
+    g.save(); g.setLineDash([2, 4]); g.beginPath();
+    ED.forEach((e, i) => { if (!e.faces.some(fi => F[fi].vis)) seg2(e, i); });
+    g.strokeStyle = `rgba(255,255,255,${o.back != null ? o.back : 0.25})`; g.lineWidth = 0.8; g.stroke(); g.restore();
+    // the faces that face you
+    if (fill > 0) {
+      const base = o.base || [10, 10, 16], span = o.span || [120, 120, 150];
+      F.filter(q => q.vis).sort((p, q) => p.depth - q.depth).forEach(q => {
+        g.beginPath(); q.f.forEach((i, j) => (j ? g.lineTo(P[i].x, P[i].y) : g.moveTo(P[i].x, P[i].y))); g.closePath();
+        const k = q.lit * q.lit, col = j => Math.round(base[j] + span[j] * k);
+        g.globalAlpha = fill * A; g.fillStyle = `rgb(${col(0)},${col(1)},${col(2)})`; g.fill(); g.globalAlpha = A;
+      });
+    }
+    if (o.inner) o.inner(P);                                            // anything seen inside the glass
+    // the visible edges burn
+    g.beginPath(); let any = false;
+    ED.forEach((e, i) => { if (e.faces.some(fi => F[fi].vis)) any = seg2(e, i) || any; });
+    if (any) { g.lineJoin = 'round'; glowStroke(g, o.lw || 1.4, o.ea != null ? o.ea : 1); }
+    g.restore();
+    return P;
+  }
+  // the crystal: a hexagonal bipyramid (vertices: 0 top, 1 bottom, 2-7 the girdle)
+  const BIPY = (() => {
+    const v = [[0, -1.2, 0], [0, 1.05, 0]], f = [];
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; v.push([Math.sin(a) * 0.62, -0.08, Math.cos(a) * 0.62]); }
+    for (let i = 0; i < 6; i++) { const a = 2 + i, b = 2 + ((i + 1) % 6); f.push([0, a, b], [1, b, a]); }
+    return { v, f };
   })();
-  // glowing cracks: a wide soft glow, then a hot white core - light coming through, not a line
-  function cracks(g, W, H, k, a, cx = W / 2, cy = H / 2) {
-    if (a <= 0) return;
-    const s = Math.hypot(W, H) * 0.62, draw = (l, n) => { g.beginPath(); for (let i = 0; i < n; i++) i ? g.lineTo(cx + l[i][0] * s, cy + l[i][1] * s) : g.moveTo(cx + l[i][0] * s, cy + l[i][1] * s); g.stroke(); };
-    g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round'; g.lineJoin = 'round';
-    for (const [lw, col] of [[16, `rgba(170,180,255,${0.12 * a})`], [7, `rgba(220,226,255,${0.35 * a})`], [2.2, `rgba(255,255,255,${a})`]]) {
-      g.lineWidth = lw; g.strokeStyle = col;
-      for (const l of CRACK.lines) draw(l, Math.max(1, Math.floor(l.length * k)));
-      if (k > 0.5) for (const b of CRACK.br) draw(b, Math.max(1, Math.floor(b.length * (k - 0.5) * 2)));
-    }
-    glowAt(g, cx, cy, Math.min(W, H) * 0.35, a * 0.8);
+  // a hard diagonal wipe: a white band sweeping across (k 0..1)
+  function wipe(g, W, H, k, dir) {
+    if (k <= 0 || k >= 1) return;
+    const e = E.inOut(k), x = -W * 0.7 + e * W * 2.4, w = W * 0.55, sk = H * 0.35;
+    g.save(); if (dir < 0) { g.translate(W, 0); g.scale(-1, 1); }
+    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + w, 0); g.lineTo(x + w - sk, H); g.lineTo(x - sk, H); g.closePath(); g.fill();
+    g.fillStyle = ACC;                                                  // a thin violet edge on its leading side
+    g.beginPath(); g.moveTo(x + w, 0); g.lineTo(x + w + W * 0.02, 0); g.lineTo(x + w + W * 0.02 - sk, H); g.lineTo(x + w - sk, H); g.closePath(); g.fill();
     g.restore();
   }
 
-  /* ---------------- the monoliths (painted once per size) ---------------- */
-  function paintMonolith(x, cx, base, w, h, seed, front) {
-    const r = rnd(seed), nseg = 3 + Math.floor(r() * 3), segH = h / nseg;
-    let y = base;
-    for (let s = 0; s < nseg; s++) {
-      const sh = segH * (0.8 + r() * 0.4), dx = (r() - 0.5) * w * 0.14 + (s >= nseg - 2 ? (r() - 0.5) * w * 0.25 : 0), rot = (r() - 0.5) * (s >= nseg - 2 ? 0.12 : 0.03);
-      const bx = cx + dx, top = y - sh;
-      x.save(); x.translate(bx, y - sh / 2); x.rotate(rot);
-      const bg = x.createLinearGradient(-w / 2, 0, w / 2, 0);
-      bg.addColorStop(0, front ? '#2a2a34' : '#1a1a22'); bg.addColorStop(0.12, front ? '#0c0c12' : '#08080c'); bg.addColorStop(0.85, '#040406'); bg.addColorStop(1, front ? '#1e1e28' : '#121218');
-      // the lowest block doesn't stop flat: the same stone runs on down and breaks off in ragged points
-      x.beginPath(); x.moveTo(-w / 2, -sh / 2); x.lineTo(w / 2, -sh / 2);
-      if (s === 0) {
-        const fr2 = rnd(seed * 3 + 1), n = 5 + Math.floor(fr2() * 3);
-        x.lineTo(w / 2, sh / 2);
-        for (let i = n - 1; i >= 1; i--) {
-          const k = i / n, pt = i % 2 ? h * (0.08 + fr2() * 0.2) * (1 - Math.abs(k - 0.5)) : h * (0.01 + fr2() * 0.04);
-          x.lineTo(-w / 2 + w * k + (fr2() - 0.5) * w * 0.08, sh / 2 + pt);
-        }
-        x.lineTo(-w / 2, sh / 2);
-      } else { x.lineTo(w / 2, sh / 2); x.lineTo(-w / 2, sh / 2); }
-      x.closePath(); x.fillStyle = bg; x.fill();
-      x.save(); x.clip();
-      const rim = x.createLinearGradient(-w / 2, 0, -w / 2 + w * 0.12, 0); rim.addColorStop(0, `rgba(235,238,255,${front ? 0.55 : 0.32})`); rim.addColorStop(1, 'rgba(235,238,255,0)');
-      x.fillStyle = rim; x.fillRect(-w / 2, -sh / 2, w * 0.12, sh + h * 0.4);
-      x.restore();
-      x.fillStyle = '#000';
-      for (let c = 0; c < 2; c++) { const cxp = (r() < 0.5 ? -1 : 1) * w / 2, cyp = (r() - 0.5) * sh, cs = w * (0.08 + r() * 0.14); x.beginPath(); x.moveTo(cxp, cyp - cs); x.lineTo(cxp - Math.sign(cxp) * cs, cyp); x.lineTo(cxp, cyp + cs * 0.7); x.fill(); }
-      x.save(); x.shadowColor = '#fff'; x.shadowBlur = 10;
-      for (let gl = 0, n = r() < 0.65 ? 1 + Math.floor(r() * 3) : 0; gl < n; gl++) { x.fillStyle = `rgba(255,255,255,${0.75 + r() * 0.25})`; x.fillRect((r() - 0.5) * w * 0.7, (r() - 0.5) * sh * 0.6, Math.max(1.5, w * 0.04), sh * (0.12 + r() * 0.3)); }
-      x.restore(); x.restore();
-      y = top;
-      if (s < nseg - 1) { x.save(); x.shadowColor = '#fff'; x.shadowBlur = 16; x.fillStyle = 'rgba(255,255,255,.95)'; x.fillRect(bx - w * 0.46, y - 2.5, w * 0.92, 2.2); x.restore(); y -= 5; }
-    }
-    x.fillStyle = front ? '#0c0c12' : '#08080c';
-    for (let c = 0, n = 4 + Math.floor(r() * 4); c < n; c++) {
-      const tx = cx + (r() - 0.5) * w * 0.9, tw = w * (0.08 + r() * 0.18), th = h * (0.05 + r() * 0.16) * (r() < 0.3 ? 1.8 : 1), lean = (r() - 0.5) * tw * 2;
-      x.beginPath(); x.moveTo(tx - tw / 2, y + 2); x.lineTo(tx + lean, y - th); x.lineTo(tx + tw / 2, y + 2); x.closePath(); x.fill();
-    }
+  // the five fragments: each a real broken crystal column (a ragged five-sided prism with a point and a
+  // snapped-off foot). Shared by the film (scene FIVE), the theme and the biome.
+  const FIVE = [[0, 1.0, 0.3], [-0.62, 0.74, 0.22], [0.62, 0.76, 0.22], [-1.12, 0.52, 0.17], [1.12, 0.55, 0.17]].map(([x, h, w], i) => {
+    const r = rnd(70 + i), n = 5, v = [], f = [];
+    for (let j = 0; j < n; j++) { const a = (j / n) * TAU + r() * 0.5, rr = w * (0.7 + r() * 0.3); v.push([Math.sin(a) * rr, h * r() * 0.06, Math.cos(a) * rr]); }   // the foot
+    for (let j = 0; j < n; j++) { const [X, , Z] = v[j], k = 0.72 + r() * 0.2; v.push([X * k, -h * (0.62 + r() * 0.16), Z * k]); }                               // the shoulder
+    v.push([(r() - 0.5) * w * 0.3, -h * (1.08 + r() * 0.1), (r() - 0.5) * w * 0.3]);                                                                        // the point
+    v.push([(r() - 0.5) * w * 0.2, h * 0.17, (r() - 0.5) * w * 0.2]);                                                                                       // a snapped-off spur below
+    const tip = 2 * n, spur = 2 * n + 1;
+    for (let j = 0; j < n; j++) { const a = j, b = (j + 1) % n; f.push([a, b, n + b, n + a], [n + a, n + b, tip], [b, a, spur]); }
+    return { x, h, M: { v, f }, ph: r() * TAU, spin: (r() < 0.5 ? -1 : 1) * (0.18 + r() * 0.2) };
+  });
+  const FIVE_LIGHT = [0.2, 0.8, 0.55], OBSIDIAN = { base: [5, 5, 9], span: [165, 165, 190] };
+  // a crack of light along the ground, glowing
+  function groundCrack(g, cx, gy, half, U, seed, a = 1) {
+    const r = rnd(seed); g.beginPath(); let x = cx - half; g.moveTo(x, gy);
+    while (x < cx + half) { x += U * (0.05 + r() * 0.08); g.lineTo(x, gy + (r() - 0.5) * U * 0.03); }
+    glowStroke(g, 1.6, a);
   }
-  const auraCache = {};
-  function auraLayers(slot, W, H, c, R) {
-    const DPR = Math.min(3, DPRx() * (slot === 'cut' ? 1.6 : 1)), key = [W, H, Math.round(c.x), Math.round(c.y), Math.round(R), DPR].join(',');   // the cutscene zooms in: paint it sharper
-    if (auraCache[slot] && auraCache[slot].key === key) return auraCache[slot];
-    const mk = () => { const cv = document.createElement('canvas'); cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); const x = cv.getContext('2d'); x.scale(DPR, DPR); return [cv, x]; };
-    const [back, bx] = mk(), [front, fx] = mk();
-    const base = c.y + R * 1.55, U = Math.min(R, W * 0.16);
-    [[-2.9, 2.1], [-2.25, 3.0], [-1.6, 3.8], [1.6, 3.7], [2.3, 2.9], [2.95, 2.2], [-3.5, 1.5], [3.5, 1.6]].forEach(([dx, hh], i) => paintMonolith(bx, c.x + dx * U, base - U * 0.4, U * 0.55, U * hh, 101 + i, false));
-    const halves = [-1, 1].map(sd => { const [cv, x] = mk(); paintMonolith(x, c.x + sd * U * 0.62, base, U * 0.8, U * 4.6, 300 + sd, true); return cv; });
-    [[-2.6, 1.6], [-1.75, 1.15], [1.8, 1.25], [2.65, 1.7]].forEach(([dx, hh], i) => paintMonolith(fx, c.x + dx * U, base + U * 0.9, U * 0.85, U * hh, 501 + i, true));
-    // the ground they stand in: a dark floor, and rubble heaped along the foot of the crown
-    const gy = base + U * 0.75, fl = fx.createLinearGradient(0, gy, 0, H);
-    fl.addColorStop(0, 'rgba(6,6,9,0)'); fl.addColorStop(0.12, '#07070a'); fl.addColorStop(1, '#010102');
-    fx.fillStyle = fl; fx.fillRect(0, gy, W, H - gy);
-    const rr = rnd(777);
-    for (let row = 0; row < 6; row++) for (let i = 0; i < 40; i++) {
-      const ry = (row / 5) * (row / 5), x = rr() * W, y = gy + ry * (H - gy) * 1.05 + (rr() - 0.3) * U * 0.25, s = U * (0.08 + rr() * 0.22) * (1 + row * 0.45);   // rows spread toward the viewer, bigger as they come
-      fx.save(); fx.translate(x, y); fx.rotate(rr() * TAU);
-      fx.fillStyle = row > 2 ? "#020203" : row ? "#050507" : "#0a0a0e";
-      fx.beginPath(); for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + rr() * 0.5, d = s * (0.6 + rr() * 0.5); k ? fx.lineTo(Math.cos(a) * d, Math.sin(a) * d * 0.6) : fx.moveTo(Math.cos(a) * d, Math.sin(a) * d * 0.6); } fx.closePath(); fx.fill();
-      fx.strokeStyle = `rgba(235,238,255,${Math.max(0.06, 0.25 - row * 0.04)})`; fx.lineWidth = 1; fx.beginPath(); fx.moveTo(-s * 0.5, -s * 0.3); fx.lineTo(s * 0.3, -s * 0.4); fx.stroke();
-      fx.restore();
-    }
-    return (auraCache[slot] = { key, back, front, halves, U, base });
-  }
-  // the crown in light: glow, rays, back row, the split's pillar, the two halves (spread by `open`), front row
-  function crown(g, W, H, c, R, t, beat, open, slot) {
-    const L = auraLayers(slot, W, H, c, R), U = L.U, bob = Math.sin(t * 0.6) * U * 0.03;
-    const gl = g.createRadialGradient(c.x, c.y - U * 0.4, 0, c.x, c.y - U * 0.4, Math.hypot(W, H) * 0.62);
-    gl.addColorStop(0, 'rgba(250,250,255,.9)'); gl.addColorStop(0.16, `rgba(200,204,238,${0.55 + 0.15 * beat})`); gl.addColorStop(0.45, 'rgba(40,42,66,.45)'); gl.addColorStop(1, 'rgba(0,0,0,.65)');
-    g.fillStyle = gl; g.fillRect(-W, -H, W * 3, H * 3);   // oversized: the cutscene frames this zoomed and tilted
-    g.save(); g.globalCompositeOperation = 'lighter'; g.translate(c.x, L.base - U * 2);
-    for (let i = 0; i < 11; i++) {
-      const a = -Math.PI / 2 + (i - 5) * 0.19 + Math.sin(t * 0.2 + i) * 0.03, len = Math.hypot(W, H), wd = (0.07 + 0.04 * Math.sin(t * 0.7 + i)) * len;
-      // a soft beam: the ray sprite (bright at the source, feathered at both edges), rotated into place
-      g.save(); g.rotate(a + Math.PI / 2); g.globalAlpha = 0.5 + 0.4 * beat;
-      g.drawImage(raySprite(), -wd / 2, -len, wd, len); g.restore();
-    }
-    g.restore();
-    g.drawImage(L.back, 0, bob, W, H);
-    g.save(); g.globalCompositeOperation = 'lighter';
-    const gw = U * (0.42 + 0.35 * open + 0.08 * beat), top = L.base - U * 4.9, sg = g.createLinearGradient(c.x - gw, 0, c.x + gw, 0);
-    sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(0.5, `rgba(255,255,255,${0.8 + 0.2 * beat})`); sg.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = sg; g.fillRect(c.x - gw, top + bob, gw * 2, L.base - top + U);
-    glowAt(g, c.x, top + bob + U * 0.3, U * (1.2 + beat), 0.7);
-    g.restore();
-    L.halves.forEach((h, i) => g.drawImage(h, (i ? 1 : -1) * open * U * 0.9, bob * 0.8, W, H));
-    g.drawImage(L.front, 0, -bob * 0.6, W, H);
-    // mist lying along the foot of the crown, and the pillar's light pooled on the ground
-    const gy = L.base + U * 0.75, mist = g.createLinearGradient(0, gy - U * 1.2, 0, gy + U * 0.8);
-    mist.addColorStop(0, 'rgba(225,228,255,0)'); mist.addColorStop(0.55, `rgba(225,228,255,${0.2 + 0.06 * beat})`); mist.addColorStop(1, 'rgba(225,228,255,0)');
-    g.fillStyle = mist; g.fillRect(-W, gy - U * 1.2, W * 3, U * 2);
-    g.save(); g.globalCompositeOperation = 'lighter'; g.translate(c.x, gy + U * 0.15); g.scale(3.2, 0.45);
-    glowAt(g, 0, 0, U * (1.1 + 0.6 * open + 0.2 * beat), 0.55); g.restore();
-    // the pillar mirrored in the glossy floor: a long soft streak of light running down toward you
-    g.save(); g.globalCompositeOperation = 'lighter';
-    const rf = g.createLinearGradient(0, gy, 0, H), rw = U * (0.35 + 0.3 * open);
-    rf.addColorStop(0, `rgba(235,238,255,${0.35 + 0.15 * beat})`); rf.addColorStop(1, 'rgba(235,238,255,0)');
-    g.fillStyle = rf; g.beginPath(); g.moveTo(c.x - rw, gy); g.lineTo(c.x + rw, gy); g.lineTo(c.x + rw * 2.2, H); g.lineTo(c.x - rw * 2.2, H); g.closePath(); g.fill();
-    g.restore();
-    return L;
-  }
-
-  /* ---------------- motes and shards ---------------- */
-  const MOTES = Array.from({ length: 140 }, (_, i) => { const r = rnd(70 + i); return [r(), r(), r(), r()]; });
-  const SHARDS = Array.from({ length: 34 }, (_, i) => { const r = rnd(900 + i); return { a: r() * TAU, rx: 1.4 + r() * 2.4, ry: 0.5 + r() * 1.6, sp: 0.06 + r() * 0.16, s: 0.06 + r() * 0.14, spin: (r() - 0.5) * 2, ph: r() }; });
-  function motes(g, base, c, U, t, H, amount, speed) {
-    g.save(); g.globalCompositeOperation = 'lighter';
-    const n = Math.round(MOTES.length * amount);
+  // glass shards rising off the ground and fading
+  function risingGlass(g, cx, gy, U, t, n, a = 1) {
+    g.save(); g.strokeStyle = '#fff'; g.lineWidth = 0.8;
     for (let i = 0; i < n; i++) {
-      const [a, b, s, ph] = MOTES[i], life = fr(ph + t * (0.05 + a * 0.04) * speed), x = c.x + (b - 0.5) * U * (0.4 + life * 5) + Math.sin(t + i) * U * 0.1, y = base - life * H * 0.95;
-      glowAt(g, x, y, (2 + s * 5) * (1 + (1 - life)), (1 - life) * 0.9);
-    }
-    g.restore();
-  }
-  function shards(g, c, U, t, n, speed) {
-    g.fillStyle = '#050507';
-    for (let i = 0; i < n; i++) {
-      const S = SHARDS[i], a = S.a + t * S.sp * speed, x = c.x + Math.cos(a) * S.rx * U, y = c.y - U * 0.6 + Math.sin(a) * S.ry * U, s = S.s * U;
-      g.save(); g.translate(x, y); g.rotate(t * S.spin + S.ph * 6);
-      g.beginPath(); g.moveTo(0, -s * 1.4); g.lineTo(s * 0.7, s * 0.5); g.lineTo(-s * 0.6, s * 0.8); g.closePath(); g.fill();
-      const eg = g.createLinearGradient(-s, -s, s, s); eg.addColorStop(0, 'rgba(240,242,255,.75)'); eg.addColorStop(1, 'rgba(240,242,255,0)');
-      g.strokeStyle = eg; g.lineWidth = 1.2; g.stroke();
+      const life = fr(i * 0.618 + t * (0.06 + (i % 4) * 0.02)), sx = cx + (fr(i * 0.37) - 0.5) * U * 3.6, sy = gy - life * U * 2.4, s = U * (0.015 + (i % 3) * 0.01);
+      g.save(); g.translate(sx + Math.sin(t * 0.7 + i) * U * 0.04, sy); g.rotate(t * (0.4 + (i % 3) * 0.5) + i); g.globalAlpha = Math.sin(life * Math.PI) * 0.85 * a;
+      g.beginPath(); g.moveTo(0, -s * 1.4); g.lineTo(s * 0.8, s * 0.6); g.lineTo(-s * 0.7, s * 0.9); g.closePath(); g.stroke();
       g.restore();
     }
-  }
-
-  /* ================= the five fragments (the aura itself) =================
-     After Sol's RNG's BREAKTHROUGH: five shattered pieces float behind the bearer, the middle one the
-     largest; the bearer hangs over a light pouring up through a crack in the ground; glass shards rise
-     off the ground and fade; faint black smoke drifts up. Each fragment is painted once into its own
-     sprite, with a pre-blurred white silhouette of it drawn behind as the bright crack of light round it. */
-  const fragCache = {};
-  function fragment(id, w, h, seed, front) {
-    const DPR = DPRx(), key = id + ':' + Math.round(w) + ':' + DPR;
-    if (fragCache[key]) return fragCache[key];
-    const cw = Math.ceil(w * 2.2), ch = Math.ceil(h * 1.75 + w), mk = () => { const c = document.createElement('canvas'); c.width = Math.ceil(cw * DPR); c.height = Math.ceil(ch * DPR); const x = c.getContext('2d'); x.scale(DPR, DPR); return [c, x]; };
-    const [cv, x] = mk(), base = ch - h * 0.3, cx = cw / 2;          // room below for the broken foot
-    paintMonolith(x, cx, base, w, h, seed, front);
-    // a crack of light running down from the top through the stone
-    const r = rnd(seed * 7 + 3);
-    x.save(); x.shadowColor = '#fff'; x.shadowBlur = 12; x.strokeStyle = 'rgba(255,255,255,.95)'; x.lineWidth = Math.max(1.5, w * 0.025); x.lineJoin = 'round';
-    x.beginPath(); let px = cx + (r() - 0.5) * w * 0.3, py = base - h * 1.05; x.moveTo(px, py);
-    for (let i = 0; i < 7; i++) { px += (r() - 0.5) * w * 0.25; py += h * (0.06 + r() * 0.08); x.lineTo(px, py); }
-    x.stroke(); x.restore();
-    // its glow: the silhouette, white, blurred (drawn far off-canvas so only the shadow lands)
-    const [gv, gx] = mk();
-    gx.shadowColor = 'rgba(235,238,255,1)'; gx.shadowBlur = w * 0.35; gx.shadowOffsetX = 10000;
-    gx.drawImage(cv, -10000, 0, cw, ch); gx.drawImage(cv, -10000, 0, cw, ch);
-    return (fragCache[key] = { cv, gv, cw, ch, bx: cx, by: base });
-  }
-  // draw a fragment with its foot at (x, y), scaled s, tilted r; glow = how bright the light round it is
-  function drawFrag(g, F, x, y, s, r, glow, alpha = 1) {
-    g.save(); g.translate(x, y); g.rotate(r); g.scale(s, s);
-    if (glow > 0) { g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = Math.min(1, glow) * alpha; g.drawImage(F.gv, -F.bx, -F.by, F.cw, F.ch); g.restore(); }
-    g.globalAlpha = alpha; g.drawImage(F.cv, -F.bx, -F.by, F.cw, F.ch);
     g.restore();
   }
-  const FIVE = [[-2.35, 2.1, 0.62, 11], [-1.25, 3.0, 0.78, 12], [0, 4.6, 1.05, 13], [1.25, 3.1, 0.78, 14], [2.35, 2.2, 0.62, 15]];
-  let puffSpr = null;
-  const puff = () => {
-    if (puffSpr) return puffSpr;
-    const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d'), gr = x.createRadialGradient(48, 48, 0, 48, 48, 48);
-    gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(0.6, 'rgba(0,0,0,.2)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(0, 0, 96, 96);
-    return (puffSpr = c);
-  };
-  /* the whole aura around a centre c (the bearer), size unit U. gather 0..1 brings the five in from far
-     apart; light = how strongly the ground crack burns */
-  function fiveAura(g, W, H, c, U, t, beat, gather = 1, light = 1) {
-    const ground = c.y + U * 2.1;
-    // the void, lit from below
-    const sky = g.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#000'); sky.addColorStop(0.55, '#07070b'); sky.addColorStop(1, '#16161e');
-    g.fillStyle = sky; g.fillRect(-W, -H, W * 3, H * 3);
-    g.save(); g.globalCompositeOperation = 'lighter';
-    glowAt(g, c.x, ground, U * (4 + beat * 0.6), 0.45 * light);
-    // the light pouring up out of the crack
-    const bw = U * (0.9 + 0.15 * beat);
-    g.globalAlpha = 0.9 * light; g.drawImage(raySprite(), c.x - bw, ground - H * 1.1, bw * 2, H * 1.1);
-    g.globalAlpha = 0.5 * light; g.drawImage(raySprite(), c.x - bw * 2.4, ground - H * 0.9, bw * 4.8, H * 0.9);
-    g.globalAlpha = 1; g.restore();
-    // the five, floating, the middle one tallest; each lit round its edge
-    FIVE.forEach(([dx, hh, ww, seed], i) => {
-      const F = fragment('five' + i, U * ww, U * hh, seed, true);
-      const spread = 1 + (1 - gather) * 2.2, x = c.x + dx * U * spread, bob = Math.sin(t * 0.7 + i * 1.3) * U * 0.08;
-      const y = ground - U * (1.35 + (i === 2 ? 0.45 : 0) + Math.abs(dx) * 0.12) + bob - (1 - gather) * U * (i % 2 ? 1.5 : -1.2);   // floating clear of the crack
-      drawFrag(g, F, x, y, 1, Math.sin(t * 0.3 + i) * 0.03 + dx * 0.02, (0.55 + 0.35 * beat) * light, Math.min(1, gather * 1.5));
-    });
-    // the ground and its crack
-    const gg = g.createLinearGradient(0, ground, 0, H);
-    gg.addColorStop(0, '#0a0a0e'); gg.addColorStop(1, '#020203');
-    g.fillStyle = gg; g.fillRect(-W, ground, W * 3, H * 2);
-    g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
-    // the crack: an opening in the ground, widest under the bearer and pinching out to nothing at both
-    // ends, ragged along its lips - filled with white, haloed by soft blooms (no stroked line)
-    const r = rnd(4242), top = [], bot = [], half = U * 3.2;
-    for (let x = c.x - half; x <= c.x + half; x += U * (0.1 + r() * 0.12)) {
-      const k = 1 - Math.abs(x - c.x) / half, w = U * 0.16 * Math.pow(Math.max(0, k), 1.3) * (0.6 + r() * 0.7);
-      const jy = (r() - 0.5) * U * 0.06; top.push([x, ground + jy - w]); bot.push([x, ground + jy + w * 0.45]);
-    }
-    for (let i = 0; i < 7; i++) glowAt(g, c.x + (i - 3) * U * 0.7, ground, U * (1.4 - Math.abs(i - 3) * 0.25), (0.35 - Math.abs(i - 3) * 0.06) * light);
-    g.fillStyle = `rgba(255,255,255,${light})`; g.beginPath();
-    top.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); for (let i = bot.length - 1; i >= 0; i--) g.lineTo(bot[i][0], bot[i][1]);
-    g.closePath(); g.fill();
-    g.restore();
-    // glass shards rising off the ground and fading
-    for (let i = 0; i < 26; i++) {
-      const life = fr(i * 0.618 + t * (0.08 + (i % 4) * 0.02)), sx = c.x + (fr(i * 0.37) - 0.5) * U * 6, sy = ground - life * U * 5, s = U * (0.05 + (i % 3) * 0.03);
-      g.save(); g.translate(sx + Math.sin(t + i) * U * 0.1, sy); g.rotate(t * (0.6 + i % 3) + i);
-      g.globalAlpha = Math.sin(life * Math.PI) * 0.9;
-      g.fillStyle = 'rgba(220,224,255,.12)'; g.strokeStyle = 'rgba(245,247,255,.9)'; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(0, -s * 1.4); g.lineTo(s * 0.8, s * 0.6); g.lineTo(-s * 0.7, s * 0.9); g.closePath(); g.fill(); g.stroke();
-      g.restore();
-    }
-    // faint black smoke drifting up
-    for (let i = 0; i < 12; i++) {
-      const life = fr(i * 0.29 + t * 0.03), px = c.x + (fr(i * 0.61) - 0.5) * U * 7 + Math.sin(t * 0.3 + i) * U * 0.4, py = ground - life * U * 6, s = U * (1 + life * 1.6);
-      g.globalAlpha = Math.sin(life * Math.PI) * 0.7; g.drawImage(puff(), px - s, py - s, s * 2, s * 2);
-    }
-    g.globalAlpha = 1;
-    return ground;
-  }
 
-  /* ================= the NULL theme: the aura behind the crystal ================= */
-  N3.auraTheme = (g, W, H, t, c, R, k) => {
-    const beat = Math.exp(-fr(t / BEAT) * 5), U = Math.min(R * 0.95, W * 0.15);
-    fiveAura(g, W, H, { x: c.x, y: c.y - R * 0.2 }, U, t, beat, 1, 0.9);
-    const cyc = t % (BAR * 8);
-    if (cyc < BEAT * 1.4) { const kk = cyc / (BEAT * 1.4); cracks(g, W, H, Math.min(1, kk * 3), (1 - kk) * 0.4); }
+  /* ================= the NULL theme: BREAKTHROUGH's aura round the crystal =================
+     The five fragments stand in an arc behind the crystal, the great one straight behind it, turning
+     slowly on a floor that runs off to the dark; light pours up out of a crack in the ground beneath,
+     glass rises off it, a measuring ring turns round the crystal. Calm - it breathes on the beat. */
+  N3.auraTheme = (g, W, H, t, c, R) => {
+    const m = Math.min(W, H), bp = fr(t / BEAT), beat = Math.exp(-bp * 5);
+    const gy = c.y + R * 1.25, U = R * 1.95, spread = Math.min(1.15, (W * 0.45) / (1.12 * U));
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    fineGrid(g, W, H, Math.max(14, m / 34), W / 2, gy, 0.55);
+    floor(g, W, H, gy, t, 0.5, 0.12);
+    // the light pouring up out of the crack, behind everything
+    const lg = g.createLinearGradient(0, gy, 0, 0); lg.addColorStop(0, 'rgba(255,255,255,.3)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+    g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = lg; g.fillRect(c.x - U * 0.35, 0, U * 0.7, gy); g.restore();
+    light(g, c.x, gy, U * 1.2, 0.4 + 0.15 * beat);
+    // a slow shockwave along the floor every eight bars
+    const sw = fr(t / (BAR * 8)) * 8 * BAR;
+    if (sw < 1.8) { g.save(); g.translate(c.x, gy); g.scale(1, 0.22); circle(g, 0, 0, U * 0.3 + E.outCubic(sw / 1.8) * W); g.restore(); glowStroke(g, 1.2, 0.6 * (1 - sw / 1.8)); }
+    for (const idx of [3, 4, 1, 2, 0]) {                                // outer ones first, the great one last
+      const f = FIVE[idx], x = c.x + f.x * U * spread, y = gy - U * 0.1 + Math.sin(t * 0.6 + f.ph) * U * 0.02;
+      light(g, x, y - U * f.h * 0.5, U * 0.4, 0.18);
+      drawMesh(g, f.M, x, y, U * (idx ? 0.9 : 1), f.ph + t * f.spin * 0.6, { light: FIVE_LIGHT, base: [4, 4, 8], span: [95, 95, 120], back: 0.14, lw: 1.1 });
+    }
+    groundCrack(g, c.x, gy, U * 1.5, U, 4242, 0.9);
+    risingGlass(g, c.x, gy, U * 0.8, t, 18, 0.8);
+    hudRing(g, c.x, c.y, R * 1.75, t * 0.04, 0.45, true);
+    circle(g, c.x, c.y, R * 1.32 * (1 + 0.03 * beat)); glowStroke(g, 1.2, 0.35 + 0.3 * beat, '140,140,255');
+    light(g, c.x, c.y, R * 2, 0.1 + 0.1 * beat);
+    const v = g.createRadialGradient(c.x, c.y, m * 0.3, W / 2, H / 2, Math.hypot(W, H) * 0.65);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.7)');
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
   };
 
-  /* ================= the NULL biome: a void of spiked slabs drifting past ================= */
-  let slabSpr = null;
-  function slabs() {
-    if (slabSpr) return slabSpr;
-    slabSpr = Array.from({ length: 6 }, (_, i) => {
-      const r = rnd(40 + i), w = 160 + r() * 140, c = document.createElement('canvas'); c.width = w + 40; c.height = 220;
-      const x = c.getContext('2d'), y0 = 130, th = 16 + r() * 10;
-      const bg = x.createLinearGradient(0, y0, 0, y0 + th); bg.addColorStop(0, '#2a2a34'); bg.addColorStop(0.2, '#0a0a10'); bg.addColorStop(1, '#030305');
-      x.fillStyle = bg; x.fillRect(20, y0, w, th);
-      x.fillStyle = 'rgba(240,242,255,.8)'; x.fillRect(20, y0, w, 1.5);
-      for (let k = 0; k < 4 + Math.floor(r() * 7); k++) {
-        const tx = 24 + r() * (w - 8), tw = 3 + r() * 7, h = (r() < 0.3 ? 70 : 20) + r() * 45, lean = (r() - 0.5) * 18;
-        const tg = x.createLinearGradient(tx, y0, tx + lean, y0 - h); tg.addColorStop(0, '#08080c'); tg.addColorStop(1, '#2a2a36');
-        x.fillStyle = tg; x.beginPath(); x.moveTo(tx - tw, y0); x.lineTo(tx + lean, y0 - h); x.lineTo(tx + tw, y0); x.closePath(); x.fill();
-      }
-      for (let k = 0; k < 2 + Math.floor(r() * 4); k++) {
-        const tx = 30 + r() * (w - 20), tw = 4 + r() * 8, h = 15 + r() * 55;
-        x.fillStyle = '#050508'; x.beginPath(); x.moveTo(tx - tw, y0 + th); x.lineTo(tx + (r() - 0.5) * 6, y0 + th + h); x.lineTo(tx + tw, y0 + th); x.closePath(); x.fill();
-      }
-      return c;
-    });
-    return slabSpr;
-  }
+  /* ================= the NULL biome: no ground, no sky =================
+     Black void, alive: searchlight beams sweep up out of the dark, two great measuring rings turn round
+     the middle, a dead eclipse hangs off to the side, broken crystal (the five fragments' kin and small
+     true forms) drifts past at three depths, meteors streak through, now and then a crack of light tears
+     across the void - and every twenty seconds the whole void inverts for a beat, white with black
+     glass, like the moment the film breaks through. Every so often a line of the picture tears too
+     (biomeFront). About a millisecond a frame. */
+  const DRIFT = Array.from({ length: 16 }, (_, i) => {
+    const r = rnd(900 + i), depth = [0.3, 0.55, 0.8, 1.05][i % 4];
+    return { mesh: i % 4 === 3 ? BIPY : FIVE[i % 5].M, depth, y: 0.06 + r() * 0.88, x: r(), sp: 0.025 + r() * 0.02, spin: (r() - 0.5) * 0.8, ph: r() * TAU, size: (0.05 + r() * 0.05) * (0.5 + depth), tilt: (r() - 0.5) * 0.6 };
+  }).sort((a, b) => a.depth - b.depth);
+  const TEARS = Array.from({ length: 6 }, (_, i) => {                  // jagged lines of light, edge to edge
+    const r = rnd(1300 + i), pts = [], a = (r() - 0.5) * 1.2; let x = -0.1, y = 0.15 + r() * 0.7;
+    while (x < 1.1) { pts.push([x, y]); x += 0.04 + r() * 0.06; y += Math.tan(a) * 0.05 + (r() - 0.5) * 0.06; }
+    return pts;
+  });
   N3.biomeBack = (g, W, H, t) => {
-    g.fillStyle = 'rgba(0,0,3,.9)'; g.fillRect(0, 0, W, H);
-    g.save(); g.globalCompositeOperation = 'lighter'; glowAt(g, W / 2, H * 0.45, Math.max(W, H) * 0.5, 0.18); g.restore();
-    const S = slabs();
-    for (let i = 0; i < 9; i++) {
-      const spr = S[i % S.length], depth = 0.45 + (i % 3) * 0.3, sp = 14 * depth, w = spr.width * depth, h = spr.height * depth;
-      const x = ((fr(i * 0.618) * (W + w) - t * sp) % (W + w) + W + w) % (W + w) - w, y = H * (0.15 + fr(i * 0.37) * 0.75) + Math.sin(t * 0.5 + i) * 8;
-      g.globalAlpha = 0.45 + depth * 0.45; g.drawImage(spr, x, y - h / 2, w, h); g.globalAlpha = 1;
+    const m = Math.min(W, H), c = { x: W / 2, y: H * 0.45 }, D = Math.hypot(W, H), pulse = Math.exp(-fr(t / BEAT) * 5);
+    g.fillStyle = 'rgba(0,0,3,.95)'; g.fillRect(0, 0, W, H);
+    fineGrid(g, W, H, Math.max(16, m / 26), t * 3, H / 2, 0.45);
+    // stars in three layers, twinkling
+    for (let i = 0; i < 90; i++) {
+      const L = i % 3, x = fr(i * 0.618 + t * 0.003 * (1 + L * 1.5)) * W, y = fr(i * 0.37) * H, tw = 0.5 + 0.5 * Math.sin(t * (1 + (i % 5)) + i);
+      g.fillStyle = `rgba(255,255,255,${(0.12 + 0.3 * L) * (0.4 + 0.6 * tw)})`; const s = 0.8 + L * 0.6; g.fillRect(x, y, s, s);
     }
+    // searchlights sweeping up out of the dark
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 3; i++) {
+      const ang = Math.sin(t * (0.13 + i * 0.05) + i * 2.1) * 0.55 + (i - 1) * 0.35, bx = W * (0.2 + i * 0.3), by = H * 1.05;
+      g.save(); g.translate(bx, by); g.rotate(ang);
+      const bw = m * 0.12, gr = g.createLinearGradient(-bw, 0, bw, 0);
+      gr.addColorStop(0, 'rgba(220,226,255,0)'); gr.addColorStop(0.5, `rgba(220,226,255,${0.07 + 0.03 * pulse})`); gr.addColorStop(1, 'rgba(220,226,255,0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(-bw * 0.15, 0); g.lineTo(bw * 0.15, 0); g.lineTo(bw, -D * 1.2); g.lineTo(-bw, -D * 1.2); g.closePath(); g.fill();
+      g.restore();
+    }
+    g.restore();
+    // two great rings round the middle
+    hudRing(g, c.x, c.y, m * 0.55, t * 0.02, 0.2, true);
+    hudRing(g, c.x, c.y, m * 0.78, -t * 0.012, 0.1, false);
+    circle(g, c.x, c.y, m * 0.42 * (1 + 0.02 * pulse)); glowStroke(g, 1, 0.18 + 0.12 * pulse, '140,140,255');
+    // the dead eclipse, off to the side
+    const ex = W * 0.74, ey = H * 0.27, er = m * 0.07;
+    light(g, ex, ey, er * 3.4, 0.4 + 0.1 * pulse); light(g, ex, ey, er * 1.5, 0.75);
+    g.save(); g.translate(ex, ey); g.rotate(t * 0.04); g.beginPath();
+    for (let i = 0; i < 48; i++) { const a = (i / 48) * TAU, l = er * (1.2 + (i % 4 === 0 ? 0.8 : 0.35)); g.moveTo(Math.cos(a) * er * 1.08, Math.sin(a) * er * 1.08); g.lineTo(Math.cos(a) * l, Math.sin(a) * l); }
+    g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 0.6; g.stroke(); g.restore();
+    circle(g, ex, ey, er); g.fillStyle = '#000'; g.fill(); glowStroke(g, 1.4, 0.95);
+    hudRing(g, ex, ey, er * 2.1, t * 0.03, 0.4, false);
+    // the drifting crystal, far ones first
+    for (const d of DRIFT) {
+      const s = m * d.size, span = W + s * 6, x = fr(d.x + t * d.sp * d.depth) * span - s * 3, y = H * d.y + Math.sin(t * 0.3 + d.ph) * s * 0.3;
+      if (d.depth > 0.7) light(g, x, y, s * 1.4, 0.12);
+      g.save(); g.translate(x, y); g.rotate(d.tilt);
+      drawMesh(g, d.mesh, 0, 0, s, d.ph + t * d.spin, { alpha: Math.min(1, 0.3 + 0.7 * d.depth), light: [-0.5, -0.7, 0.3], base: [4, 4, 8], span: [90, 90, 115], back: 0.15, lw: 0.6 + d.depth * 0.8 });
+      g.restore();
+    }
+    // meteors: a streak every couple of seconds, each on its own slot
+    for (let k = 0; k < 2; k++) {
+      const slot = Math.floor(t / 2.3 + k * 0.5), p = fr(t / 2.3 + k * 0.5), r = rnd(slot * 7 + k);
+      if (r() < 0.45 || p > 0.35) continue;
+      const q = p / 0.35, x0 = r() * W, y0 = r() * H * 0.5, ang = 0.5 + r() * 0.5, len = m * (0.25 + r() * 0.2), x = x0 + Math.cos(ang) * q * m, y = y0 + Math.sin(ang) * q * m;
+      const gr = g.createLinearGradient(x, y, x - Math.cos(ang) * len, y - Math.sin(ang) * len);
+      gr.addColorStop(0, `rgba(255,255,255,${0.9 * (1 - q)})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.strokeStyle = gr; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, y); g.lineTo(x - Math.cos(ang) * len, y - Math.sin(ang) * len); g.stroke();
+      light(g, x, y, 10, 0.7 * (1 - q));
+    }
+    // a crack of light tearing across the void every six seconds, drawn in fast, fading slow
+    const tp = t / 6, ti = Math.floor(tp), tk = fr(tp) * 6;
+    if (tk < 1.6) {
+      const pts = TEARS[ti % TEARS.length], n = Math.max(2, Math.floor(pts.length * clamp(tk / 0.25))), a = 1 - clamp((tk - 0.3) / 1.3);
+      g.beginPath(); for (let i = 0; i < n; i++) { const px = pts[i][0] * W, py = pts[i][1] * H; i ? g.lineTo(px, py) : g.moveTo(px, py); }
+      g.lineJoin = 'round'; glowStroke(g, 1.6, a);
+    }
+    // the edges of the void glow faintly
     for (const sd of [0, 1]) {
-      const fg = g.createLinearGradient(sd ? W : 0, 0, sd ? W * 0.8 : W * 0.2, 0);
-      fg.addColorStop(0, 'rgba(235,238,255,.28)'); fg.addColorStop(1, 'rgba(235,238,255,0)');
+      const fg = g.createLinearGradient(sd ? W : 0, 0, sd ? W * 0.82 : W * 0.18, 0);
+      fg.addColorStop(0, `rgba(235,238,255,${0.14 + 0.05 * pulse})`); fg.addColorStop(1, 'rgba(235,238,255,0)');
       g.fillStyle = fg; g.fillRect(0, 0, W, H);
+    }
+    // every twenty seconds the void inverts for a beat - white, the glass black
+    const iv = fr(t / 20) * 20;
+    if (iv < 0.9) {
+      const a = (iv < 0.08 ? iv / 0.08 : 1 - E.inQuad((iv - 0.08) / 0.82)) * (G.flashMul ? G.flashMul() : 1);
+      g.save(); g.globalCompositeOperation = 'difference'; g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(0, 0, W, H); g.restore();
     }
   };
   N3.biomeFront = (g, W, H, t) => {
@@ -371,154 +361,329 @@
   };
 
   /* ================= the cutscene ================= */
-  const DUR = 32.5;                                                     // seconds of song: 46.15 -> 78.65
-  const REVEAL = barAt(14);                                             // 28.74 s, the last bars of the drop
-  const beatAt = n => DAN + n * BEAT;                                   // beat n of the drop
-  const THIN = '"Helvetica Neue", "Segoe UI", Arial, sans-serif';
-  // the words, light and wide-set; a group's words land one per listed beat and stay until it ends
+  const DUR = 38;                                                       // as long as BREAKTHROUGH's: 33.9 -> 71.9 s of the song
+  const REVEAL = barAt(10);                                             // 67.77 s in the song
+  const FL = () => (G.flashMul ? G.flashMul() : 1);                     // 설정 - 번쩍임 줄이기
+  // each line snaps in whole on its beat; a `stack` piles its words up one under another, each on its
+  // own note (`times`), the way BREAKTHROUGH stands its last question on end
   const SAY = [
-    { at: HIT1, words: ['get out'], until: HIT2, pos: 0.5, size: 0.06 },
-    { at: HIT2, words: ['of my head'], until: DAN - BEAT * 0.4, pos: 0.5, size: 0.06 },
-    { at: beatAt(1), beats: [0, 1, 2], words: ['i  —', 'it began', 'with five'], until: barAt(2) - 0.1, pos: 0.93, size: 0.042 },
-    { at: barAt(2) + BEAT, beats: [0, 1, 2], words: ['ii  —', 'fewer', 'every time'], until: barAt(4) - 0.1, pos: 0.93, size: 0.042 },
-    { at: barAt(4) + BEAT, beats: [0, 1, 2], words: ['iii  —', 'the light', 'thinned out'], until: barAt(6) - 0.1, pos: 0.93, size: 0.042 },
-    { at: barAt(6) + BEAT, beats: [0, 1, 2], words: ['iv  —', 'until nothing', 'stayed'], until: barAt(8) - 0.1, pos: 0.93, size: 0.042, ink: '#000' },
-    { at: barAt(8) + BEAT, beats: [0, 2], words: ['it never', 'left'], until: barAt(10) - 0.1, pos: 0.16, size: 0.046 },
-    { at: barAt(10) + BEAT, beats: [0, 2], words: ['five fragments', 'remain'], until: barAt(12) - 0.1, pos: 0.16, size: 0.046 },
-    { at: barAt(12), beats: [0, 2, 4], words: ['how much of', 'this world', 'is real?'], until: REVEAL - 0.15, pos: 0.16, size: 0.046 },
+    { at: barAt(-8) + BEAT, until: barAt(-6) - 0.2, text: 'i  —  it started with few', pos: 0.87, size: 0.038 },
+    { at: barAt(-6) + BEAT, until: barAt(-4) - 0.2, text: 'ii  —  only less it gets', pos: 0.13, size: 0.038 },
+    { at: barAt(-4) + BEAT, until: barAt(-2) - 0.2, text: 'iii  —  time by time, now empty', pos: 0.87, size: 0.038 },
+    { at: barAt(-2) - 0.3, until: BREAK - 0.05, text: 'iv', pos: 0.09, size: 0.034 },
+    { at: RUN[0], stack: ['how', 'much', 'do', 'you', 'believe', 'in', 'this', 'world?'], times: RUN, until: BREAK - 0.05, pos: 0.5, size: 0.05 },
+    { at: HIT1, until: DAN - 0.03, text: 'get out of my head', pos: 0.5, size: 0.05 },
+    { at: beatAt(1), until: barAt(2) - 0.2, text: "it wasn't gone", pos: 0.5, size: 0.046 },
+    { at: barAt(2) + BEAT, until: barAt(4) - 0.2, text: 'with only five fragments left', pos: 0.13, size: 0.04 },
+    { at: barAt(6) + BEAT, until: barAt(8) - 0.2, text: 'piece by piece, it returns', pos: 0.87, size: 0.04 },
+    { at: barAt(8) + BEAT, until: REVEAL - 0.3, text: 'and there was nothing left', pos: 0.1, size: 0.04 },
   ];
   function say(g, W, H, T) {
+    if (!G.opt('captions')) return;
     const m = Math.min(W, H);
     for (const s of SAY) {
       if (T < s.at || T > s.until) continue;
-      const fade = 1 - seg(T, s.until - 0.2, s.until), fs = m * s.size;
-      const shown = s.words.map((w, i) => ({ w, t0: s.at + (s.beats ? s.beats[i] * BEAT : 0) })).filter(x => T >= x.t0);
-      g.save(); g.font = `300 ${fs}px ${THIN}`; g.textBaseline = 'middle'; g.textAlign = 'center';
-      if ('letterSpacing' in g) g.letterSpacing = `${fs * 0.22}px`;
-      const gap = fs * 0.55, widths = shown.map(x => g.measureText(x.w).width);
-      let full = widths.reduce((a, b) => a + b, 0) + gap * (shown.length - 1), k = 1;
-      if (full > W * 0.88) { k = W * 0.88 / full; full *= k; }
-      let x = W / 2 - full / 2;
-      shown.forEach((it, i) => {
-        const age = T - it.t0, a = Math.min(1, age * 9) * fade, w = widths[i] * k, rise = (1 - Math.min(1, age * 7)) * fs * 0.3;
-        g.save(); g.translate(x + w / 2, H * s.pos + rise); g.scale(k, k); g.globalAlpha = a;
-        if (!s.ink) { g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = fs * 0.4; }
-        g.fillStyle = s.ink || '#f4f5ff'; g.fillText(it.w, 0, 0);
+      if (s.stack) {
+        const fs = m * s.size, lh = fs * 1.35, y0 = H * s.pos - ((s.stack.length - 1) * lh) / 2;
+        g.save(); g.font = `300 ${fs}px ${THIN}`; g.textAlign = 'left'; g.textBaseline = 'middle';
+        if ('letterSpacing' in g) g.letterSpacing = `${fs * 0.2}px`;
+        g.globalCompositeOperation = 'difference'; g.fillStyle = '#fff';
+        g.globalAlpha = 1 - seg(T, s.until - 0.12, s.until);
+        const x = W / 2 - m * 0.16;
+        s.stack.forEach((w, i) => {
+          const age = T - s.times[i]; if (age < 0) return;
+          g.save(); g.translate(x - (1 - E.outCubic(clamp(age / 0.12))) * fs * 0.6, y0 + i * lh); g.fillText(w, 0, 0); g.restore();
+        });
         g.restore();
-        x += w + gap * k;
-      });
+        continue;
+      }
+      const text = s.text, age = T - s.at, fs = m * s.size, pop = 1 + 0.06 * (1 - E.outCubic(clamp(age / 0.15)));
+      g.save(); g.font = `300 ${fs}px ${THIN}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      if ('letterSpacing' in g) g.letterSpacing = `${fs * 0.2}px`;
+      g.globalCompositeOperation = 'difference'; g.fillStyle = '#fff';  // reads on black and on white
+      const k = Math.min(1, (W * 0.88) / g.measureText(text).width);
+      g.translate(W / 2, H * s.pos); g.scale(k * pop, k * pop);
+      g.globalAlpha = 1 - seg(T, s.until - 0.12, s.until);
+      g.fillText(text, fs * 0.1, 0);
       g.restore();
     }
   }
-  // i - iv: four different monoliths, each in its own framing, the light breaking round it
-  const SOLO = [
-    { seed: 71, w: 1.1, h: 5.6, x: 0.5, y: 0.92, s0: 1.0, s1: 1.12, r: 0, skew: 0, rise: 0.05 },        // i   - head-on, looking up, pushing in
-    { seed: 72, w: 1.0, h: 4.6, x: 0.42, y: 0.86, s0: 1.08, s1: 1.0, r: 0.16, skew: -0.25, rise: 0 },   // ii  - leaning, seen from the side, drifting
-    { seed: 73, w: 1.3, h: 3.8, x: 0.5, y: 0.78, s0: 1.25, s1: 1.4, r: -0.05, skew: 0.12, rise: -0.04, split: true },   // iii - the split one, close
-    { seed: 74, w: 0.9, h: 3.2, x: 0.55, y: 0.74, s0: 0.95, s1: 0.85, r: 0.06, skew: 0, rise: 0.02 },  // iv  - small, alone, stark
-  ];
-  function solo(g, W, H, T, i, k, beat) {
-    const S = SOLO[i], m = Math.min(W, H), U = m * 0.16, stark = i === 3;
-    g.fillStyle = stark ? '#f2f2f2' : '#000'; g.fillRect(0, 0, W, H);
-    if (!stark) {                                                       // a cold light falling from behind
-      g.save(); g.globalCompositeOperation = 'lighter'; glowAt(g, W * S.x, H * S.y - U * S.h * 0.7, m * (0.9 + 0.1 * beat), 0.55); g.restore();
+
+  /* ---- the scenes. lt = seconds into the scene, bn = its beat, bp = phase in the beat ---- */
+  // WHITE: a white world, small black fragments hanging in it
+  const FRAGS = Array.from({ length: 90 }, (_, i) => {
+    const r = rnd(300 + i), n = 3 + Math.floor(r() * 3);
+    const pts = Array.from({ length: n }, (_, j) => { const a = (j / n) * TAU + r() * 0.8, d = 0.5 + r() * 0.6; return [Math.cos(a) * d, Math.sin(a) * d]; });
+    return { x: r(), y: r(), s: 0.003 + Math.pow(r(), 4) * 0.034, rot: r() * TAU, spin: (r() - 0.5) * 0.5, z: 0.4 + r() * 0.8, pts };
+  });
+  function white(g, W, H, lt) {
+    const m = Math.min(W, H), c = { x: W / 2, y: H / 2 };
+    g.fillStyle = '#f3f3f1'; g.fillRect(0, 0, W, H);
+    const v = g.createRadialGradient(c.x, c.y, m * 0.2, c.x, c.y, Math.hypot(W, H) * 0.6);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.13)'); g.fillStyle = v; g.fillRect(0, 0, W, H);
+    const push = lt * 0.03 + 0.012 * Math.floor(lt / BAR) + 0.012 * E.outCubic(clamp(fr(lt / BAR) * 3));   // a nudge on each downbeat
+    g.fillStyle = '#050505';
+    for (const f of FRAGS) {
+      const ex = 1 + push * f.z, x = c.x + (f.x - 0.5) * W * 1.1 * ex, y = c.y + (f.y - 0.5) * H * 1.1 * ex + Math.sin(lt * 0.6 + f.rot) * m * 0.004, s = f.s * m * (1 + push * f.z * 2);
+      // the caption's band across the middle is kept clear: fragments drifting into it fade away
+      const clear = clamp((Math.hypot((x - c.x) / (W * 0.46), (y - c.y) / (m * 0.1)) - 1) / 0.6); if (clear <= 0) continue;
+      g.save(); g.translate(x, y); g.rotate(f.rot + lt * f.spin); g.globalAlpha = clear;
+      g.beginPath(); f.pts.forEach((p, i) => (i ? g.lineTo(p[0] * s, p[1] * s) : g.moveTo(p[0] * s, p[1] * s))); g.closePath(); g.fill();
+      g.restore();
     }
-    const s = S.s0 + (S.s1 - S.s0) * k, x = W * S.x + (i === 1 ? (k - 0.5) * W * 0.16 : 0), y = H * (S.y + S.rise * k);
-    g.save(); g.translate(x, y); g.transform(1, 0, S.skew, 1, 0, 0); g.translate(-x, -y);
-    if (S.split) {
-      const F1 = fragment('solo2a', U * S.w * 0.55, U * S.h, S.seed, true), F2 = fragment('solo2b', U * S.w * 0.55, U * S.h * 0.9, S.seed + 50, true), gap = U * (0.2 + k * 0.25);
-      g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.9; g.drawImage(raySprite(), x - gap * 1.5, y - U * S.h * s * 1.4, gap * 3, U * S.h * s * 1.5); g.restore();
-      drawFrag(g, F1, x - gap - U * S.w * 0.3 * s, y, s, S.r - 0.04, 0.9 + 0.3 * beat);
-      drawFrag(g, F2, x + gap + U * S.w * 0.3 * s, y, s, S.r + 0.05, 0.9 + 0.3 * beat);
-    } else {
-      const F = fragment('solo' + i, U * S.w, U * S.h, S.seed, true);
-      if (stark) drawFrag(g, F, x, y, s, S.r, 0);                     // black stone on a white field
-      else drawFrag(g, F, x, y, s, S.r, 0.85 + 0.35 * beat);
+    g.fillStyle = 'rgba(0,0,0,.55)'; g.font = `400 ${Math.max(9, m * 0.018)}px ${MONO}`;
+    g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText('NULL // 0x00', m * 0.06, m * 0.06);
+    g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText('1 : 555,555,555,555', W - m * 0.06, H - m * 0.06);
+    g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 1.5; brackets(g, W / 2, H / 2, W - m * 0.07, H - m * 0.07, m * 0.05); g.stroke();
+  }
+  // i: an eclipse - a black disc in its corona, ringed by measuring scales
+  function eclipse(g, W, H, lt, bn, bp, beat) {
+    const m = Math.min(W, H), c = { x: W / 2, y: H * 0.44 }, z = 1 + 0.12 * E.inOut(clamp(lt / (BAR * 2))), r = m * 0.2 * z;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    fineGrid(g, W, H, m / 30, c.x, c.y, 0.5);
+    light(g, c.x, c.y, r * 3.2, 0.5 + 0.15 * beat); light(g, c.x, c.y, r * 1.6, 0.9);
+    g.save(); g.translate(c.x, c.y); g.rotate(lt * 0.05); g.beginPath();
+    for (let i = 0; i < 72; i++) { const a = (i / 72) * TAU, l = r * (1.15 + (i % 6 === 0 ? 0.9 : i % 2 ? 0.25 : 0.45)); g.moveTo(Math.cos(a) * r * 1.08, Math.sin(a) * r * 1.08); g.lineTo(Math.cos(a) * l, Math.sin(a) * l); }
+    g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 0.7; g.stroke(); g.restore();
+    circle(g, c.x, c.y, r); g.fillStyle = '#000'; g.fill(); glowStroke(g, 2, 1);
+    hudRing(g, c.x, c.y, r * 2.3, lt * 0.06, 0.7, true);
+    hudRing(g, c.x, c.y, r * 3.1, -lt * 0.035, 0.3, false);
+    const k = clamp((fr(lt / BAR) * BAR) / (BAR * 0.9));               // a slow ring rolling out on each downbeat
+    circle(g, c.x, c.y, r * 1.1 + E.outCubic(k) * Math.hypot(W, H) * 0.5); glowStroke(g, 1, 0.6 * (1 - k));
+    const an = lt * 0.8, px = c.x + Math.cos(an) * r * 2.3, py = c.y + Math.sin(an) * r * 2.3;
+    square(g, px, py, 8, TAU / 8); g.fillStyle = ACC; g.fill(); light(g, px, py, 16, 0.5);
+  }
+  // ii: an endless floor to a horizon, a monolith rising out of it in a beam of light
+  function plain(g, W, H, lt, bn, bp, beat) {
+    const m = Math.min(W, H), hy = H * 0.58, rise = E.outCubic(clamp(lt / (BAR * 1.6)));
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 50; i++) { g.fillStyle = `rgba(255,255,255,${0.15 + 0.5 * fr(i * 0.71)})`; g.fillRect(fr(i * 0.618) * W, fr(i * 0.37) * hy * 0.92, 1.2, 1.2); }
+    const bw = m * 0.07 * rise, bg = g.createLinearGradient(0, 0, 0, hy);
+    bg.addColorStop(0, 'rgba(255,255,255,0)'); bg.addColorStop(1, 'rgba(255,255,255,.3)');
+    g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = bg; g.fillRect(W / 2 - bw, 0, bw * 2, hy); g.restore();
+    floor(g, W, H, hy, lt, 1, 0.35);
+    const mw = m * 0.11, mh = m * 0.5 * rise, x = W / 2 - mw / 2, y = hy - mh;
+    if (mh > 1) {
+      g.save(); g.globalAlpha = 0.16; const rg = g.createLinearGradient(0, hy, 0, hy + mh * 0.6);
+      rg.addColorStop(0, '#fff'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(x, hy, mw, mh * 0.6); g.restore();
+      g.fillStyle = '#000'; g.fillRect(x, y, mw, mh);
+      g.beginPath(); g.rect(x, y, mw, mh); glowStroke(g, 1.2, 0.9);
+      g.beginPath(); for (let i = 1; i < 6; i++) { const yy = hy - (mh * i) / 6; g.moveTo(x + 3, yy); g.lineTo(x + mw - 3, yy); }
+      g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 0.6; g.stroke();
+      dimension(g, x + mw + m * 0.06, hy, x + mw + m * 0.06, y, `${Math.round(rise * 555)}`, 0.75, clamp((rise - 0.2) / 0.3));
+      light(g, W / 2, y, m * 0.14, 0.45 * rise + 0.2 * beat);
     }
-    g.restore();
-    // dust in the light
-    g.save(); g.globalCompositeOperation = stark ? 'source-over' : 'lighter';
-    for (let j = 0; j < 30; j++) {
-      const life = fr(j * 0.618 + T * 0.05), px = fr(j * 0.37 + i) * W, py = H - life * H;
-      if (stark) { g.fillStyle = `rgba(0,0,0,${Math.sin(life * Math.PI) * 0.5})`; g.fillRect(px, py, 2, 2); }
-      else glowAt(g, px, py, 3, Math.sin(life * Math.PI) * 0.6);
+  }
+  // iii: a long corridor of frames, the light at its end
+  function corridor(g, W, H, lt, bn, bp, beat) {
+    const m = Math.min(W, H), c = { x: W / 2, y: H * 0.45 };
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    light(g, c.x, c.y, m * 0.55, 0.5 + 0.2 * beat); light(g, c.x, c.y, m * 0.14, 1);
+    g.beginPath(); for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { g.moveTo(c.x, c.y); g.lineTo(c.x + sx * W * 1.2, c.y + sy * H * 1.2); }
+    g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 0.8; g.stroke();
+    const ph = fr(lt * 0.45), tw = lt * 0.04;
+    for (let j = 16; j >= 0; j--) {
+      const zz = j + 1 - ph, sc = 1.1 / zz, w = W * sc, h = H * sc * 0.9, a = clamp(1.4 - zz * 0.09) * clamp(zz * 1.2);
+      if (a <= 0) continue;
+      g.save(); g.translate(c.x, c.y); g.rotate(tw + zz * 0.01);
+      g.beginPath(); g.rect(-w / 2, -h / 2, w, h); glowStroke(g, 0.6 + 2.4 / zz, a * 0.9);
+      g.beginPath(); g.rect(-w * 0.46, -h * 0.46, w * 0.92, h * 0.92); g.strokeStyle = `rgba(255,255,255,${a * 0.3})`; g.lineWidth = 0.5; g.stroke();
+      brackets(g, 0, 0, w * 0.92, h * 0.92, Math.min(w, h) * 0.08); g.strokeStyle = `rgba(255,255,255,${a})`; g.lineWidth = Math.max(1, 6 / zz); g.stroke();
+      g.beginPath(); for (let i = 0; i <= 20; i++) { const x = -w * 0.46 + (w * 0.92 * i) / 20; g.moveTo(x, -h * 0.46); g.lineTo(x, -h * 0.46 + ((i % 5 ? 3 : 7) * 3) / zz); }
+      g.strokeStyle = `rgba(255,255,255,${a * 0.5})`; g.lineWidth = 0.6; g.stroke();
+      g.restore();
     }
+  }
+  // iv: stripes slide across on the bar and the half bar, the word inverting against them
+  function nul(g, W, H, lt) {
+    const half = Math.floor(lt / (BAR / 2)), hp = fr(lt / (BAR / 2)) * (BAR / 2), nb = 7, bh = H / nb, col = n => (n % 2 ? '#000' : '#fff');
+    g.fillStyle = col(half + 1); g.fillRect(0, 0, W, H);
+    g.fillStyle = col(half);
+    for (let i = 0; i < nb; i++) { const d = E.outCubic(clamp((hp - i * 0.03) / 0.42)), dir = i % 2 ? 1 : -1; g.fillRect(dir * (1 - d) * W, i * bh - 0.5, W, bh + 1); }
+    const m = Math.min(W, H), fs = Math.min(W * 0.19, H * 0.2);
+    g.save(); g.globalCompositeOperation = 'difference'; g.fillStyle = '#fff'; g.strokeStyle = '#fff';
+    g.beginPath(); for (let i = 1; i < nb; i++) { g.moveTo(0, i * bh); g.lineTo(W, i * bh); } g.lineWidth = 0.5; g.stroke();
+    g.font = `400 ${Math.max(9, m * 0.016)}px ${MONO}`; g.textBaseline = 'middle';
+    for (let i = 0; i < nb; i++) { g.textAlign = 'left'; g.fillText(`0${i}`, m * 0.04, i * bh + bh / 2); g.textAlign = 'right'; g.fillText('VOID', W - m * 0.04, i * bh + bh / 2); }
+    g.fillRect(W / 2 - m * 0.2, 0, 1, H * E.outCubic(clamp(lt / 0.6)));   // the rule the question stands against
     g.restore();
   }
+  // FIVE: the five fragments (above) stand in the light from a crack in the ground, one landing on each beat,
+  // turning slowly, lit from the crack beneath
+  function five(g, W, H, lt, bn, bp, beat) {
+    const m = Math.min(W, H), U = m * 0.36, gy = H * 0.72;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    fineGrid(g, W, H, m / 30, W / 2, gy, 0.5);
+    // the light pouring up out of the crack
+    const lg = g.createLinearGradient(0, gy, 0, 0); lg.addColorStop(0, 'rgba(255,255,255,.4)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+    g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = lg; g.fillRect(W / 2 - U * 0.5, 0, U, gy); g.restore();
+    light(g, W / 2, gy, U * 1.6, 0.55 + 0.2 * beat);
+    for (const idx of [3, 4, 1, 2, 0]) {                                // outer ones first, the great one in front
+      const f = FIVE[idx], on = E.outBack(clamp((lt - idx * BEAT) / 0.3)); if (on <= 0) continue;
+      const x = W / 2 + f.x * U, y = gy - U * 0.2 + Math.sin(lt * 0.8 + f.ph) * U * 0.02 - (1 - on) * U * 0.35;
+      light(g, x, y - U * 0.3, U * 0.45, 0.25 * on);
+      drawMesh(g, f.M, x, y, U, f.ph + lt * f.spin, { alpha: Math.min(1, on), light: [0.2, 0.8, 0.55], base: [5, 5, 9], span: [165, 165, 190], back: 0.2, lw: 1.2 });
+    }
+    // the crack itself
+    const r = rnd(4242); g.beginPath(); let x = W / 2 - U * 1.6; g.moveTo(x, gy);
+    while (x < W / 2 + U * 1.6) { x += U * (0.05 + r() * 0.08); g.lineTo(x, gy + (r() - 0.5) * U * 0.03); }
+    glowStroke(g, 1.6, 1);
+    // glass shards rising
+    for (let i = 0; i < 22; i++) {
+      const life = fr(i * 0.618 + lt * (0.12 + (i % 4) * 0.03)), sx = W / 2 + (fr(i * 0.37) - 0.5) * U * 3.4, sy = gy - life * U * 2.2, s = U * (0.015 + (i % 3) * 0.01);
+      g.save(); g.translate(sx, sy); g.rotate(lt * (0.6 + (i % 3)) + i); g.globalAlpha = Math.sin(life * Math.PI) * 0.9;
+      g.beginPath(); g.moveTo(0, -s * 1.4); g.lineTo(s * 0.8, s * 0.6); g.lineTo(-s * 0.7, s * 0.9); g.closePath(); g.strokeStyle = '#fff'; g.lineWidth = 0.8; g.stroke();
+      g.restore();
+    }
+  }
+  // ODDS: 1 in 555,555,555,555, counted up inside three orbits
+  function odds(g, W, H, lt, bn, bp, beat) {
+    const m = Math.min(W, H), c = { x: W / 2, y: H * 0.45 };
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    fineGrid(g, W, H, m / 30, c.x, c.y, 0.45);
+    for (let j = 0; j < 3; j++) {
+      const rx = W * 0.46, ry = m * 0.1 * (1 + j * 0.5), an = lt * (1.2 + j * 0.4);
+      g.save(); g.translate(c.x, c.y); g.rotate((j * TAU) / 3 + lt * 0.2);
+      g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, TAU); g.strokeStyle = 'rgba(255,255,255,.25)'; g.lineWidth = 0.8; g.stroke();
+      g.setLineDash([1.5, 6]); g.beginPath(); g.ellipse(0, 0, rx * 1.03, ry * 1.12, 0, 0, TAU); g.strokeStyle = 'rgba(255,255,255,.18)'; g.stroke(); g.setLineDash([]);
+      g.fillStyle = j ? '#fff' : ACC; g.fillRect(Math.cos(an) * rx - 3, Math.sin(an) * ry - 3, 6, 6);
+      g.restore();
+    }
+    const k = E.inOut(clamp(lt / (BAR * 1.5))), done = k >= 1, full = '555,555,555,555', str = Math.floor(555555555555 * k).toLocaleString('en-US');
+    const fs = Math.min(W / 10.5, H * 0.09);
+    if (done) light(g, c.x, c.y, W * 0.5, 0.35 * beat);
+    g.save(); g.font = `200 ${fs}px ${THIN}`; g.textBaseline = 'middle'; g.textAlign = 'center';
+    const cw = g.measureText('0').width * 1.08, wOf = ch => (ch === ',' ? cw * 0.45 : cw);
+    const fullW = [...full].reduce((s, ch) => s + wOf(ch), 0), x0 = c.x - fullW / 2;
+    g.fillStyle = '#fff';
+    let x = x0 + fullW;
+    [...str].reverse().forEach((ch, j) => {                             // right-aligned, the low digits still spinning
+      const w = wOf(ch), jit = !done && ch !== ',' && j < 5 ? (fr(Math.sin(lt * 60 + j) * 999) - 0.5) * fs * 0.12 : 0;
+      x -= w; g.fillText(ch, x + w / 2, c.y + jit);
+    });
+    g.fillRect(x0, c.y + fs * 0.75, fullW * k, 1.5);
+    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.5; brackets(g, c.x, c.y, fullW + fs * 0.8, fs * 2.4, fs * 0.3); g.stroke();
+    g.font = `400 ${fs * 0.3}px ${MONO}`; if ('letterSpacing' in g) g.letterSpacing = `${fs * 0.12}px`;
+    g.fillStyle = ACC; g.fillText('1  IN', c.x, c.y - fs * 1.0);
+    g.restore();
+  }
+  // FORM: the true form drawn like a blueprint as it turns - guides, then every edge (the hidden ones
+  // dashed), the vertices named, the dimensions - and at last the obsidian filling it in
+  function form(g, W, H, lt, bn, bp, beat) {
+    const m = Math.min(W, H), c = { x: W / 2, y: H * 0.43 }, s = m * 0.24, k = clamp(lt / (BAR * 2)), turn = 0.35 + lt * 0.2;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    fineGrid(g, W, H, m / 30, c.x, c.y, 1);
+    const gk = E.outCubic(clamp(k / 0.25));
+    g.save(); g.setLineDash([4, 4]); g.strokeStyle = 'rgba(140,140,255,.75)'; g.lineWidth = 0.8;
+    g.beginPath(); g.arc(c.x, c.y, s * 1.4, -Math.PI / 2, -Math.PI / 2 + TAU * gk); g.stroke();
+    g.beginPath(); g.moveTo(c.x - W * 0.45 * gk, c.y - s * 0.08); g.lineTo(c.x + W * 0.45 * gk, c.y - s * 0.08);
+    g.moveTo(c.x, c.y - s * 1.45 * gk); g.lineTo(c.x, c.y + s * 1.35 * gk); g.stroke();
+    g.restore();
+    const fillK = E.inOut(clamp((k - 0.72) / 0.25));
+    light(g, c.x, c.y, s * 1.8, 0.1 + 0.45 * fillK + 0.12 * beat);
+    const P = drawMesh(g, BIPY, c.x, c.y, s, turn, { fill: fillK, edges: E.inOut(clamp((k - 0.1) / 0.5)), back: 0.5, lw: 1, base: [8, 8, 14], span: [140, 140, 175], inner: P => fillK > 0 && core(g, P, s, fillK) });
+    const vk = clamp((k - 0.45) / 0.2);
+    if (vk > 0) {
+      g.save(); g.globalAlpha = vk; g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineWidth = 1; g.font = `400 9px ${MONO}`; g.textAlign = 'left'; g.textBaseline = 'bottom';
+      P.forEach((p, i) => { g.strokeRect(p.x - 3, p.y - 3, 6, 6); g.fillText(i === 0 ? 'APEX' : i === 1 ? 'BASE' : 'G' + (i - 1), p.x + 6, p.y - 4); });
+      g.restore();
+    }
+    const dk = clamp((k - 0.5) / 0.3);
+    dimension(g, c.x - 0.62 * s, c.y + s * 1.3, c.x + 0.62 * s, c.y + s * 1.3, '1.24', 0.8, dk);
+    dimension(g, c.x + s * 1.15, c.y - 1.2 * s, c.x + s * 1.15, c.y + 1.05 * s, '2.25', 0.8, dk);
+  }
+  // the violet core seen through the glass, from point to point
+  function core(g, P, s, a = 1) {
+    const t = P[0], b = P[1];
+    g.save(); g.globalCompositeOperation = 'lighter';
+    const cg = g.createLinearGradient(t.x, t.y, b.x, b.y);
+    cg.addColorStop(0, 'rgba(140,140,255,0)'); cg.addColorStop(0.45, `rgba(165,165,255,${0.6 * a})`); cg.addColorStop(1, 'rgba(140,140,255,0)');
+    g.fillStyle = cg; g.beginPath(); g.moveTo(t.x, t.y); g.lineTo(b.x + s * 0.035, b.y); g.lineTo(b.x - s * 0.035, b.y); g.closePath(); g.fill();
+    glowAt(g, (t.x + b.x) / 2, t.y + (b.y - t.y) * 0.45, s * 0.35, 0.3 * a);
+    g.restore();
+  }
+  // the true form: the obsidian bipyramid, edges burning white, the violet core, small shards orbiting
+  function voidGem(g, x, y, s, turn, t) {
+    const tilt = 0.22;
+    const orbit = back => {                                             // shards on a tilted ring, behind or in front
+      for (let i = 0; i < 7; i++) {
+        const a = t * 0.5 + (i / 7) * TAU, Z = Math.cos(a); if ((Z < 0) !== back) continue;
+        const px = x + Math.sin(a) * 1.25 * s, py = y + (0.15 + Math.sin(a * 2 + i) * 0.08 + Z * 1.25 * tilt) * s, ss = s * (0.05 + (i % 3) * 0.02) * (1 + Z * 0.2);
+        g.save(); g.translate(px, py); g.rotate(t * (0.8 + i * 0.1) + i);
+        g.beginPath(); g.moveTo(0, -ss * 1.5); g.lineTo(ss * 0.7, ss * 0.5); g.lineTo(-ss * 0.6, ss * 0.8); g.closePath();
+        g.fillStyle = '#050508'; g.fill(); g.strokeStyle = `rgba(255,255,255,${back ? 0.35 : 0.9})`; g.lineWidth = 1; g.stroke();
+        g.restore();
+      }
+    };
+    orbit(true);
+    light(g, x, y, s * 0.9, 0.35);
+    const P = drawMesh(g, BIPY, x, y, s, turn, { tilt, base: [8, 8, 14], span: [140, 140, 175], inner: P => core(g, P, s) });
+    light(g, P[0].x, P[0].y, s * 0.25, 0.8); light(g, P[1].x, P[1].y, s * 0.15, 0.5);
+    orbit(false);
+  }
+  // RISE: the true form lights up and the light swells until the screen is white
+  function rise(g, W, H, lt, bn, bp, beat) {
+    const m = Math.min(W, H), c = { x: W / 2, y: H * 0.47 }, k = clamp(lt / (BAR * 2)), s = m * 0.2 * (1 + 0.15 * E.inCubic(k));
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    fineGrid(g, W, H, m / 30, c.x, c.y, 0.6);
+    g.save(); g.translate(c.x, c.y); g.rotate(lt * 0.1); g.beginPath();
+    for (let i = 0; i < 48; i++) { const a = (i / 48) * TAU, l = Math.hypot(W, H) * (i % 2 ? 0.5 : 0.8); g.moveTo(Math.cos(a) * s * 1.6, Math.sin(a) * s * 1.6); g.lineTo(Math.cos(a) * l, Math.sin(a) * l); }
+    g.restore(); glowStroke(g, 0.6, 0.15 + 0.4 * k);
+    hudRing(g, c.x, c.y, s * 1.9 * (1 + k * 0.25), lt * 0.1, 0.65, true);
+    light(g, c.x, c.y, m * (0.45 + k * 1.3), 0.3 + 0.6 * k);
+    voidGem(g, c.x, c.y, s, lt * 0.8 * (1 + k * 2), lt);
+    const wk = clamp((lt - BAR * 1.4) / (BAR * 0.6));                   // the last beats go white
+    g.fillStyle = `rgba(255,255,255,${E.inCubic(wk) * 0.95})`; g.fillRect(0, 0, W, H);
+  }
+  // when each scene starts (bar of the drop; before it, i - iv)
+  const SCENES = [[-8, eclipse], [-6, plain], [-4, corridor], [-2, nul], [0, white], [2, five], [4, odds], [6, form], [8, rise]];
+  // after the reveal: the true form turns above the floor, inside its scales
+  function after(g, W, H, T, bn, bp, beat) {
+    const m = Math.min(W, H), lt = T - REVEAL, c = { x: W / 2, y: H * 0.31 };
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    floor(g, W, H, H * 0.5, lt, 0.5, 0.15);
+    hudRing(g, c.x, c.y, m * 0.32, lt * 0.04, 0.6, true);
+    hudRing(g, c.x, c.y, m * 0.44, -lt * 0.03, 0.2, false);
+    light(g, c.x, c.y, m * 0.5, 0.25 + 0.15 * beat);
+    voidGem(g, c.x, c.y, m * 0.16, lt * 0.6, lt);
+  }
+
   G.cutscenes.register({
-    id: 'nullscapes', name: 'NULLSCAPES', odds: 555500000000, tier: 'null', biome: 'null', zone: -1,
+    id: 'nullscapes', name: 'NULLSCAPES', odds: 555555555555, tier: 'null', biome: 'null', zone: -1,
     music: 'audio/flow.mp3', musicAt: DA, pre: 2000, fullscreen: true,
-    duration: DUR * 1000, revealAt: REVEAL / DUR, colors: ['#ffffff', '#c8ccff', '#000000'],
-    captions: [],                                                       // drawn by say(), word by word on the beat
+    duration: DUR * 1000, revealAt: REVEAL / DUR, colors: ['#ffffff', '#8c8cff', '#000000'],
+    captions: [],                                                       // drawn by say(), on the beat
     draw(g, e) {
-      const { W, H, time } = e, T = time / 1000, m = Math.min(W, H);
+      const { W, H, time } = e, T = time / 1000;
       g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-      // ---- the blackout: motes of light drawn into a star, its flare swelling ----
+      // ---- the blackout: a hairline draws itself across the dark, then goes ----
       if (T < 0) {
-        const k = 1 + T / 2;
-        g.save(); g.globalCompositeOperation = 'lighter';
-        for (let i = 0; i < 60; i++) {
-          const [a, b, s] = MOTES[i], ang = a * TAU, d = (1 - fr(k * (0.6 + b) + s)) * Math.hypot(W, H) * 0.5;
-          glowAt(g, W / 2 + Math.cos(ang) * d, H / 2 + Math.sin(ang) * d, 3 + s * 4, 0.6 * k);
+        const k = E.inOut(1 + T / 2), w = W * 0.8 * k, a = 1 - seg(T, -0.5, -0.05);
+        g.fillStyle = `rgba(255,255,255,${0.85 * a})`; g.fillRect(W / 2 - w / 2, H / 2 - 0.5, w, 1);
+        light(g, W / 2 - w / 2, H / 2, 8, 0.6 * k * a); light(g, W / 2 + w / 2, H / 2, 8, 0.6 * k * a);
+        return;
+      }
+      // ---- the break and the two piano notes: nothing but the words ----
+      if (T >= BREAK && T < DAN) { say(g, W, H, T); return; }
+      const lt0 = T - DAN, bn0 = Math.floor(lt0 / BEAT), bp = fr(lt0 / BEAT), beat = Math.exp(-bp * 5);
+      if (T < REVEAL) {
+        if (lt0 >= SCENES[0][0] * BAR) {
+          let i = SCENES.length - 1; while (i > 0 && lt0 < SCENES[i][0] * BAR) i--;
+          const [b0, scene] = SCENES[i];
+          scene(g, W, H, lt0 - b0 * BAR, bn0 - b0 * 4, bp, beat);
+          const fin = seg(T, barAt(-8), barAt(-8) + 1.2);                 // the first scene fades up out of the dark
+          if (fin < 1) { g.fillStyle = `rgba(0,0,0,${1 - fin})`; g.fillRect(0, 0, W, H); }
         }
-        g.restore();
-        flare(g, W, H, W / 2, H / 2, m * (0.02 + k * k * 0.07), 0.3 + 0.7 * k);
-        return;
-      }
-      // ---- "da" / "dan": dark, and the words; one beat out, the light cracks through ----
-      if (T < DAN) {
-        const hit = Math.max(0, 1 - Math.abs(T - HIT1) / 0.1) + Math.max(0, 1 - Math.abs(T - HIT2) / 0.1);
-        if (hit > 0) { g.fillStyle = `rgba(255,255,255,${0.3 * Math.min(1, hit)})`; g.fillRect(0, 0, W, H); }
-        const pre = seg(T, DAN - BEAT * 1.5, DAN);
-        if (pre > 0) cracks(g, W, H, E.inCubic(pre), 0.5 + 0.5 * pre);
-        say(g, W, H, T);
-        return;
-      }
-      const beat = Math.exp(-fr((T - DAN) / BEAT) * 5), bar = (T - DAN) / BAR;
-      if (bar < 8) {
-        // ---- i - iv ----
-        const i = Math.floor(bar / 2), k = E.inOut(clamp((bar - i * 2) / 2));
-        solo(g, W, H, T, i, k, beat);
       } else {
-        // ---- the five fragments gather; the ground cracks open with light ----
-        const U = m * 0.15, gather = E.outCubic(seg(T, barAt(8), barAt(10))), light = 0.5 + 0.5 * seg(T, barAt(8), barAt(11));
-        const zoom = 1.35 - 0.35 * E.inOut(seg(T, barAt(8), REVEAL)) + 0.02 * beat;
-        const c = { x: W / 2, y: H * 0.5 };
-        g.save(); g.translate(W / 2, H / 2); g.scale(zoom, zoom); g.translate(-W / 2, -H / 2);
-        fiveAura(g, W, H, c, U, T, beat, gather, light);
-        g.restore();
-        g.save(); g.globalCompositeOperation = 'lighter'; glowAt(g, W / 2, H * 0.62, m * 0.9, 0.1 * beat); g.restore();
-        const cl = seg(T, barAt(12), REVEAL);
-        if (cl > 0 && T < REVEAL) cracks(g, W, H, E.inCubic(cl), 0.45 + 0.4 * beat);
+        after(g, W, H, T, bn0, bp, beat);
+        const k = T - REVEAL; if (k < 0.8) { g.fillStyle = `rgba(255,255,255,${1 - k / 0.8})`; g.fillRect(0, 0, W, H); }   // out of RISE's white
       }
-      // ---- the drop: the dark shatters outward into the first light ----
-      if (T < DAN + 1.4) {
-        const k = E.inCubic(clamp((T - DAN) / 1.3)), s = Math.hypot(W, H) * 0.62;
-        g.save(); g.translate(W / 2, H / 2);
-        for (const shd of CRACK.shards) {
-          const a = 1 - k; if (a <= 0) continue;
-          g.save(); g.translate(shd.cx * s * k * 2.6 * shd.push, shd.cy * s * k * 2.6 * shd.push); g.rotate(shd.spin * k); g.scale(1 + k * 1.5 * shd.push, 1 + k * 1.5 * shd.push);
-          g.beginPath(); shd.poly.forEach((p, i) => (i ? g.lineTo((p[0] - shd.cx) * s, (p[1] - shd.cy) * s) : g.moveTo((p[0] - shd.cx) * s, (p[1] - shd.cy) * s))); g.closePath();
-          g.globalAlpha = a; g.fillStyle = '#030305'; g.fill();
-          g.globalCompositeOperation = 'lighter'; g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 1.5; g.stroke();
-          g.restore();
-        }
-        g.restore();
-        g.fillStyle = `rgba(255,255,255,${0.9 * (1 - clamp((T - DAN) / 0.4))})`; g.fillRect(0, 0, W, H);
-      }
-      // ---- cuts between i / ii / iii / iv / the five: a white hit on the downbeat ----
-      const cutBars = [2, 4, 6, 8], since = Math.min(...cutBars.map(b => { const d = (bar - b) * BAR; return d >= 0 ? d : 99; }));
-      if (since < 0.25) { g.fillStyle = `rgba(255,255,255,${0.7 * (1 - since / 0.25)})`; g.fillRect(0, 0, W, H); }
-      // ---- the reveal ----
-      const rv = Math.max(0, 1 - Math.abs(T - REVEAL) / 0.45);
-      if (rv > 0) { g.fillStyle = `rgba(255,255,255,${rv})`; g.fillRect(0, 0, W, H); }
+      // ---- a hard diagonal wipe through each scene change ----
+      for (const [b] of SCENES) if (b !== -8 && b !== 0 && b < 8) { const k = (T - barAt(b) + 0.22) / 0.44; if (k > 0 && k < 1) wipe(g, W, H, k, b % 4 ? -1 : 1); }
+      // ---- the drop: one flash as the black gives way to white ----
+      const dk = T - DAN; if (dk >= 0 && dk < 0.3) { g.fillStyle = `rgba(255,255,255,${(1 - dk / 0.3) * FL()})`; g.fillRect(0, 0, W, H); }
       const end = seg(T, DUR - 2.5, DUR);
       if (end > 0) { g.fillStyle = `rgba(0,0,0,${end})`; g.fillRect(0, 0, W, H); }
-      if (bar >= 8 || bar < 6) {
-        const v = g.createRadialGradient(W / 2, H / 2, m * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
-        v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(0.6, 'rgba(0,0,0,.15)'); v.addColorStop(1, 'rgba(0,0,0,.55)');
-        g.fillStyle = v; g.fillRect(0, 0, W, H);
-      }
       say(g, W, H, T);
     },
   });

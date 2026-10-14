@@ -22,11 +22,11 @@
       how: '날씨가 바뀔 때마다 1000분의 1', fx: '럭 x10 · 코인 x14 · 자동 클릭 불가 · 19초마다 3.12% 확률로 에러 크리스탈',
       extra: '에러 광물 19종 (3분의 2가 억대)' },
     heaven: { id: 'heaven', name: 'THE HEAVEN', ko: '천국', color: '#bfe6ff', color2: '#ffffff', min: 7, luck: 7, chance: 1 / 777, onlyOver: 1e8,
-      how: '날씨가 바뀔 때마다 777분의 1', fx: '1억 이상 광물만 나옵니다 · 럭 x7',
+      how: '날씨가 바뀔 때마다 777분의 1', fx: '1억 미만 광물은 나오지 않습니다 · 럭 x7',
       extra: '한정 광물 THE GODS · 1 in 12,049,712,324' },
     null: { id: 'null', name: 'NULL', ko: '널', color: '#ffffff', color2: '#7a7aff', min: 793 / 60, dur: '13분 13초', chance: 0.001, minZone: 4,
       how: '5번째 맵부터 · 날씨가 바뀔 때마다 1000분의 1', fx: '땅도 하늘도 없는 곳 · 이곳에서만 NULLSCAPES',
-      extra: '한정 광물 NULLSCAPES · 1 in 555,500,000,000' },
+      extra: '한정 광물 NULLSCAPES · 1 in 555,555,555,555' },
   };
   const durOf = b => b.dur || b.min + '분';
   const now = () => Date.now();

@@ -473,7 +473,7 @@
       ${m ? `<div class="wxm" style="--mc:${m.color}"><span>변이</span><b>${m.name}</b><i>1천만대 이상 · ${Math.round(m.chance * 100)}% · 보상 x${m.mul}</i></div>` : '<div class="wxm off"><span>변이</span><b>없음</b></div>'}
       ${bossUp ? '<button class="buy bevel wxboss" data-wxboss="1"><span>보스에 맞서기</span></button>' : ''}
       <div class="wxtable">${Object.keys(table).filter(k => table[k] > 0).map(k => `<span style="--c:${D.weathers[k].color}" class="${k === w.id ? 'on' : ''}">${D.weathers[k].name}<i>${(table[k] / tot * 100).toFixed(table[k] / tot < 0.01 ? 1 : 0)}%</i></span>`).join('')}</div>
-      ${G.config.dev ? `<div class="wxdev"><small>DEV · 날씨 바꾸기</small><button data-bioset="cuber">▶ CUBER STAGE</button><button data-bioset="glitch">▶ GLITCH</button>${Object.keys(table).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('')}${reg.night ? Object.keys(reg.night).filter(k => !table[k]).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('') : ''}</div>` : ''}`;
+      ${G.config.dev ? `<div class="wxdev"><small>DEV · 날씨 바꾸기</small><button data-bioset="cuber">▶ CUBER STAGE</button><button data-bioset="glitch">▶ GLITCH</button><button data-bioset="heaven">▶ THE HEAVEN</button><button data-bioset="null">▶ NULL</button>${Object.keys(table).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('')}${reg.night ? Object.keys(reg.night).filter(k => !table[k]).map(k => `<button data-wxset="${k}">${D.weathers[k].name}</button>`).join('') : ''}</div>` : ''}`;
     pop.hidden = false; void pop.offsetWidth; pop.classList.add('show');
   }
   function closePop() { pop.classList.remove('show'); setTimeout(() => { if (!pop.classList.contains('show')) pop.hidden = true; }, 200); }

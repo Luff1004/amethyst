@@ -6,7 +6,7 @@
              hue = fixed hue for the backdrop (null keeps each map's own hue), s/l = its saturation / lightness
   ambient  : the effect drawn over the backdrop (js/game.js ambient): dust (default) / one of each achievement theme's own
   preview  : colours for the swatch on the theme card
-  noPreview: no 미리보기 button while still locked (spoiler guard - the 1조+ themes)
+  noPreview: no 미리보기 button at all (spoiler guard - every theme unlocked by drawing a mineral))
   The crystal itself always keeps its map colour.
 */
 G.data.themes = [
@@ -14,16 +14,16 @@ G.data.themes = [
     desc: '처음부터 함께한 보랏빛 광산', preview: ['#07060c', '#a970ff', '#241640'] },
   /* ---- achievement themes: never sold - unlocked by doing something. js/settings.js checks
      unlock.test(state) and, the moment it passes, hands the theme over with an unlock banner ---- */
-  { id: 'divine', name: 'THE DIVINE', en: 'THE DIVINE', price: 0, css: 'divine', bg: { hue: 24, s: 75, l: 5 }, ambient: 'divine',
+  { id: 'divine', name: 'THE DIVINE', en: 'THE DIVINE', price: 0, noPreview: true, css: 'divine', bg: { hue: 24, s: 75, l: 5 }, ambient: 'divine',
     unlock: { label: '1억 이상 광물 발견', test: s => foundOver(s, 1e8) },
     desc: '신의 빛이 내려앉은 광산 · 타오르는 성환과 쏟아지는 빛줄기', preview: ['#0a0401', '#ff8a1e', '#3a1806'] },
-  { id: 'sovereign', name: 'THE SOVEREIGN', en: 'THE SOVEREIGN', price: 0, css: 'sovereign', bg: { hue: 42, s: 35, l: 4 }, ambient: 'sovereign',
+  { id: 'sovereign', name: 'THE SOVEREIGN', en: 'THE SOVEREIGN', price: 0, noPreview: true, css: 'sovereign', bg: { hue: 42, s: 35, l: 4 }, ambient: 'sovereign',
     unlock: { label: '10억 이상 광물 발견', test: s => foundOver(s, 1e9) },
     desc: '황제의 옥좌 · 루비 박힌 황금 모서리와 아르데코 광채, 월계관 아래 내리는 금가루', preview: ['#060402', '#f3c64e', '#2a1c06'] },
-  { id: 'empyrean', name: 'THE EMPYREAN', en: 'THE EMPYREAN', price: 0, css: 'empyrean', bg: { hue: 222, s: 60, l: 4 }, ambient: 'empyrean',
+  { id: 'empyrean', name: 'THE EMPYREAN', en: 'THE EMPYREAN', price: 0, noPreview: true, css: 'empyrean', bg: { hue: 222, s: 60, l: 4 }, ambient: 'empyrean',
     unlock: { label: '100억 이상 광물 발견', test: s => foundOver(s, 1e10) },
     desc: '하늘 위의 옥좌 · 사파이어와 백금의 모서리, 오로라와 별똥별, 룬이 새겨진 성환', preview: ['#02040c', '#7fb8ff', '#0c1c44'] },
-  { id: 'verdant', name: 'THE VERDANT', en: 'THE VERDANT', price: 0, css: 'verdant', bg: { hue: 145, s: 55, l: 4 }, ambient: 'verdant',
+  { id: 'verdant', name: 'THE VERDANT', en: 'THE VERDANT', price: 0, noPreview: true, css: 'verdant', bg: { hue: 145, s: 55, l: 4 }, ambient: 'verdant',
     unlock: { label: '1000억 이상 광물 발견', test: s => foundOver(s, 1e11) },
     desc: '태고의 숲의 왕좌 · 에메랄드 모서리와 덩굴, 크리스탈을 감은 비취 우로보로스, 퍼져나가는 생명의 파동', preview: ['#020a05', '#3ee38a', '#0a2a14'] },
   { id: 'crimson', name: 'THE CRIMSON', en: 'THE CRIMSON', price: 0, noPreview: true, css: 'crimson', bg: { hue: 356, s: 70, l: 4 }, ambient: 'crimson',
@@ -40,10 +40,10 @@ G.data.themes = [
     unlock: { label: '시크릿 광물 발견', test: s => foundTier(s, 'secret') },
     desc: '보이지 않는 것들이 보고 있다 · 어둠 속에서 뜨는 눈, 동공이 된 크리스탈, 깜빡이는 화면', preview: ['#000000', '#d8d8d8', '#141414'] },
   /* unlock.progress (optional): [have, need], shown on the locked card */
-  { id: 'archive', name: 'THE ARCHIVE', en: 'THE ARCHIVE', price: 0, css: 'archive', bg: { hue: 28, s: 45, l: 4 }, ambient: 'archive',
+  { id: 'archive', name: 'THE ARCHIVE', en: 'THE ARCHIVE', price: 0, noPreview: true, css: 'archive', bg: { hue: 28, s: 45, l: 4 }, ambient: 'archive',
     unlock: { label: '1억 이상 광물 1000번 뽑기', test: s => findsOver(s, 1e8) >= 1000, progress: s => [findsOver(s, 1e8), 1000] },
     desc: '천 번의 행운을 기록한 서고 · 책장 사이의 펼쳐진 고서, 페이지에서 떠오르는 고대 문자, 일렁이는 촛불', preview: ['#0c0703', '#d6aa50', '#3a2210'] },
-  { id: 'symphony', name: 'THE SYMPHONY', en: 'THE SYMPHONY', price: 0, css: 'symphony', bg: { hue: 0, s: 0, l: 3 }, ambient: 'symphony',
+  { id: 'symphony', name: 'THE SYMPHONY', en: 'THE SYMPHONY', price: 0, noPreview: true, css: 'symphony', bg: { hue: 0, s: 0, l: 3 }, ambient: 'symphony',
     unlock: { label: '1억 이상 광물 3번 연속 뽑기', test: s => ((s.ach && s.ach.best8) || 0) >= 3, progress: s => [Math.min(3, (s.ach && s.ach.best8) || 0), 3] },
     desc: '세 번 연속, 완벽한 화음 · 흑백 악보와 떠다니는 음표, 크리스탈을 감은 오선, 스스로 연주하는 피아노', preview: ['#050505', '#ffffff', '#1c1c1c'] },
 ];
@@ -54,10 +54,10 @@ G.data.themes.push(
   { id: 'cuber', name: 'CUBER STAGE', en: 'CUBER STAGE', price: 0, css: 'cuber', bg: { hue: 265, s: 60, l: 5 }, ambient: 'cuber',
     unlock: { label: '큐버 스테이지 바이옴 발견', test: s => biomeSeen(s, 'cuber') },
     desc: '네온의 무대 · 줄무늬 태양과 달려오는 격자, 조명과 레이저, 4차원 큐브, 128BPM', preview: ['#0a0418', '#3af0ff', '#2a0a40'] },
-  { id: 'gods', name: 'G.O.D.S', en: 'G.O.D.S', price: 0, css: 'gods', bg: { hue: 210, s: 70, l: 55 }, ambient: 'gods', music: 'audio/gods.mp3',
+  { id: 'gods', name: 'G.O.D.S', en: 'G.O.D.S', price: 0, noPreview: true, css: 'gods', bg: { hue: 210, s: 70, l: 55 }, ambient: 'gods', music: 'audio/gods.mp3',
     unlock: { label: 'THE GODS 발견 (THE HEAVEN 한정 광물)', test: s => { const c = s.codex.thegods; return !!(c && (typeof c === 'number' ? c : c.n)); } },
     desc: '하늘의 눈들 · 날개 달린 눈이 떠다니는 맑은 하늘, 눈의 고리 - 그리고 가끔, 하늘이 당신을 내려다본다', preview: ['#7fb8ff', '#ffffff', '#1a3a6a'] },
-  { id: 'null', name: 'NULL', en: 'NULL', price: 0, css: 'null', bg: { hue: 240, s: 15, l: 2 }, ambient: 'null', music: 'audio/flow.mp3',
+  { id: 'null', name: 'NULL', en: 'NULL', price: 0, noPreview: true, css: 'null', bg: { hue: 240, s: 15, l: 2 }, ambient: 'null', music: 'audio/flow.mp3',
     unlock: { label: 'NULLSCAPES 발견 (NULL 한정 광물)', test: s => { const c = s.codex.nullscapes; return !!(c && (typeof c === 'number' ? c : c.n)); } },
     desc: '아무것도 없는 곳을 뚫고 나온 것 · 크리스탈을 둘러싼 부서진 흑백 모놀리스, 틈에서 새는 빛, Flow', preview: ['#000000', '#ffffff', '#16161c'] },
 );

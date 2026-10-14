@@ -372,8 +372,8 @@
     // index Z.length = the SPECIAL shelf: the monthly event minerals, which belong to no map
     const SP = Z.length, specials = () => G.cutscenes.list.filter(c => c.special || c.boss).sort((a, b) => (a.boss ? 99 : a.month) - (b.boss ? 99 : b.month));
     // index Z.length + 1 = the RARE BIOME shelf: a biome mineral only appears here once you've drawn it
-    // (the codex-only link and review mode show all of them)
-    const BIO = Z.length + 1, showAllBio = G.config.viewer || G.config.unlockCodex;
+    // (the codex-only link shows all of them; review mode doesn't - an undrawn biome mineral stays a secret)
+    const BIO = Z.length + 1, showAllBio = G.config.viewer;
     const biomes = () => G.cutscenes.list.filter(c => c.biome && (showAllBio || (s.codex[c.id] || {}).n > 0)).sort((a, b) => (a.aura ? -1 : 0) - (b.aura ? -1 : 0) || a.odds - b.odds);
     const zc = c => (c === SP ? specials() : c === BIO ? biomes() : G.cutscenes.inZone(c));
     const foundOf = i => zc(i).filter(c => (s.codex[c.id] || {}).n > 0).length;
@@ -519,7 +519,7 @@
         const own = G.state.themesOwned[t.id], using = G.state.theme === t.id, trying = G.isPreviewing && G.isPreviewing(t.id);
         const [bg, acc, btn] = t.preview;
         const btns = using ? '<button class="buy bevel small max" disabled><span>사용 중</span></button>'
-          : (t.noPreview && !own ? '' : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>`)
+          : (t.noPreview ? '' : `<button class="buy bevel small ${trying ? 'on' : ''}" data-themetry="${t.id}"><span>${trying ? '미리보는 중' : '미리보기'}</span></button>`)
             +(own ? `<button class="buy bevel small ready" data-themeuse="${t.id}"><span>적용</span></button>` : t.unlock ? '' : crystalBtn(t.price, `data-themebuy="${t.id}"`));
         // achievement themes say what unlocks them instead of a price
         const tag = t.unlock ? (own ? `<span class="tprice tach">${G.icon('check', 11)} 업적 달성 · ${t.unlock.label}</span>` : `<span class="tprice tach lock">${G.icon('lock', 11)} 해금 조건 · ${t.unlock.label}${t.unlock.progress ? (([a, b]) => ` (${G.fmtInt(a)} / ${G.fmtInt(b)})`)(t.unlock.progress(G.state)) : ''}</span>`)
