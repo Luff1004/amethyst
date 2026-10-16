@@ -207,6 +207,9 @@
       };
     }
     const i = C.list.findIndex(c => c.id === def.id);
+    // two minerals sharing an id would silently replace one another (and the codex records of the first
+    // would be read as the second) - say so loudly when testing locally
+    if (i >= 0 && G.config.dev) console.error(`cutscene id "${def.id}" registered twice: ${C.list[i].name} -> ${def.name}`);
     if (i >= 0) C.list[i] = def; else C.list.push(def);
     C.list.sort((a, b) => a.odds - b.odds);
     C.byId = {};

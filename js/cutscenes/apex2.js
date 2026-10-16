@@ -220,7 +220,7 @@
     const parts = Array.from({ length: 520 }, () => { const [a, b] = edges[Math.floor(r() * edges.length)], t = r(), j = 0.03; return [lerp(nodes[a][0], nodes[b][0], t) + (r() - 0.5) * j, lerp(nodes[a][1], nodes[b][1], t) + (r() - 0.5) * j, r()]; });
     return { nodes, edges, parts };
   })();
-  A.film({ id: 'genesis', name: 'Genesis', odds: 1.2e16, duration: 20000, revealAt: 0.72, colors: ['#ffd0b0', PRIM, '#000000'] }, (g, W, H, T, RV) => {
+  A.film({ id: 'genesisweb', name: 'Genesis', odds: 1.2e16, duration: 20000, revealAt: 0.72, colors: ['#ffd0b0', PRIM, '#000000'] }, (g, W, H, T, RV) => {
     const m = Math.min(W, H), c = { x: W / 2, y: H * 0.44 }, BANG = 1.4;
     g.fillStyle = '#020104'; g.fillRect(0, 0, W, H);
     if (T < BANG) { const k = T / BANG; light(g, c.x, c.y, 6 + k * 30, 0.4 + 0.6 * k * (0.7 + 0.3 * Math.sin(T * 30))); circle(g, c.x, c.y, 1.5 + k * 2); g.fillStyle = '#fff'; g.fill(); }
