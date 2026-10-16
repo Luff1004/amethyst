@@ -57,7 +57,7 @@
         </div>
         ${months}
         <div class="pkgs">${pkgs}</div>
-        <div class="evnote">보유 크리스탈 <b>${G.fmtInt(s.crystals)}</b> &nbsp;·&nbsp; 포션은 크리스탈 탭, 음식은 상점 탭에서 사용 &nbsp;·&nbsp; 한정 포션은 이벤트 기간에만 사용할 수 있습니다</div>
+        <div class="evnote">보유 크리스탈 <b>${G.fmtInt(s.crystals)}</b> &nbsp;·&nbsp; 크리스탈은 인벤토리, 음식은 상점 탭에서 사용 &nbsp;·&nbsp; 한정 포션은 이벤트 기간에만 사용할 수 있습니다</div>
       </div>`;
     // re-rendering must never throw the player back to the top of a long, scrolled popup
     const card = modal.querySelector('.tcard'); if (card) card.scrollTop = keepScroll;

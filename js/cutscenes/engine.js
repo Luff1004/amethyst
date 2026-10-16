@@ -177,8 +177,17 @@
 
   const DUR = [3000, 3600, 4400, 5200, 6200, 7400, 11000, 16000, 13000, 13000, 16500, 17000, 17500, 18000, 18500, 19000, 22000, 14000];
 
+  // the 5th map's old ladder above 1조 (31 minerals, up to Labyrinth's 1e24) was taken out, to be
+  // replaced by a few new ones (js/cutscenes/apex.js). Their films stay in the files but never
+  // register - a save that found one keeps the record, it just isn't listed (everything reading the
+  // codex skips unknown ids).
+  C.REMOVED = new Set(['mazeeternal', 'paradoxincarnate', 'firstfractureecho', 'mirrorremembers', 'dimunbound', 'wakingeye', 'lastseam',
+    'loopsovereign', 'fractureabsolute', 'mazeends', 'riftgenesis', 'unwrittencorridor', 'watchingvoid', 'collapsedhorizon', 'beyondmaze',
+    'echowithoutend', 'foldedthrone', 'silenceincarnate', 'vanishsovereign', 'endlessreturn', 'realityoverwritten', 'corebeyondreach',
+    'labyrinthmaker', 'genesisecho', 'riftsovereign2', 'existenceecho', 'mazeend', 'eyethatwaits', 'finaltruth', 'eternalreturn', 'labyrinth']);
   C.register = def => {
     if (!def || !def.id || !def.odds) throw new Error('cutscene needs id and odds');
+    if (C.REMOVED.has(def.id)) return;
     const ti = def.tier ? G.tiers.findIndex(t => t.key === def.tier) : G.tierIndex(def.odds);
     def.tierIdx = ti < 0 ? G.tierIndex(def.odds) : ti;
     def.zones = Array.isArray(def.zone) ? def.zone : [def.zone || 0];

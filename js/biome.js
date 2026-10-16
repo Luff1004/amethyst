@@ -27,6 +27,18 @@
     null: { id: 'null', name: 'NULL', ko: '널', color: '#ffffff', color2: '#7a7aff', min: 793 / 60, dur: '13분 13초', chance: 0.001, minZone: 4,
       how: '5번째 맵부터 · 날씨가 바뀔 때마다 1000분의 1', fx: '땅도 하늘도 없는 곳 · 이곳에서만 NULLSCAPES',
       extra: '한정 광물 NULLSCAPES · 1 in 555,555,555,555' },
+    /* the dream biomes: once a night, between 00:00 and 03:00 local time, DREAM opens for 45 minutes -
+       or, 1 time in 30, LUCID DREAM, or 1 in 24, NIGHTMARE. No auto-mining in any of them. Each has its
+       own mineral (js/cutscenes/dreams.js) and its own resource (js/data/materials.js). */
+    dream: { id: 'dream', name: 'DREAM', ko: '꿈', color: '#ffc4ee', color2: '#bfeeff', min: 45, noAuto: true, night: true,
+      how: '밤 12시~새벽 3시 사이 · 하룻밤에 한 번', fx: '자동 채굴 불가 · 10초마다 꿈 조각',
+      extra: '한정 광물 DREAM MAKER · 1 in 1,000,000,000,000' },
+    lucid: { id: 'lucid', name: 'LUCID DREAM', ko: '자각몽', color: '#bfeeff', color2: '#fff2c4', min: 45, noAuto: true, night: true,
+      how: 'DREAM이 열릴 때 30분의 1', fx: '자동 채굴 불가 · 10초마다 뒤틀린 꿈의 조각',
+      extra: '한정 광물 NOSTALGIA · 럭과 상관없이 1천만분의 1' },
+    nightmare: { id: 'nightmare', name: 'NIGHTMARE', ko: '악몽', color: '#ff2a3a', color2: '#ffffff', min: 45, noAuto: true, night: true,
+      how: 'DREAM이 열릴 때 24분의 1', fx: '자동 채굴 불가 · 10초마다 악몽 조각',
+      extra: '한정 광물 RUNRUNRUNRUNRUNRUN · 럭과 상관없이 100만분의 1' },
   };
   const durOf = b => b.dur || b.min + '분';
   const now = () => Date.now();
@@ -64,11 +76,21 @@
     else if (Math.random() < D.heaven.chance) start('heaven');
     else if (G.state.zone >= D.null.minZone && Math.random() < D.null.chance) start('null');   // NULL only opens out on the 5th map and beyond
   }
-  // CUBER STAGE's aura: its own roll per mining action, luck ignored
+  // a biome's luck-blind mineral (CUBER STAGE's aura, LUCID DREAM's and NIGHTMARE's): its own roll per
+  // mining action at exactly 1 in its odds
   function auraRoll() {
-    const b = current();
-    if (!b || b.id !== 'cuber') return null;
-    return Math.random() < 1 / 1e6 ? G.cutscenes.byId.aura_luff1004 || null : null;
+    const b = current(); if (!b) return null;
+    const a = G.cutscenes.list.find(c => c.aura && c.biome === b.id);
+    return a && Math.random() < 1 / a.odds ? a : null;
+  }
+  // the dream window: 00:00 - 03:00 local, once a night
+  function dreamCheck() {
+    const s = G.state; if (current() || !s.tutorialDone) return;
+    const d = new Date(); if (d.getHours() >= 3) return;
+    const night = d.toDateString(); if (s.dreamNight === night) return;
+    s.dreamNight = night;
+    const r = Math.random();
+    start(r < 1 / 30 ? 'lucid' : r < 1 / 30 + 1 / 24 ? 'nightmare' : 'dream');
   }
 
   /* gifts + expiry, once a second */
@@ -76,6 +98,7 @@
     if (!G.state || G.config.viewer) return;
     const s = G.state;
     if (s.biome && !current()) { end(); return; }
+    dreamCheck();
     const b = current(); if (!b || !b.gift) return;
     // the gift clock starts fresh after a reload (or a long sleep) - never a burst of catch-up rolls
     if (!giftAt || now() - giftAt > b.gift.every * 3000) giftAt = now();
@@ -99,7 +122,7 @@
     G.audio.blackout && G.audio.blackout(7); setTimeout(() => G.audio.blast(8), 500); G.buzz && G.buzz([60, 40, 120, 40, 200]);
     clearTimeout(intro.t); intro.t = setTimeout(() => { introEl.classList.remove('show'); setTimeout(() => { introEl.hidden = true; }, 700); }, 4800);
   }
-  const paintBody = () => { const b = current(); document.body.classList.toggle('biome-cuber', !!b && b.id === 'cuber'); document.body.classList.toggle('biome-glitch', !!b && b.id === 'glitch'); document.body.classList.toggle('biome-heaven', !!b && b.id === 'heaven'); document.body.classList.toggle('biome-null', !!b && b.id === 'null'); };
+  const paintBody = () => { const b = current(); for (const id in D) document.body.classList.toggle('biome-' + id, !!b && b.id === id); };
 
   /* ---------------- the world itself ---------------- */
   function cube(g, x, y, s, ax, ay, col, a) {
@@ -136,6 +159,8 @@
       g.lineWidth = 1.6;
       for (let i = 0; i < 6; i++) { const sd = i % 2 ? 1 : -1, x = vx + sd * W * (0.3 + (i % 3) * 0.08), y = H * (0.18 + (i % 3) * 0.13) + Math.sin(t * 0.8 + i) * 12; cube(g, x, y, Math.min(W, H) * (0.03 + (i % 3) * 0.012), t * (0.5 + i * 0.1), t * (0.7 + i * 0.13), i % 2 ? '#3af0ff' : '#ff3ad8', 0.7); }
       g.restore();
+    } else if (b.night) {
+      if (G.dreams) G.dreams.back(g, W, H, t, b.id); else { g.fillStyle = 'rgba(10,6,20,.8)'; g.fillRect(0, 0, W, H); }
     } else if (b.id === 'null') {
       if (G.n3 && G.n3.biomeBack) G.n3.biomeBack(g, W, H, t); else { g.fillStyle = 'rgba(0,0,2,.88)'; g.fillRect(0, 0, W, H); }
     } else if (b.id === 'heaven') {
@@ -165,6 +190,7 @@
       return;
     }
     if (b.id === 'null') { if (G.n3 && G.n3.biomeFront) G.n3.biomeFront(g, W, H, t); return; }
+    if (b.night) { if (G.dreams) G.dreams.front(g, W, H, t, b.id); return; }
     if (b.id === 'heaven') {                   // a soft white veil, brightest at the edges
       const v = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.6);
       v.addColorStop(0, 'rgba(255,255,255,0)'); v.addColorStop(1, 'rgba(255,255,255,.3)');

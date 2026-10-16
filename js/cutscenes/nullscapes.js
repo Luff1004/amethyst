@@ -360,6 +360,9 @@
     }
   };
 
+  // the kit, shared with the 1조+ films (js/cutscenes/apex.js)
+  N3.kit = { drawMesh, BIPY, hudRing, glowStroke, light, glowAt, fineGrid, floor, circle, square, brackets, dimension, rnd, wipe };
+
   /* ================= the cutscene ================= */
   const DUR = 38;                                                       // as long as BREAKTHROUGH's: 33.9 -> 71.9 s of the song
   const REVEAL = barAt(10);                                             // 67.77 s in the song

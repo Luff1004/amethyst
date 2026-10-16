@@ -180,6 +180,7 @@ const P = {
   volcano: '<path d="M2 21h20l-6-11h-4z"/><path d="M12 10V4M9 6l3-2 3 2"/><path d="M11 14l-2 4M14 14l1 3"/>',
   void: '<circle cx="12" cy="12" r="3"/><path d="M12 3a9 9 0 0 1 9 9M21 12a9 9 0 0 1-9 9M12 21a9 9 0 0 1-9-9M3 12a9 9 0 0 1 9-9" stroke-dasharray="3 3"/>',
   heart: '<path d="M12 20S4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.5-8 11-8 11z"/>',
+  bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9 12h6"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.2-1.6l2-1.4-2-3.4-2.3.9a7 7 0 0 0-2.7-1.6L13.4 2h-2.8l-.4 2.9a7 7 0 0 0-2.7 1.6l-2.3-.9-2 3.4 2 1.4a7 7 0 0 0 0 3.2l-2 1.4 2 3.4 2.3-.9a7 7 0 0 0 2.7 1.6l.4 2.9h2.8l.4-2.9a7 7 0 0 0 2.7-1.6l2.3.9 2-3.4-2-1.4c.13-.5.2-1.05.2-1.6z"/>',
 };
 G.icon = (name, size = 22) =>
@@ -190,4 +191,7 @@ G.tiers.push(
   { key: 'glitch', ko: '에러',  en: 'ERR0R', below: Infinity, color: '#ff2a6a', manual: true },   // GLITCH's error minerals
   { key: 'heaven', ko: '천상',  en: 'HEAVENLY', below: Infinity, color: '#dff2ff', manual: true },   // THE HEAVEN's own mineral, THE GODS
   { key: 'null',   ko: '널',    en: 'NULL', below: Infinity, color: '#ffffff', manual: true },        // NULL's own mineral, NULLSCAPES
+  { key: 'dream',     ko: '꿈',     en: 'DREAM',     below: Infinity, color: '#ffc4ee', manual: true },   // DREAM's own mineral, DREAM MAKER
+  { key: 'lucid',     ko: '자각몽', en: 'LUCID',     below: Infinity, color: '#bfeeff', manual: true },   // LUCID DREAM's NOSTALGIA
+  { key: 'nightmare', ko: '악몽',   en: 'NIGHTMARE', below: Infinity, color: '#ff2a3a', manual: true },   // NIGHTMARE's RUNRUNRUNRUNRUNRUN
 );

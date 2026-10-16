@@ -27,6 +27,10 @@ G.opt = key => {
     zone: 0, maxZone: 0,
     upg: {}, buffs: {}, codex: {}, muted: false,
     crystals: 0, potions: {}, armed: {}, autoOn: true,
+    mats: {}, cauldron: {},          // resources gathered from the skies, and what's already in the cauldron per recipe (js/inventory.js)
+    charms: {}, charmUntil: {}, autoCraft: {},   // luck charms held / running until (ms), and which recipes 자동 추가 is on for
+    gear: { owned: {}, equipped: null, forge: null },   // gauntlets: held, worn, and the one on the forge { id, end, dur }
+    dreamNight: '',                  // the night (local date) DREAM last opened - once a night, 00:00~03:00 (js/biome.js)
     yellow: 0, red: 0,               // YELLOW crystals (drop from hand-mining, 3rd map on) and RED (crafted, 4th map on)
     ybuff: { luck: 0, coin: 0 },     // 옐로우 상점 buffs: timestamps they last until
     mutTickets: 0,                   // 옐로우 상점 - 변이 확정권 waiting to be used
@@ -138,7 +142,11 @@ G.opt = key => {
       for (const f of G.data.foods) if (f.perm ? G.state.perm[f.id] : (G.state.buffs[f.id] || 0) > now()) s += f.bonus;
       return s;
     },
-    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1) * (this.ybuffLeft('luck') > 0 ? 1.5 : 1) * (G.biome ? G.biome.mul('luck') : 1) * (1 + this.lab('luck')); },
+    luck() { return (1 + this.val('luck') + this.foodLuck()) * (G.weather ? G.weather.mul('luck') : 1) * (this.ybuffLeft('luck') > 0 ? 1.5 : 1) * (G.biome ? G.biome.mul('luck') : 1) * (1 + this.lab('luck')) * this.charmMul() * this.gauntletMul(); },
+    /* the gauntlet being worn (js/data/materials.js) */
+    gauntletMul() { const e = G.state && G.state.gear && G.state.gear.equipped, g = e && (G.data.gauntlets || []).find(x => x.id === e); return g ? g.mul : 1; },
+    /* the strongest luck charm running (js/data/materials.js) */
+    charmMul() { const u = (G.state && G.state.charmUntil) || {}, now = Date.now(); let m = 1; for (const c of G.data.charms || []) if ((u[c.id] || 0) > now) m = Math.max(m, c.mul); return m; },
     potion: id => G.data.potions.find(p => p.id === id),
     /* several crystals can be armed at once now - their luck stacks (adds up) for the next click */
     armedList() {
