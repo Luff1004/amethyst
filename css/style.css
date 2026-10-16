@@ -1759,3 +1759,21 @@ html[data-theme="null"] #themeFrame { display: none; }
 #biomeIntro.bi-null b { font-family: Syncopate, "Arial Black", sans-serif; letter-spacing: .5em; text-shadow: 0 0 30px #fff, 0 0 2px #fff; animation: biNull 4.8s ease-out; }
 @keyframes biNull { 0% { opacity: 0; letter-spacing: 1.4em; } 8% { opacity: 1; } 9% { opacity: .2; } 10% { opacity: 1; } }
 body.biome-null #coinVal, body.biome-null #luckVal { text-shadow: 0 0 12px #fff; }
+
+/* ================= the notice on entering (js/notice.js) ================= */
+#noticeModal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 14px; pointer-events: none; }
+#noticeModal.show { pointer-events: auto; }
+#noticeModal .scrim { position: fixed; inset: 0; background: rgba(4, 3, 8, .6); opacity: 0; transition: opacity .3s; }
+#noticeModal.show .scrim { opacity: 1; }
+#noticeModal .tcard { position: relative; --c: 14px; --fill: var(--modal); width: min(92vw, 380px); padding: 22px 18px 16px; display: grid; gap: 10px; transform: translateY(16px) scale(.98); opacity: 0; transition: transform .3s, opacity .3s; }
+#noticeModal.show .tcard { transform: none; opacity: 1; }
+#noticeModal .nver { font-size: 10px; letter-spacing: .3em; color: var(--acc); }
+#noticeModal h3 { margin: 0; font-size: 19px; color: #fff; }
+#noticeModal p { margin: 0; font-size: 12.5px; color: var(--dim); }
+#noticeModal .nlist { list-style: none; margin: 4px 0 2px; padding: 0; display: grid; gap: 7px; }
+#noticeModal .nlist li { display: flex; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, .03); }
+#noticeModal .nlist i { display: grid; place-items: center; color: var(--acc); flex: none; }
+#noticeModal .nlist span { display: grid; gap: 2px; }
+#noticeModal .nlist b { font-size: 14px; color: #fff; letter-spacing: .02em; }
+#noticeModal .nlist small { font-size: 11.5px; color: var(--dim); line-height: 1.4; }
+#noticeModal .nbtns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
