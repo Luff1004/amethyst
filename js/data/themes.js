@@ -60,6 +60,9 @@ G.data.themes.push(
   { id: 'null', name: 'NULL', en: 'NULL', price: 0, noPreview: true, css: 'null', bg: { hue: 240, s: 15, l: 2 }, ambient: 'null', music: 'audio/flow.mp3',
     unlock: { label: 'NULLSCAPES 발견 (NULL 한정 광물)', test: s => { const c = s.codex.nullscapes; return !!(c && (typeof c === 'number' ? c : c.n)); } },
     desc: '아무것도 없는 곳을 뚫고 나온 것 · 크리스탈을 둘러싼 부서진 흑백 모놀리스, 틈에서 새는 빛, Flow', preview: ['#000000', '#ffffff', '#16161c'] },
+  { id: 'dreamcore', name: 'DREAMCORE', en: 'DREAMCORE', price: 0, css: 'dreamcore', bg: { hue: 290, s: 40, l: 10 }, ambient: 'dreamcore',
+    unlock: { label: '꿈 바이옴 발견 (DREAM · LUCID DREAM · NIGHTMARE)', test: s => biomeSeen(s, 'dream') || biomeSeen(s, 'lucid') || biomeSeen(s, 'nightmare') },
+    desc: '어디선가 본 것 같은 곳 · 파스텔 하늘 아래 들판의 검은 문, 떠다니는 구름과 비눗방울, 가끔 떠오르는 문장', preview: ['#2a1e48', '#ffc4ee', '#bfeeff'] },
 );
 // has this rare biome ever come up (recorded since the themes came in), or has one of its minerals been found
 function biomeSeen(s, id) {

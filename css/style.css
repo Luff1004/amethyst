@@ -1987,3 +1987,31 @@ body.cut #btnBag, body.bossing #btnBag { display: none; }
 @keyframes biNight { 50% { filter: contrast(1.3) brightness(.75) hue-rotate(-10deg); } }
 #biomeIntro.bi-nightmare b { font-family: Impact, "Arial Black", sans-serif; letter-spacing: .25em; color: #ff2a3a; text-shadow: 0 0 20px #ff0010, 3px 0 0 #fff; }
 #biomeIntro.bi-dream em, #biomeIntro.bi-lucid em, #biomeIntro.bi-nightmare em, #biomeIntro.bi-dream span, #biomeIntro.bi-lucid span, #biomeIntro.bi-nightmare span { color: #fff; text-shadow: 0 1px 6px #000; }
+
+/* ================= DREAMCORE (a dream biome found) =================
+   soft lavender glass edged in pink and sky, italic serif type, the screen edge breathing pastel */
+html[data-theme="dreamcore"] {
+  --bg: #1a1230; --panel: rgba(34, 24, 60, .9); --ink: #fff6fc; --dim: #cbbce8; --line: rgba(255, 196, 238, .6); --acc: #ffc4ee;
+  --card: rgba(40, 28, 70, .88); --btn: #2c2050; --btn2: #4a3478; --sel: linear-gradient(180deg, #5a3e8a, #2a1e48); --modal: rgba(28, 20, 50, .97); --scroll: #b49ad8;
+}
+html[data-theme="dreamcore"] #panel { --fill: radial-gradient(140% 60% at 50% -10%, rgba(255, 196, 238, .22), transparent 60%), radial-gradient(120% 60% at 50% 110%, rgba(191, 238, 255, .16), transparent 60%), rgba(30, 22, 54, .93); }
+html[data-theme="dreamcore"] .card { --fill: linear-gradient(160deg, rgba(60, 40, 96, .92), rgba(30, 22, 54, .92)); }
+html[data-theme="dreamcore"] #tabs .tab.active { --line: #ffc4ee; --fill: linear-gradient(180deg, #5a3e8a, #2a1e48); color: #fff; text-shadow: 0 0 10px #ffc4ee; }
+html[data-theme="dreamcore"] .ph h2 { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: .08em; background: linear-gradient(90deg, #ffc4ee, #e6d4ff, #bfeeff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+html[data-theme="dreamcore"] .ph h2 small { font-family: system-ui, "Malgun Gothic", sans-serif; font-style: normal; -webkit-text-fill-color: #cbbce8; }
+html[data-theme="dreamcore"] #coinVal, html[data-theme="dreamcore"] .card .meta > b { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
+html[data-theme="dreamcore"] #coinVal { color: #fff; text-shadow: 0 0 12px #ffc4ee, 0 0 24px #bfeeff; }
+html[data-theme="dreamcore"] .buy { --fill: linear-gradient(180deg, #4a3478, #2c2050); }
+html[data-theme="dreamcore"] body::after { content: ""; position: fixed; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 80px rgba(255, 196, 238, .28), inset 0 0 160px rgba(191, 238, 255, .12); animation: dreamBreath 7s ease-in-out infinite; }
+@keyframes dreamBreath { 50% { opacity: .45; } }
+html[data-theme="dreamcore"] body.cut::after { display: none; }
+html[data-theme="dreamcore"] #themeFrame { display: none; }
+/* the swatch: the field and its door */
+.amb-dreamcore { background: url(../img/dream/field.jpg) center 55% / cover no-repeat !important; filter: saturate(1.15); }
+.amb-dreamcore::before, .amb-dreamcore::after { display: none !important; }
+.card.tc-dreamcore:not(.locked) { --line: #ffc4ee; box-shadow: 0 0 22px rgba(255, 196, 238, .25), 0 0 40px rgba(191, 238, 255, .12); }
+.card.tc-dreamcore:not(.locked) .meta > b { font-family: Georgia, serif; font-style: italic; letter-spacing: .2em; background: linear-gradient(90deg, #ffc4ee, #bfeeff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.tu-dreamcore { background: url(../img/dream/room.jpg) center / cover !important; }
+.tu-dreamcore .tu-box b { font-family: Georgia, serif; font-style: italic; letter-spacing: .3em; background: none; -webkit-text-fill-color: #fff; filter: drop-shadow(0 0 14px #ffc4ee); }
+.tu-dreamcore .tu-box b::after { display: none; }
+.tu-dreamcore .tu-eq { background: linear-gradient(90deg, #ffc4ee, #bfeeff); color: #2a1e48; }

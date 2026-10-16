@@ -185,9 +185,15 @@
     'loopsovereign', 'fractureabsolute', 'mazeends', 'riftgenesis', 'unwrittencorridor', 'watchingvoid', 'collapsedhorizon', 'beyondmaze',
     'echowithoutend', 'foldedthrone', 'silenceincarnate', 'vanishsovereign', 'endlessreturn', 'realityoverwritten', 'corebeyondreach',
     'labyrinthmaker', 'genesisecho', 'riftsovereign2', 'existenceecho', 'mazeend', 'eyethatwaits', 'finaltruth', 'eternalreturn', 'labyrinth']);
+  /* 광물 절감 (2026-10): maps 1-4 thinned to about fifty minerals each - 10 per tier from EPIC to
+     DIVINE, kept evenly spread across each tier's odds. The rest are RETIRED, not deleted: they stay
+     registered (so a save that found one still counts it everywhere - themes, map unlocks, stats)
+     but they are never rolled and are not listed in the codex. */
+  C.RETIRED = new Set(['fluorite', 'peridot', 'malachite', 'obsidian', 'moonstone', 'citrine', 'smoky', 'topaz', 'tourmaline', 'desertrose', 'emerald', 'paraiba', 'padparadscha', 'demantoid', 'musgravite', 'adamantite', 'skystone', 'dragonblood', 'seakingstone', 'froststone', 'voidcrystal', 'sunstone', 'worldtree', 'nebulaheart', 'stormcaller', 'phoenixreq', 'dragoneclipse', 'starforge', 'lunarsov', 'crimsonzenith', 'genesisbloom', 'wardenruin', 'seraphengine', 'zincblende', 'nickelnugget', 'graphite', 'boraxstone', 'mica', 'hematite', 'cinnabar', 'platinumvein', 'manganesenodule', 'bismuthcrystal', 'wolframite', 'steelcrystal', 'quicksilverore', 'frostmetal', 'abyssalore', 'crimsonsteel', 'glacialcore', 'spectralmetal', 'stormcopper', 'sunmetal', 'deepforge', 'oreheart', 'quakestone', 'corerunite', 'pressurecrystal', 'magnetheart', 'mantleflame', 'veinofkings', 'boundlessore', 'primevalironore', 'hollowearthgem', 'ironsoul', 'deepveinmonarch', 'pressuretitan', 'voidmetal', 'seismiccrown', 'furnaceofages', 'thedeepforge', 'coreveil', 'fissureking', 'bedrocketernal', 'gravitascore', 'theundermind', 'continentalheart', 'glowstone', 'heart', 'icecrystal', 'glassquartz', 'prismstone', 'moonlightstone', 'starlightquartz', 'aurorastone', 'fireflyquartz', 'stalactite', 'stalagmite', 'cavepearl', 'clearcrystal', 'chillcrystal', 'crystalrose', 'silvercave', 'fluorprism', 'afterglow', 'fossilcrystal', 'cathedralquartz', 'abyssallight', 'infiniteclarity', 'frostflame', 'skycavestone', 'crystalnebula', 'millenniumice', 'glassheart', 'glowpearl', 'abyssalspire', 'glacierheart', 'millenniumstal', 'primalice', 'starcave', 'abyssallantern', 'sanctuaryoflight', 'eternalice', 'galaxyfragment', 'glowingvoid', 'heavencavelight', 'abyssalstarlight', 'eternalglacier', 'crystaltemple', 'lightwave', 'ghostcavelight', 'abyssalprism', 'fullmoonice', 'infinitereflect', 'lightlabyrinth', 'cavernoflight', 'luminoussov', 'radianthollow', 'glasswingcore', 'aurorasanctum', 'hallofmirrors', 'glacialcathedral', 'prismmonarch', 'hollowofechoes', 'spectralbloom', 'radianceeternal', 'dawnlightcore', 'mirrorsovereign', 'luminasveil', 'glasslightthrone', 'echoingcrystal', 'refractedsoul', 'eternalglasswork', 'twilightprism', 'obsidianshard', 'cindergem', 'ashquartz', 'slagglass', 'moltenamber', 'scoriastone', 'pyroquartz', 'forgemetal', 'coalcore', 'hardenedash', 'crucibleore', 'searedcrystal', 'moltenveins', 'pressurecore', 'blazingobsidian', 'eclipse', 'crucibleheart', 'scorchedcrown', 'crystalcoal', 'pressuregem', 'ashenrelic', 'infernalcrown', 'pressuresoul', 'eternalflame', 'crucibleofgods', 'scorchedsoul', 'coalescedcore', 'pressurethrone', 'forgeborn', 'moltengenesis', 'pressureeternal', 'deepcoreheartd', 'blazingsovereign', 'scorchedgenesis', 'magmadominion', 'blackdiamondcrown', 'infernorequiem', 'searingdominion', 'volcanicrequiem']);
   C.register = def => {
     if (!def || !def.id || !def.odds) throw new Error('cutscene needs id and odds');
     if (C.REMOVED.has(def.id)) return;
+    if (C.RETIRED.has(def.id)) def.retired = true;
     const ti = def.tier ? G.tiers.findIndex(t => t.key === def.tier) : G.tierIndex(def.odds);
     def.tierIdx = ti < 0 ? G.tierIndex(def.odds) : ti;
     def.zones = Array.isArray(def.zone) ? def.zone : [def.zone || 0];
@@ -217,7 +223,7 @@
     return def;
   };
 
-  C.inZone = i => C.list.filter(c => c.zones.includes(i));
+  C.inZone = i => C.list.filter(c => c.zones.includes(i) && !c.retired);
 
   /* roll once per mining action, at most one cutscene, only this zone's minerals.
      Every mineral gets its own independent chance (luck / odds, capped). If several come up at once -
@@ -236,6 +242,7 @@
       // rare-biome minerals: the error minerals only while GLITCH is up (any map); the aura is rolled separately (js/biome.js)
       if (c.biome) { if (c.aura || !G.biome || !G.biome.current() || G.biome.current().id !== c.biome) continue; }
       else if (!c.zones.includes(zone) || c.boss) continue;
+      if (c.retired) continue;                         // 광물 절감: retired minerals are never rolled
       // weather-exclusive minerals only exist while their weather is overhead
       if (c.weather && wxId !== c.weather) continue;
       if (specialSky && !c.weather && G.isSecret(c)) continue;

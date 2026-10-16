@@ -120,8 +120,60 @@
     g.restore();
   }
 
+  /* ---------------- the DREAMCORE theme (js/data/themes.js): somewhere you've been before ----------------
+     A pastel sky over the field with its black door, clouds drifting across, a faint checkerboard
+     fading into the grass, bubbles and little four-point stars rising, a soft rainbow halo and a ring of
+     stars round the crystal - and now and then a line of text surfacing and sinking again. */
+  const WHISPERS = ['you\'ve been here before', 'are you still dreaming?', 'it\'s okay. you can stay', 'this place remembers you', 'wake up?', 'it was always summer here', 'don\'t open the door'];
+  const BUBBLES = Array.from({ length: 22 }, (_, i) => { const r = K.rnd(1700 + i); return { x: r(), s: 0.006 + r() * 0.018, sp: 0.02 + r() * 0.03, ph: r() * 10, star: r() < 0.4 }; });
+  function sparkle(g, x, y, s, a) { g.globalAlpha = a; g.beginPath(); g.moveTo(x, y - s); g.lineTo(x + s * 0.25, y - s * 0.25); g.lineTo(x + s, y); g.lineTo(x + s * 0.25, y + s * 0.25); g.lineTo(x, y + s); g.lineTo(x - s * 0.25, y + s * 0.25); g.lineTo(x - s, y); g.lineTo(x - s * 0.25, y - s * 0.25); g.closePath(); g.fill(); g.globalAlpha = 1; }
+  function dreamcoreTheme(g, W, H, t, c, R) {
+    const m = Math.min(W, H), hz = H * 0.66;
+    // the sky, its colours wandering slowly
+    const sh = Math.sin(t * 0.05) * 20, sky = g.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, `hsl(${300 + sh},60%,78%)`); sky.addColorStop(0.55, `hsl(${255 + sh},55%,80%)`); sky.addColorStop(1, `hsl(${200 + sh},70%,84%)`);
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    // the field and its door, faded into the sky
+    if (ok(IMG.field)) { g.save(); g.globalAlpha = 0.6; cover(g, IMG.field, W, H, 1.1, 0.5, 0.58); g.restore(); bloom(g, IMG.field, W, H, 1.1, 0.5, 0.58, 0.25); }
+    pastel(g, W, H, 0.5);
+    // clouds drifting
+    for (let i = 0; i < 6; i++) { const cw = m * (0.5 + (i % 3) * 0.25), x = fr(i * 0.37 + t * 0.006 * (1 + (i % 2))) * (W + cw * 2) - cw, y = H * (0.05 + (i % 4) * 0.09); g.globalAlpha = 0.55; g.drawImage(cloud(), x, y, cw, cw * 0.5); }
+    g.globalAlpha = 1;
+    // a checkerboard floor fading into the grass
+    g.save(); g.globalAlpha = 0.18;
+    for (let r = 0; r < 10; r++) {
+      const z0 = 1 + r, z1 = 2 + r, y0 = hz + (H - hz) * 1.2 / z1 * 1.6, y1 = hz + (H - hz) * 1.2 / z0 * 1.6; if (y0 > H) continue;
+      for (let k = -12; k < 12; k++) { if ((k + r) % 2) continue; const xa = W / 2 + k * W * 0.2 / z1 * 2, xb = W / 2 + (k + 1) * W * 0.2 / z1 * 2, xc = W / 2 + (k + 1) * W * 0.2 / z0 * 2, xd = W / 2 + k * W * 0.2 / z0 * 2; g.beginPath(); g.moveTo(xa, y0); g.lineTo(xb, y0); g.lineTo(xc, y1); g.lineTo(xd, y1); g.closePath(); g.fillStyle = '#ffffff'; g.fill(); }
+    }
+    g.restore();
+    // the halo: soft rainbow rings, and a ring of little stars turning
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(c.x, c.y, R * (1.35 + i * 0.07), 0, TAU); g.strokeStyle = `hsla(${(i * 55 + t * 12) % 360},90%,75%,.22)`; g.lineWidth = R * 0.06; g.stroke(); }
+    g.restore();
+    light(g, c.x, c.y, R * 2.6, 0.35);
+    g.fillStyle = '#fff';
+    for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU + t * 0.08, rr = R * 2.05; sparkle(g, c.x + Math.cos(a) * rr, c.y + Math.sin(a) * rr, R * (0.05 + (i % 3) * 0.02), 0.5 + 0.4 * Math.sin(t * 2 + i)); }
+    // bubbles and stars rising
+    for (const b of BUBBLES) {
+      const life = fr(b.ph + t * b.sp), x = b.x * W + Math.sin(t * 0.6 + b.ph) * m * 0.02, y = H * (1.05 - life * 1.1), s = b.s * m, a = Math.sin(life * Math.PI);
+      if (b.star) { g.fillStyle = '#fff'; sparkle(g, x, y, s, a * 0.8); }
+      else { g.beginPath(); g.arc(x, y, s, 0, TAU); g.strokeStyle = `rgba(255,255,255,${0.6 * a})`; g.lineWidth = 1.2; g.stroke(); g.fillStyle = `rgba(255,220,250,${0.12 * a})`; g.fill(); g.beginPath(); g.arc(x - s * 0.35, y - s * 0.35, s * 0.22, 0, TAU); g.fillStyle = `rgba(255,255,255,${0.7 * a})`; g.fill(); }
+    }
+    // a line of text surfacing now and then, never over the crystal
+    const cyc = 11, k = fr(t / cyc), idx = Math.floor(t / cyc);
+    if (k < 0.55) {
+      const a = Math.sin((k / 0.55) * Math.PI), txt = WHISPERS[idx % WHISPERS.length], top = idx % 2 === 0;
+      g.save(); g.font = `italic 400 ${Math.max(14, m * 0.034)}px ${DREAMFONT}`; g.textAlign = 'center'; g.fillStyle = `rgba(255,255,255,${0.75 * a})`; g.shadowColor = 'rgba(180,120,220,.8)'; g.shadowBlur = 12;
+      g.fillText(txt, W / 2, top ? c.y - R * 2.6 : c.y + R * 2.75); g.restore();
+    }
+    grain(g, W, H, 0.06);
+    const v = g.createRadialGradient(W / 2, H / 2, m * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(60,30,90,.35)'); g.fillStyle = v; g.fillRect(0, 0, W, H);
+  }
+
   /* ---------------- the biome backgrounds ---------------- */
   G.dreams = {
+    theme: dreamcoreTheme,
     back(g, W, H, t, id) {
       const img = id === 'lucid' ? IMG.room : id === 'nightmare' ? nightmare() : IMG.field;
       g.fillStyle = id === 'nightmare' ? '#120406' : '#1a1428'; g.fillRect(0, 0, W, H);

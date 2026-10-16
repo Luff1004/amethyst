@@ -356,7 +356,7 @@
       });
     }
     // rare-biome minerals count once you've drawn them (all of them on the codex-only link)
-    const cl = G.cutscenes.list.filter(c => !c.biome || showAllBio || (s.codex[c.id] || {}).n > 0);
+    const cl = G.cutscenes.list.filter(c => !c.retired && (!c.biome || showAllBio || (s.codex[c.id] || {}).n > 0));
     const total = cl.length, found = cl.filter(c => (s.codex[c.id] || {}).n > 0).length;
     if (G.config.viewer) {
       const vchips = Z.map((zz, i) => `<button class="chip bevel ${i === codexZone ? 'on' : ''}" data-cz="${i}" style="--zh:${zz.hue}">
@@ -387,7 +387,7 @@
   /* 설정 - 통계: everything worth knowing about this save, computed from what it already records
      (play time / boxes / crystals drunk are counted from the update that added them - `since`) */
   function statsView() {
-    const s = G.state, st = s.stats || {}, list = G.cutscenes.list.filter(c => !c.biome || (s.codex[c.id] || {}).n > 0), found = c => (s.codex[c.id] || {}).n > 0;   // biome minerals once drawn
+    const s = G.state, st = s.stats || {}, list = G.cutscenes.list.filter(c => !c.retired && (!c.biome || (s.codex[c.id] || {}).n > 0)), found = c => (s.codex[c.id] || {}).n > 0;   // biome minerals once drawn
     const dur = ms => { const m = Math.floor(ms / 60000), h = Math.floor(m / 60); return h ? `${h}시간 ${m % 60}분` : `${m}분`; };
     let finds = 0, muts = 0; const mutKinds = new Set();
     for (const id in s.codex) { const r = s.codex[id]; if (!r) continue; finds += r.n || 0; if (r.mut) for (const k in r.mut) { muts += r.mut[k]; mutKinds.add(k); } }
@@ -673,7 +673,7 @@
       G.act.setSetting(el.dataset.set, val); G.audio.tab();
     } else if (el.dataset.prevwin) {
       // a real mineral from a random tier, so every press shows a different colour and size of number
-      const pool = G.cutscenes.list.filter(c => c.tierIdx >= 3), def = pool[Math.floor(Math.random() * pool.length)];
+      const pool = G.cutscenes.list.filter(c => c.tierIdx >= 3 && !c.retired), def = pool[Math.floor(Math.random() * pool.length)];
       G.emit('win', { def, reward: G.cutscenes.reward(def), tier: G.tiers[def.tierIdx] });
       if (G.opt('bannerStyle') === 'off') toast('알림이 꺼져 있습니다');
     } else if (el.dataset.retutorial) {

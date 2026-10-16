@@ -1586,6 +1586,8 @@
       godsTheme(t, fr);
     } else if (kind === 'error') {
       errorTheme(t, fr);
+    } else if (kind === 'dreamcore') {
+      if (G.dreams && G.dreams.theme) G.dreams.theme(g, W, H, t, center(), crystalR());
     } else if (kind === 'cuber') {
       cuberTheme(t, fr);
     } else if (kind === 'archive') {
@@ -1837,7 +1839,7 @@
     const sk = shake * G.opt('shake');                                // 설정 - 화면 흔들림
     if (sk > 0) g.translate((Math.random() - 0.5) * sk * 10, (Math.random() - 0.5) * sk * 10);
     drawBackground(t);
-    const quietSky = G.activeTheme && ['unseen', 'symphony', 'error', 'cuber', 'gods', 'null'].includes(G.activeTheme().ambient);     // THE UNSEEN keeps its dark: no weather painted over it (the weather itself still runs)
+    const quietSky = G.activeTheme && ['unseen', 'symphony', 'error', 'cuber', 'gods', 'null', 'dreamcore'].includes(G.activeTheme().ambient);     // THE UNSEEN keeps its dark: no weather painted over it (the weather itself still runs)
     if (!quietSky) G.weather.drawBack(g, W, H, t);
     G.biome.drawBack(g, W, H, t);                                    // a rare biome paints over the sky
     if (G.boss && G.boss.active) G.boss.draw(g, W, H, now);          // a boss fight replaces the crystal

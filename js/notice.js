@@ -1,17 +1,17 @@
-/* AMETHYST - the notice shown on entering (v1.0: what the next update brings).
+/* AMETHYST - the notice shown on entering (v1.0: what the update brought).
    "다시 보지 않기" is remembered in its own localStorage key, never in the save. Skipped in the
    codex-only viewer and until the tutorial is done. */
 (() => {
-  const KEY = 'amethyst_notice_v1_0';
+  const KEY = 'amethyst_notice_v1_1';
   const NOTICE = {
     ver: 'v1.0',
-    title: '업데이트로 돌아옵니다',
-    lead: '다음 업데이트에서 아메시스트가 이렇게 바뀝니다',
+    title: '업데이트 완료!',
+    lead: '아메시스트 v1.0 업데이트가 적용되었습니다',
     items: [
-      ['crystal', '크리스탈 제조', '상자 뽑기 대신, 모은 자원으로 크리스탈을 직접 만듭니다'],
-      ['cloud', '바이옴 자원', '날씨와 바이옴마다 그곳에서만 나는 자원을 모읍니다'],
-      ['book', '광물 절감', ''],
-      ['moon', 'LUCID DREAM', ''],
+      ['crystal', '크리스탈 제조', '상자 뽑기 대신, 모은 자원으로 크리스탈 · 행운 부적 · 건틀렛을 직접 만듭니다 (제조 탭)'],
+      ['cloud', '바이옴 자원', '날씨와 바이옴마다 그곳에서만 나는 자원을 모읍니다 (인벤토리)'],
+      ['book', '광물 절감', '맵마다 광물을 약 50개로 정리했습니다'],
+      ['moon', 'DREAM · LUCID DREAM · NIGHTMARE', '새벽 0시~3시, 하룻밤에 한 번 꿈이 열립니다 · 새 테마 DREAMCORE'],
     ],
   };
   let hidden = false; try { hidden = localStorage.getItem(KEY) === '1'; } catch (e) {}
