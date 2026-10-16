@@ -117,9 +117,33 @@
      the condition passes, then announced with a full-screen unlock banner - held back while a
      cutscene or boss fight is on screen, one banner at a time */
   const unlockQ = [];
+  /* one-off repair (2026-10-16): for a short while the new 1경 GENESIS took the id of map 1's 10억
+     Genesis Singularity, so anyone who had found that one read as having found a 1경 and was handed
+     EMPYREAN ~ ORIGIN. Once per save, those five are taken back unless the player's real finds earn
+     them - counting the 5th map's old ladder (taken out since, so no longer registered) at its odds,
+     so themes honestly won on it stay. A theme being worn that goes falls back to the default. */
+  const OLD_LADDER = { mazeeternal: 1.9e12, paradoxincarnate: 3.7e12, firstfractureecho: 7.2e12, mirrorremembers: 1.4e13, dimunbound: 2.7e13,
+    wakingeye: 5.1e13, lastseam: 9.9e13, loopsovereign: 1e14, fractureabsolute: 2.2e14, mazeends: 4.6e14, riftgenesis: 9.9e14, unwrittencorridor: 2.1e15,
+    watchingvoid: 4.6e15, collapsedhorizon: 9.9e15, beyondmaze: 1e16, echowithoutend: 2.5e16, foldedthrone: 6.3e16, silenceincarnate: 1.6e17,
+    vanishsovereign: 3.9e17, endlessreturn: 9.9e17, realityoverwritten: 1e18, corebeyondreach: 3.2e18, labyrinthmaker: 9.9e18, genesisecho: 3.1e19,
+    riftsovereign2: 9.9e19, existenceecho: 1e20, mazeend: 5.6e20, eyethatwaits: 3.2e21, finaltruth: 1.8e22, eternalreturn: 1e23, labyrinth: 1e24 };
+  function repairGenesisThemes() {
+    const s = G.state; if (!s || !s.themesOwned || s.genesisFix) return;
+    let best = 0;
+    for (const id in s.codex) {
+      const c = s.codex[id], n = typeof c === 'number' ? c : c && c.n; if (!(n > 0)) continue;
+      const d = G.cutscenes.byId[id], odds = d ? (d.special ? 0 : d.odds) : OLD_LADDER[id] || 0;
+      best = Math.max(best, odds);
+    }
+    const need = { empyrean: 1e10, verdant: 1e11, crimson: 1e12, infinite: 1e15, origin: 1e16 }, taken = [];
+    for (const id in need) if (s.themesOwned[id] && best < need[id] && !G.config.dev) { delete s.themesOwned[id]; taken.push(id); }
+    if (taken.includes(s.theme)) { s.theme = 'amethyst'; applyTheme(); }
+    s.genesisFix = true; G.save();
+  }
   const checkUnlocks = () => {
     const s = G.state;
     if (!s || !s.themesOwned) return;
+    repairGenesisThemes();
     for (const t of G.data.themes) {
       if (!t.unlock || s.themesOwned[t.id]) continue;
       // local dev: every achievement theme is simply open (quietly - no banner), to try them on freely
